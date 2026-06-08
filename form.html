@@ -351,6 +351,29 @@ select option { background: var(--sel-bg); color: var(--t1); }
 }
 .btn-pdf   { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.28); color:#10b981; }
 
+/* ── Help FAB ───────────────────────────────────────── */
+.help-fab {
+  position:fixed; bottom:76px; right:16px; z-index:9000;
+  width:42px; height:42px; border-radius:50%;
+  background:linear-gradient(135deg,#1d4ed8,#7c3aed);
+  border:none; color:#fff; font-size:1.1rem; font-weight:800;
+  cursor:pointer; box-shadow:0 4px 16px rgba(99,102,241,.5);
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .15s, box-shadow .15s;
+}
+.help-fab:hover { transform:scale(1.1); box-shadow:0 6px 24px rgba(99,102,241,.65); }
+
+/* ── ℹ️ Tooltip trigger ─────────────────────────────── */
+.tip-icon {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%;
+  background:rgba(99,102,241,.25); border:1px solid rgba(99,102,241,.5);
+  color:#a5b4fc; font-size:.62rem; font-weight:800;
+  cursor:pointer; margin-left:5px; vertical-align:middle;
+  transition:background .15s;
+}
+.tip-icon:hover { background:rgba(99,102,241,.45); }
+
 /* ── Remark Chips ───────────────────────────────────── */
 .rchip {
   display:inline-flex; align-items:center; gap:4px;
@@ -770,6 +793,9 @@ select option { background: var(--sel-bg); color: var(--t1); }
 <!-- SHARE CARD (hidden, used for image generation) -->
 <div id="shareCardEl" style="position:fixed;left:-9999px;top:-9999px;width:480px;font-family:'Sarabun',sans-serif;font-size:14px;z-index:-1;"></div>
 
+<!-- Help FAB -->
+<button class="help-fab" onclick="showHelp()" title="คู่มือการใช้งาน">?</button>
+
 <!-- HEADER -->
 <div class="page-header">
   <div class="ph-inner">
@@ -873,6 +899,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
       <label style="display:flex;align-items:center;gap:5px">
         เลขอ้างอิง
         <span style="font-size:.65rem;color:#34d399;font-weight:400">●BB</span>
+        <span class="tip-icon" onclick="showTip('refid')">i</span>
       </label>
       <input type="text" id="f_refId" placeholder="Q-YYYYMMDD-XXXX" readonly
         style="background:var(--readonly-bg);border-color:var(--readonly-bc);color:var(--readonly-col);font-size:.78rem;letter-spacing:.5px">
@@ -947,7 +974,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
         placeholder="—">
     </div>
     <div class="field">
-      <label>ลูกค้ากำหนดช่องว่าง (mm) <span style="color:#8b8aaa;font-size:.68rem">(0 = ไม่ได้กำหนด)</span></label>
+      <label>ลูกค้ากำหนดช่องว่าง (mm) <span style="color:#8b8aaa;font-size:.68rem">(0 = ไม่ได้กำหนด)</span><span class="tip-icon" onclick="showTip('custgap')">i</span></label>
       <input type="number" id="f_custGap" value="0" min="0" step="0.1"
         oninput="calcGapWeld()" placeholder="0 = ใช้ค่า auto">
     </div>
@@ -1105,7 +1132,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
     </div>
     <div class="accord-body" style="display:none;padding:10px 12px 12px">
       <div class="field" style="margin-bottom:0">
-        <label>ต้นทุนคงที่ / Overhead (฿) (ค่าบริหาร)</label>
+        <label>ต้นทุนคงที่ / Overhead (฿) (ค่าบริหาร)<span class="tip-icon" onclick="showTip('overhead')">i</span></label>
         <input type="number" class="cost-input" id="f_fixedCost" value="50" step="0.01" oninput="calcAll()" style="max-width:220px">
       </div>
     </div>
@@ -1396,7 +1423,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
     </div>
     <div class="grid g3" style="margin-bottom:10px">
       <div class="field">
-        <label>อัตราค่าแรง ฿/วัน</label>
+        <label>อัตราค่าแรง ฿/วัน<span class="tip-icon" onclick="showTip('labor')">i</span></label>
         <input type="number" id="cfg_ratePerDay" placeholder="500" step="50" oninput="onRateDayChange()">
       </div>
       <div class="field">
@@ -5349,6 +5376,143 @@ function showSaveSuccessCard(row, isUpdate) {
 
 let _lastSavedRow   = null;
 let _lastSavedImage = null;  // snapshot รูปแนบ ณ ตอน save
+
+// ── HELP SYSTEM ──────────────────────────────────────────────────────
+const _TIPS = {
+  custgap: {
+    title: '↔️ ลูกค้ากำหนดช่องว่าง',
+    body: `<b>ค่าปกติ = 0</b> → ระบบคำนวณช่องว่างอัตโนมัติจาก OD และ ID<br><br>
+           <b>ถ้าลูกค้ากำหนด เช่น 10 mm</b> → ตะแกรงในจะใหญ่ขึ้น ราคาเพิ่มตาม<br><br>
+           สูตรที่ใช้:<br>
+           • Auto: <code>(OD-5 - ID-5) ÷ 2</code><br>
+           • Custom: ตะแกรงใน = <code>(OD - custgap×2) × π + 50</code><br><br>
+           ⚠️ ค่าที่ใส่ต้องน้อยกว่า auto gap`
+  },
+  overhead: {
+    title: '💰 ต้นทุนคงที่ / Overhead',
+    body: `ค่าใช้จ่ายบริหารที่บวกเพิ่มต่อชิ้น เช่น ค่าไฟ ค่าเช่า ค่าน้ำ<br><br>
+           <b>ค่าเริ่มต้น:</b> กำหนดได้ใน Config → ค่าเริ่มต้น<br><br>
+           <b>ตัวอย่าง:</b> ถ้าใส่ 50 บาท/ลูก → ต้นทุนรวมจะบวก 50 บาทต่อชิ้นงาน<br><br>
+           รวมอยู่ใน <b>ต้นทุนรวม</b> ก่อนคำนวณราคาขาย`
+  },
+  refid: {
+    title: '🔗 เลขอ้างอิง (Ref)',
+    body: `สร้างอัตโนมัติทุกครั้งที่เปิดฟอร์มใหม่<br><br>
+           <b>รูปแบบ:</b> <code>Q-YYYYMMDD-XXXX</code><br>
+           ตัวอย่าง: <code>Q-20260608-1205</code><br><br>
+           • YYYYMMDD = วันที่ปัจจุบัน<br>
+           • XXXX = เลขสุ่ม 4 หลัก<br><br>
+           เก็บใน <b>คอลัมน์ BB</b> ของ Google Sheet ใช้สำหรับค้นหางานได้`
+  },
+  labor: {
+    title: '👷 อัตราค่าแรง',
+    body: `กำหนดได้ใน <b>Config → ค่าแรง</b><br><br>
+           <b>โหมดคำนวณ:</b><br>
+           • ฿/นาที × เวลาต่อกระบวนการ<br>
+           • ฿/ชั่วโมง × ชั่วโมงต่อกระบวนการ<br>
+           • ฿/วัน × จำนวนวัน<br><br>
+           <b>ปุ่ม "รีโหลดค่าแรง"</b> จะสว่างขึ้น (เหลือง) เมื่อ config ค่าแรงมีการเปลี่ยนแปลง<br>
+           กดเพื่ออัพเดทค่าแรงในฟอร์มปัจจุบัน`
+  }
+};
+
+function showTip(key) {
+  const t = _TIPS[key];
+  if (!t) return;
+  Swal.fire({
+    title: t.title,
+    html: `<div style="text-align:left;font-size:.88rem;line-height:1.7;color:#cbd5e1">${t.body}</div>`,
+    background: '#0d1b2a', color: '#e2e8f0',
+    confirmButtonColor: '#1d65cc', confirmButtonText: 'ได้เลย',
+    width: 400,
+  });
+}
+
+function showHelp(section) {
+  const sections = [
+    { id:'start', icon:'🚀', title:'เริ่มต้นใช้งาน', body:`
+      <b>ขั้นตอนแรก:</b> ไปที่แท็บ <b>⚙️ Config</b> แล้วใส่ <b>Script URL</b> ของ Google Apps Script<br><br>
+      <b>ไม่มี Script URL?</b> ดูวิธีติดตั้งใน <code>วิธีติดตั้ง.txt</code> ที่มาพร้อมกับโปรเจค<br><br>
+      หลังจากตั้งค่าแล้ว กดปุ่ม <b>🔄 รีเฟรช</b> เพื่อดึงข้อมูลจาก Google Sheet` },
+    { id:'general', icon:'📋', title:'ข้อมูลทั่วไป', body:`
+      <b>สถานะ:</b> รอสรุป / ยืนยันแล้ว / ยกเลิก<br>
+      <b>No.Quo:</b> เลขใบเสนอราคา สร้างอัตโนมัติ<br>
+      <b>วันที่:</b> บันทึกเป็นรูปแบบ วัน/เดือน/ปีพ.ศ. (เช่น 8/6/2569)<br>
+      <b>เลขอ้างอิง:</b> สร้างอัตโนมัติ <code>Q-YYYYMMDD-XXXX</code> ใช้ค้นหางาน<br>
+      <b>ลูกค้า / ผู้ติดต่อ:</b> เลือกจาก dropdown (กำหนดใน Config)` },
+    { id:'size', icon:'📐', title:'ขนาดชิ้นงาน', body:`
+      <b>OD:</b> เส้นผ่าศูนย์กลางนอก (mm)<br>
+      <b>ID:</b> เส้นผ่าศูนย์กลางใน (mm)<br>
+      <b>H:</b> ความสูง (mm)<br><br>
+      <b>ช่องว่างใส่จีบ:</b> คำนวณอัตโนมัติ = (OD-5 - ID-5) ÷ 2<br>
+      <b>ลูกค้ากำหนดช่องว่าง:</b> ใส่เมื่อลูกค้าระบุมา → ราคาตะแกรงในจะเพิ่มตาม<br><br>
+      <b>🔍 ตรวจสอบแม่พิมพ์:</b> กรอก OD+ID แล้วระบบเทียบกับ Config อัตโนมัติ` },
+    { id:'material', icon:'🧱', title:'วัสดุ & ต้นทุน', body:`
+      <b>MAT:</b> เลือกวัสดุจาก dropdown → ราคา/ลูกคำนวณอัตโนมัติจากสูตรตัด<br><br>
+      <b>ราคา Auto:</b> ดึงจากแท็บ DATA ใน Google Sheet<br>
+      ถ้าราคาไม่ถูก → แก้ใน Sheet แล้วกด รีเฟรช<br><br>
+      <b>เลือก "ไม่มี":</b> ราคาจะเป็น 0 อัตโนมัติ<br><br>
+      <b>เทสเสีย:</b> คำนวณ 15% ของต้นทุนวัสดุรวม` },
+    { id:'labor', icon:'👷', title:'ค่าแรง', body:`
+      ตั้งค่าได้ใน <b>Config → ค่าแรง</b><br><br>
+      <b>กระบวนการ:</b> เพิ่มได้หลาย process เช่น ตัด, เชื่อม, ขัด<br>
+      แต่ละ process มีเวลาและอัตราแยกกัน<br><br>
+      <b>ปุ่มรีโหลดค่าแรง:</b> จะสว่างเหลืองเมื่อแก้ Config แล้วยังไม่อัพเดทฟอร์ม<br><br>
+      <b>ค่าขนส่ง:</b> เลือก 100/200/300/500 หรือพิมพ์เองได้` },
+    { id:'price', icon:'💰', title:'ราคาเสนอ', body:`
+      <b>ต้นทุน/ลูก:</b> รวมทุกรายการ วัสดุ + ค่าแรง + Overhead + อื่นๆ<br><br>
+      <b>Margin:</b> กำหนดใน Config (%) → ราคาขาย = ต้นทุน × (1 + margin%)<br>
+      ราคาขายปัดขึ้นเป็นจำนวนเต็ม 10 อัตโนมัติ<br><br>
+      <b>ราคาขาย:</b> แก้ไขเองได้ตลอดเวลา` },
+    { id:'save', icon:'💾', title:'บันทึก & แชร์', body:`
+      <b>💾 บันทึก:</b> ต้องกรอก "ลูกค้า" ก่อนถึงบันทึกได้<br><br>
+      หลังบันทึก จะแสดง <b>Card สรุปใบเสนอราคา</b> พร้อมปุ่ม:<br>
+      • 📋 คัดลอก → คัดลอกข้อความ Telegram format<br>
+      • ✈️ ส่งรูป → แชร์รูป Card ผ่าน Telegram/LINE/อื่นๆ<br>
+      • 🖼 บันทึกรูป → save ไฟล์ PNG ลงเครื่อง<br><br>
+      <b>📎 แนบรูป:</b> แนบใบขอราคาจากลูกค้า → แสดงใน Card + ช่วย AI อ่านแบบ` },
+    { id:'config', icon:'⚙️', title:'Config & ตั้งค่า', body:`
+      <b>Script URL:</b> URL ของ Google Apps Script (บันทึกครั้งเดียว)<br>
+      <b>ค่าเริ่มต้น:</b> Margin%, Overhead, ค่าชุบ, ค่าขนส่ง<br>
+      <b>ค่าแรง:</b> อัตรา ฿/นาที ฿/ชั่วโมง ฿/วัน และกระบวนการ<br>
+      <b>สูตรตัด:</b> กำหนดสูตรคำนวณขนาดตัดแต่ละชิ้นส่วน<br>
+      <b>แม่พิมพ์:</b> เพิ่มขนาด OD ที่มีแม่พิมพ์อยู่<br>
+      <b>ลูกค้า:</b> เพิ่มรายชื่อลูกค้าสำหรับ dropdown` },
+  ];
+
+  const navHtml = sections.map(s =>
+    `<button onclick="document.querySelectorAll('.help-sec').forEach(e=>e.style.display='none');document.getElementById('hs-${s.id}').style.display='block';this.parentElement.querySelectorAll('button').forEach(b=>b.style.background='transparent');this.style.background='rgba(99,102,241,.25)'"
+      style="padding:7px 12px;border:none;border-radius:8px;background:transparent;color:#cbd5e1;font-family:Sarabun,sans-serif;font-size:.82rem;cursor:pointer;text-align:left;width:100%">
+      ${s.icon} ${s.title}</button>`
+  ).join('');
+
+  const contentHtml = sections.map((s, i) =>
+    `<div id="hs-${s.id}" class="help-sec" style="display:${i===0?'block':'none'}">
+      <div style="font-size:.95rem;font-weight:700;color:#e2e8f0;margin-bottom:10px">${s.icon} ${s.title}</div>
+      <div style="font-size:.85rem;line-height:1.75;color:#cbd5e1">${s.body}</div>
+    </div>`
+  ).join('');
+
+  Swal.fire({
+    html: `
+      <div style="display:flex;gap:0;height:380px;text-align:left;font-family:Sarabun,sans-serif">
+        <div style="width:145px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);padding:8px 6px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">
+          ${navHtml}
+        </div>
+        <div style="flex:1;padding:14px 16px;overflow-y:auto">${contentHtml}</div>
+      </div>`,
+    background: '#0d1b2a', color: '#e2e8f0',
+    title: '📖 คู่มือการใช้งาน PTTS',
+    showConfirmButton: false,
+    showCloseButton: true,
+    width: 620,
+    didOpen: () => {
+      // highlight first nav button
+      const btns = document.querySelectorAll('.swal2-html-container button');
+      if (btns.length) btns[0].style.background = 'rgba(99,102,241,.25)';
+    }
+  });
+}
 
 function reshowShareCard() {
   if (!_lastSavedRow) return;
