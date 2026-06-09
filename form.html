@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>PTTS — Cost Breakdown</title>
+<title>PTS — Cost Breakdown</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=optional" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -13,6 +13,8 @@
 
 /* ══ THEME VARIABLES ══════════════════════════════════════════ */
 :root {
+  /* Summary panel width (overridden by JS from localStorage) */
+  --sp-width: 544px;
   /* Accent (updated by JS) */
   --c1: #3b82f6; --c2: #0ea5e9;
   --c1-10: rgba(59,130,246,.10); --c1-15: rgba(59,130,246,.15);
@@ -141,11 +143,10 @@ body {
 /* Logo badge */
 .ph-logo {
   width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
-  background: var(--grad); display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 14px var(--c1-28);
-  font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: -1px;
-  font-family: 'Sarabun', sans-serif;
+  background: transparent;
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
 }
+.ph-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 /* Divider line */
 .ph-divider {
   width: 1px; height: 38px; background: var(--bc-div);
@@ -352,8 +353,8 @@ select option { background: var(--sel-bg); color: var(--t1); }
 
 /* ── BUTTONS ─────────────────────────────────────── */
 .btn-row {
-  display: grid; grid-template-columns: 1fr 1fr 1.4fr 1.4fr;
-  gap: 8px; max-width: 720px; margin: 16px auto 0;
+  display: grid; grid-template-columns: 1fr 1fr 1.4fr 1fr 1.4fr;
+  gap: 8px; max-width: 860px; margin: 16px auto 0;
 }
 @media (max-width: 480px) {
   .btn-row { grid-template-columns: 1fr 1fr; }
@@ -428,19 +429,33 @@ select option { background: var(--sel-bg); color: var(--t1); }
 
 /* ═══ SHARE CARD POPUP ════════════════════════════════════════════ */
 .share-card-popup {
-  background: transparent !important;
-  box-shadow: none !important;
+  background: #fff !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,.22) !important;
   border: none !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
 }
 .share-card-popup .swal2-close {
-  color: rgba(255,255,255,.6) !important;
-  font-size: 1.4rem !important;
-  top: 6px !important; right: 6px !important;
+  color: rgba(255,255,255,.9) !important;
+  font-size: 1.3rem !important;
+  top: 10px !important; right: 12px !important;
+  width: 30px !important; height: 30px !important;
+  background: rgba(255,255,255,.2) !important;
+  border-radius: 50% !important;
+  z-index: 10 !important;
+}
+.share-card-popup .swal2-close:hover {
+  background: rgba(255,255,255,.35) !important;
+  color: #fff !important;
+}
+.share-card-popup .swal2-html-container {
+  margin: 0 !important; padding: 0 !important;
 }
 .share-card-popup .swal2-footer {
-  border-top: none !important;
-  padding: 10px 0 4px !important;
-  background: transparent !important;
+  border-top: 1px solid #e2e8f0 !important;
+  padding: 10px 14px 10px !important;
+  background: #fff !important;
 }
 
 /* ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════════ */
@@ -998,10 +1013,9 @@ select option { background: var(--sel-bg); color: var(--t1); }
   }
   .sidebar-logo {
     width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
-    background: var(--grad);
+    background: transparent;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1rem; font-weight: 900; color: #fff; letter-spacing: -1px;
-    box-shadow: 0 3px 10px var(--c1-28);
+    overflow: hidden;
   }
   .sidebar-title { font-size: .88rem; font-weight: 700; color: var(--t1); line-height: 1.2; }
   .sidebar-sub   { font-size: .68rem; color: var(--t3); }
@@ -1016,36 +1030,36 @@ select option { background: var(--sel-bg); color: var(--t1); }
 
 /* ── DESKTOP SUMMARY PANEL (≥1100px) ─────────────────── */
 @media (min-width: 1100px) {
-  body { padding-right: 272px; }
+  body { padding-right: var(--sp-width); }
 
   .summary-panel {
     display: flex; flex-direction: column;
     position: fixed; top: 0; right: 0;
-    width: 272px; height: 100vh;
+    width: var(--sp-width); height: 100vh;
     background: var(--bg-card);
     border-left: 1px solid var(--bc-div);
     overflow-y: auto; overflow-x: hidden;
     scrollbar-width: none; z-index: 90;
-    padding: 18px 14px 24px;
+    padding: 18px 14px 24px 18px;
     gap: 0;
   }
   .summary-panel::-webkit-scrollbar { display: none; }
 
   .sp-header {
-    font-size: .78rem; font-weight: 700; color: var(--t3);
+    font-size: .72rem; font-weight: 700; color: var(--t3);
     letter-spacing: .8px; text-transform: uppercase;
     margin-bottom: 14px; padding-bottom: 10px;
     border-bottom: 1px solid var(--bc-div);
   }
-  .sp-total-lbl { font-size: .72rem; color: var(--t3); margin-bottom: 2px; }
+  .sp-total-lbl { font-size: .67rem; color: var(--t3); margin-bottom: 1px; }
   .sp-total {
-    font-size: 1.55rem; font-weight: 800; color: var(--c1);
-    letter-spacing: -.5px; line-height: 1.1; margin-bottom: 2px;
+    font-size: 1.25rem; font-weight: 800; color: var(--c1);
+    letter-spacing: -.5px; line-height: 1.1; margin-bottom: 1px;
   }
-  .sp-per-unit { font-size: .78rem; color: var(--t2); margin-bottom: 14px; }
+  .sp-per-unit { font-size: .72rem; color: var(--t2); margin-bottom: 4px; }
   .sp-chart-wrap {
     width: 100%; aspect-ratio: 1;
-    max-width: 180px; margin: 0 auto 10px;
+    max-width: 108px; margin: 0 auto 4px;
     position: relative;
   }
   .sp-chart-center {
@@ -1054,20 +1068,20 @@ select option { background: var(--sel-bg); color: var(--t1); }
   }
   .sp-chart-center-val { font-size: .78rem; font-weight: 700; color: var(--t1); }
   .sp-chart-center-lbl { font-size: .62rem; color: var(--t3); }
-  .sp-legend { margin-bottom: 14px; }
+  .sp-legend { margin-bottom: 3px; }
   .sp-legend-row {
     display: flex; justify-content: space-between; align-items: center;
-    font-size: .75rem; padding: 3px 0;
+    font-size: .68rem; padding: 1px 0;
     border-bottom: 1px solid var(--bc-div);
   }
   .sp-legend-row:last-child { border-bottom: none; }
-  .sp-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-right: 5px; }
+  .sp-legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-right: 4px; }
   .sp-legend-name { flex: 1; color: var(--t2); display: flex; align-items: center; }
   .sp-legend-val { font-weight: 600; color: var(--t1); }
-  .sp-divider { border: none; border-top: 1px solid var(--bc-div); margin: 8px 0 12px; }
+  .sp-divider { border: none; border-top: 1px solid var(--bc-div); margin: 3px 0 5px; }
   .sp-kpi-row {
     display: flex; justify-content: space-between; align-items: baseline;
-    padding: 5px 0; font-size: .78rem;
+    padding: 2px 0; font-size: .75rem;
   }
   .sp-kpi-lbl { color: var(--t3); }
   .sp-kpi-val { font-weight: 700; color: var(--t1); }
@@ -1076,6 +1090,39 @@ select option { background: var(--sel-bg); color: var(--t1); }
   .sp-no-data {
     flex: 1; display: flex; align-items: center; justify-content: center;
     font-size: .78rem; color: var(--t3); text-align: center; padding: 20px;
+  }
+
+  /* ── ปุ่ม Action ย้ายเข้า summary panel บน desktop ── */
+  .btn-row { display: none; }        /* ซ่อน btn-row ล่างฟอร์ม */
+  #editingBadge { display: none !important; } /* ซ่อน badge ล่างฟอร์ม */
+
+  .sp-action-btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; width: 100%; padding: 9px 10px;
+    border-radius: 9px; border: none; cursor: pointer;
+    font-family: 'Sarabun', sans-serif; font-size: .82rem; font-weight: 600;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .sp-action-btn:active { transform: scale(.97); }
+
+  /* ── Resize handle ─────────────────────────────────── */
+  .sp-resize-handle {
+    position: absolute; left: 0; top: 0;
+    width: 6px; height: 100%;
+    cursor: ew-resize; z-index: 10;
+    background: transparent;
+    transition: background .2s;
+  }
+  .sp-resize-handle::after {
+    content: ''; position: absolute;
+    left: 2px; top: 50%; transform: translateY(-50%);
+    width: 2px; height: 40px; border-radius: 2px;
+    background: var(--bc-div);
+    transition: background .2s, height .2s;
+  }
+  .sp-resize-handle:hover::after,
+  .sp-resize-handle.dragging::after {
+    background: var(--c1); height: 60px;
   }
 }
 </style>
@@ -1091,10 +1138,10 @@ select option { background: var(--sel-bg); color: var(--t1); }
 <!-- HEADER -->
 <div class="page-header">
   <div class="ph-inner">
-    <div class="ph-logo">PT</div>
+    <div class="ph-logo"><img src="PTS.png" alt="PTS" class="app-logo-img" onerror="this.style.display='none';this.parentNode.textContent='PT'"></div>
     <div class="ph-divider"></div>
     <div class="ph-text">
-      <div class="ph-title">PTTS Cost Breakdown</div>
+      <div class="ph-title">PTS Cost Breakdown</div>
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
@@ -1205,13 +1252,13 @@ select option { background: var(--sel-bg); color: var(--t1); }
     </button>
     <button onclick="openAiReader()"
       style="padding:8px 14px;border-radius:8px;border:1px solid rgba(130,100,220,.65);
-        background:rgba(130,100,220,.25);color:#c4b5fd;font-family:Sarabun,sans-serif;
+        background:rgba(130,100,220,.25);color:#000;font-family:Sarabun,sans-serif;
         font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">
       📷 อ่านแบบ AI
     </button>
     <button onclick="openTextReader()"
       style="padding:8px 14px;border-radius:8px;border:1px solid rgba(34,197,94,.5);
-        background:rgba(34,197,94,.15);color:#86efac;font-family:Sarabun,sans-serif;
+        background:rgba(34,197,94,.15);color:#000;font-family:Sarabun,sans-serif;
         font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">
       📝 ข้อความลูกค้า
     </button>
@@ -1257,32 +1304,32 @@ select option { background: var(--sel-bg); color: var(--t1); }
   <div class="card-header">
     <div class="icon ic-dim">📐</div>
     <h2>ขนาดชิ้นงาน</h2>
-    <!-- Mobile-only buttons (ซ่อนบน desktop ≥1280px) -->
-    <div class="mob-btns" style="margin-left:auto;gap:6px;align-items:center">
-      <button onclick="$('attachFileInput').click()"
-        style="padding:6px 12px;border-radius:8px;border:1px solid #16a34a;
-          background:#4ade80;color:#052e16;font-family:Sarabun,sans-serif;
-          font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap">
-        📎 แนบรูป
-      </button>
-      <button onclick="openAiReader()" style="padding:6px 14px;border-radius:8px;
-        border:1px solid rgba(130,100,220,.65);background:rgba(130,100,220,.25);
-        color:#c4b5fd;font-family:Sarabun,sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;
-        white-space:nowrap">
-        📷 อ่านแบบ AI
-      </button>
-      <button onclick="openTextReader()" style="padding:6px 14px;border-radius:8px;
-        border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.15);
-        color:#86efac;font-family:Sarabun,sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;
-        white-space:nowrap">
-        📝 ข้อความ
-      </button>
-    </div>
+  </div>
+  <!-- Mobile-only buttons (ซ่อนบน desktop ≥1280px) -->
+  <div class="mob-btns" style="gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+    <button onclick="$('attachFileInput').click()"
+      style="padding:6px 12px;border-radius:8px;border:1px solid #16a34a;
+        background:#4ade80;color:#052e16;font-family:Sarabun,sans-serif;
+        font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap">
+      📎 แนบรูป
+    </button>
+    <button onclick="openAiReader()" style="padding:6px 14px;border-radius:8px;
+      border:1px solid rgba(130,100,220,.65);background:rgba(130,100,220,.25);
+      color:#000;font-family:Sarabun,sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;
+      white-space:nowrap">
+      📷 อ่านแบบ AI
+    </button>
+    <button onclick="openTextReader()" style="padding:6px 14px;border-radius:8px;
+      border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.15);
+      color:#000;font-family:Sarabun,sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;
+      white-space:nowrap">
+      📝 ข้อความ
+    </button>
   </div>
   <div class="grid g4">
     <div class="field">
       <label>OD (mm)</label>
-      <input type="number" id="f_od" placeholder="0" step="0.01" oninput="updateSize();autoCalcFill()">
+      <input type="number" id="f_od" placeholder="0" step="0.01" oninput="updateSize();autoCalcFill();_updatePricingInsight()">
     </div>
     <div class="field">
       <label>ID (mm)</label>
@@ -1344,7 +1391,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
     </div>
     <div class="field">
       <label>แบบงาน</label>
-      <select id="f_workType"><option value="">— กำลังโหลด… —</option></select>
+      <select id="f_workType" onchange="autoRawMat()"><option value="">— กำลังโหลด… —</option></select>
     </div>
   </div>
   <div class="grid g2" style="margin-top:10px">
@@ -1388,31 +1435,6 @@ select option { background: var(--sel-bg); color: var(--t1); }
     <div class="field"><label>MAT ฝาล่าง</label><select id="f_matBot" onchange="autoCalcFill()"><option value="">— เลือก —</option></select></div>
     <div class="field"><label>Cost ฝาล่าง (฿/ลูก) <span style="color:#34d399;font-size:.68rem">●auto</span></label><input type="number" class="cost-input" id="f_costBot" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
   </div>
-
-  <div class="divider"></div>
-
-  <!-- กระบวนการภายนอก -->
-  <div class="accord-wrap" style="border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;margin-bottom:2px">
-    <div class="accord-hdr" onclick="toggleAccord(this)"
-      style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;
-             background:rgba(255,255,255,.03);user-select:none;gap:8px">
-      <span style="font-size:.82rem;font-weight:600;color:var(--text-muted)">🧪 เทสเสีย</span>
-      <span style="display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end">
-        <span id="accord_testWaste_summary" style="font-size:.78rem;color:#60a5fa"></span>
-        <span class="accord-arrow" style="font-size:.75rem;color:var(--text-muted);transition:transform .25s">▼</span>
-      </span>
-    </div>
-    <div class="accord-body" style="display:none;padding:10px 12px 12px">
-      <div class="pair-row" style="margin-bottom:0">
-        <div class="field"><label>เทสเสีย</label><input type="text" id="f_testWaste" value="15%-Job" readonly></div>
-        <div class="field"><label>Cost เทสเสีย (฿/ลูก)</label><input type="number" class="cost-input" id="f_cTestWaste" placeholder="0.00" step="0.01" readonly></div>
-      </div>
-    </div>
-  </div>
-  <div class="pair-row">
-    <div class="field"><label>จ้างทำข้างนอก</label><input type="text" id="f_outsource" placeholder="รายละเอียด"></div>
-    <div class="field"><label>Cost จ้างข้างนอก (฿/ลูก)</label><input type="number" class="cost-input" id="f_cOutsource" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
-  </div>
   <div class="pair-row">
     <div class="field"><label>ตะแกรงนอก</label><select id="f_meshOut" onchange="autoCalcFill()"><option value="">— เลือก —</option></select></div>
     <div class="field"><label>Cost ตะแกรงนอก (฿/ลูก) <span style="color:#34d399;font-size:.68rem">●auto</span></label><input type="number" class="cost-input" id="f_cMeshOut" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
@@ -1420,10 +1442,6 @@ select option { background: var(--sel-bg); color: var(--t1); }
   <div class="pair-row">
     <div class="field"><label>ตะแกรงใน</label><select id="f_meshIn" onchange="autoCalcFill()"><option value="">— เลือก —</option></select></div>
     <div class="field"><label>Cost ตะแกรงใน (฿/ลูก) <span style="color:#34d399;font-size:.68rem">●auto</span></label><input type="number" class="cost-input" id="f_cMeshIn" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
-  </div>
-  <div class="pair-row">
-    <div class="field"><label>เลเซอร์</label><input type="text" id="f_laser" placeholder="รายละเอียด"></div>
-    <div class="field"><label>Cost เลเซอร์ (฿/ลูก)</label><input type="number" class="cost-input" id="f_cLaser" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
   </div>
   <div class="pair-row">
     <div class="field">
@@ -1440,6 +1458,13 @@ select option { background: var(--sel-bg); color: var(--t1); }
       </select>
     </div>
     <div class="field"><label>Cost ชุป (฿/ลูก)</label><input type="number" class="cost-input" id="f_cPlating" placeholder="0.00" value="90" step="0.01" oninput="calcAll()"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="pair-row">
+    <div class="field"><label>เลเซอร์</label><input type="text" id="f_laser" placeholder="รายละเอียด"></div>
+    <div class="field"><label>Cost เลเซอร์ (฿/ลูก)</label><input type="number" class="cost-input" id="f_cLaser" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
   </div>
   <div class="pair-row">
     <div class="field"><label>รายละเอียดแม่พิมพ์</label><select id="f_mold" onchange="calcAll()">
@@ -1483,6 +1508,10 @@ select option { background: var(--sel-bg); color: var(--t1); }
     <div class="field"><label>ขนส่ง/ลูก <span style="color:#34d399;font-size:.68rem">●auto</span></label><input type="number" class="cost-input" id="f_cTransport" placeholder="0.00" step="0.01" readonly style="background:var(--readonly-bg);border-color:var(--readonly-bc);color:var(--readonly-col)"></div>
   </div>
   <div class="pair-row">
+    <div class="field"><label>จ้างทำข้างนอก</label><input type="text" id="f_outsource" placeholder="รายละเอียด"></div>
+    <div class="field"><label>Cost จ้างข้างนอก (฿/ลูก)</label><input type="number" class="cost-input" id="f_cOutsource" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
+  </div>
+  <div class="pair-row">
     <div class="field"><label>อื่นๆ 1</label><input type="text" id="f_other1" placeholder="รายละเอียด"></div>
     <div class="field"><label>Cost อื่นๆ 1 (฿/ลูก)</label><input type="number" class="cost-input" id="f_cOther1" placeholder="0.00" step="0.01" oninput="calcAll()"></div>
   </div>
@@ -1500,6 +1529,25 @@ select option { background: var(--sel-bg); color: var(--t1); }
   </div>
 
   <div class="divider"></div>
+
+  <!-- เทสเสีย -->
+  <div class="accord-wrap" style="border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;margin-bottom:2px">
+    <div class="accord-hdr" onclick="toggleAccord(this)"
+      style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;
+             background:rgba(255,255,255,.03);user-select:none;gap:8px">
+      <span style="font-size:.82rem;font-weight:600;color:var(--text-muted)">🧪 เทสเสีย</span>
+      <span style="display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end">
+        <span id="accord_testWaste_summary" style="font-size:.78rem;color:#60a5fa"></span>
+        <span class="accord-arrow" style="font-size:.75rem;color:var(--text-muted);transition:transform .25s">▼</span>
+      </span>
+    </div>
+    <div class="accord-body" style="display:none;padding:10px 12px 12px">
+      <div class="pair-row" style="margin-bottom:0">
+        <div class="field"><label>เทสเสีย</label><input type="text" id="f_testWaste" value="15%-Job" readonly></div>
+        <div class="field"><label>Cost เทสเสีย (฿/ลูก)</label><input type="number" class="cost-input" id="f_cTestWaste" placeholder="0.00" step="0.01" readonly></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ต้นทุนคงที่ -->
   <div class="accord-wrap" style="border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;margin-bottom:2px">
@@ -1576,8 +1624,8 @@ select option { background: var(--sel-bg); color: var(--t1); }
       <label class="rchip" data-label="งานมีสตัด">
         <input type="checkbox" onchange="syncRemarkChips()"> งานมีสตัด
       </label>
-      <label class="rchip" data-label="ขอบฝา" data-unit="มม.">
-        <input type="checkbox" onchange="syncRemarkChips()"> ขอบฝา
+      <label class="rchip" data-label="ขอบฝาสูง" data-unit="มม.">
+        <input type="checkbox" onchange="syncRemarkChips()"> ขอบฝาสูง
         <input type="number" class="rchip-num" min="0.5" step="0.5" oninput="syncRemarkChips()" style="width:54px">
       </label>
 
@@ -2227,7 +2275,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
 
     <!-- กรองตรง OD×ID×H -->
     <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none">
-      <input type="checkbox" id="adv_exact_size" onchange="_dtPage=0;dtRender()"
+      <input type="checkbox" id="adv_exact_size" onchange="dtToggleExactSizeFilter()"
         style="width:14px;height:14px;accent-color:#7c3aed;cursor:pointer">
       <span style="font-size:.78rem;color:var(--t2)">กรองตรง OD×ID×H
         <span id="adv_exact_size_label" style="color:#b09fff;font-weight:700"></span>
@@ -2413,6 +2461,8 @@ select option { background: var(--sel-bg); color: var(--t1); }
 
 <!-- ── SUMMARY PANEL (desktop right, ≥1100px) ─── -->
 <div class="summary-panel" id="summaryPanel">
+  <!-- drag-resize handle on left edge -->
+  <div class="sp-resize-handle" id="spResizeHandle" title="ลากเพื่อปรับขนาด"></div>
   <div class="sp-header">📊 สรุปต้นทุน</div>
   <div class="sp-total-lbl">ต้นทุนรวม / Job</div>
   <div class="sp-total" id="sp_totalJob">฿0.00</div>
@@ -2443,6 +2493,34 @@ select option { background: var(--sel-bg); color: var(--t1); }
   <div class="sp-kpi-row">
     <span class="sp-kpi-lbl">Margin</span>
     <span class="sp-kpi-val" id="sp_margin">—%</span>
+  </div>
+
+  <!-- ── Pricing Intelligence (วิเคราะห์ราคา) ── -->
+  <hr class="sp-divider" style="margin-top:8px">
+  <div id="spInsightSection" style="background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(59,130,246,.06));border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:10px 10px 8px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:.78rem;font-weight:800;color:var(--c1);letter-spacing:.3px">🎯 วิเคราะห์ราคา</span>
+      <span id="spInsightMeta" style="font-size:.65rem;color:var(--t3);background:var(--c1-10);padding:2px 7px;border-radius:20px">—</span>
+    </div>
+    <div id="spInsightBody" style="font-size:.72rem;color:var(--t3);text-align:center;padding:4px 0">
+      กรอก OD เพื่อวิเคราะห์
+    </div>
+  </div>
+
+  <!-- ── Action Buttons (desktop only — hidden on mobile via CSS) ── -->
+  <hr class="sp-divider" style="margin-top:10px">
+  <!-- Editing badge -->
+  <div id="editingBadgeSP" style="display:none;justify-content:center;align-items:center;padding:3px 8px;margin-bottom:6px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);border-radius:20px;font-size:.72rem;color:#f59e0b;font-weight:600"></div>
+  <!-- Buttons ordered by importance -->
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <button class="sp-action-btn btn-primary" onclick="submitForm()">
+      <span id="saveBtnLabelSP">💾 บันทึกลง Sheets</span>
+    </button>
+    <button class="sp-action-btn btn-pdf" onclick="showDocExport()">🖨 ดูแบบเสนอราคา</button>
+    <button id="btnReshowCardSP" class="sp-action-btn btn-pdf" onclick="reshowShareCard()"
+      style="opacity:.4;cursor:not-allowed" disabled title="ยังไม่มีข้อมูลที่บันทึก">📤 แชร์/รูป</button>
+    <button id="btnReloadLaborSP" class="sp-action-btn btn-calc" onclick="recalcBtn()">🔄 รีโหลดค่าแรง</button>
+    <button class="sp-action-btn btn-clear" onclick="location.reload()">↺ คืนค่าฟอร์ม</button>
   </div>
 </div>
 
@@ -2514,8 +2592,8 @@ function renderTabBar() {
   if (!bar) return;
   const { order, hidden } = _loadTabCfg();
   const sidebarHdr = `<div class="sidebar-header">
-    <div class="sidebar-logo">PT</div>
-    <div><div class="sidebar-title">PTTS</div><div class="sidebar-sub">Cost Breakdown</div></div>
+    <div class="sidebar-logo"><img src="${_getLogoSrc()}" alt="PTS" class="app-logo-img" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.parentNode.textContent='PT'"></div>
+    <div><div class="sidebar-title">PTS</div><div class="sidebar-sub">Cost Breakdown</div></div>
   </div>`;
   const buttons = order.map(id => {
     if (hidden.includes(id)) return '';
@@ -2935,6 +3013,13 @@ function _syncMatToMaps() {
   _localMatMesh.forEach(m => { matPriceMap[m.code]=+m.price||0; if(m.name) matNameMap[m.code]=m.name; if(m.w&&m.l) specMatData[m.code]={w:+m.w,l:+m.l}; });
 }
 
+// แปลงรหัสวัตถุดิบเป็นชื่อรายการ (สำหรับ output ภายนอก)
+// ถ้าไม่มีชื่อในระบบ คืนรหัสเดิม
+function matLabel(code) {
+  if (!code) return '';
+  return matNameMap[code] || code;
+}
+
 function _saveLocalMat(type) {
   localStorage.setItem(_getMatKey(type), JSON.stringify(_getMatArr(type)));
   _syncMatToMaps();
@@ -3113,6 +3198,7 @@ function onSellPriceInput() {
   const lbl = $('marginLabel');
   if (lbl) lbl.textContent = '●กำหนดเอง';
   calcAll();
+  _updatePricingInsight(); // อัปเดต percentile ทันทีที่พิมพ์ราคา
 }
 
 function renderMarginTable(total, unit) {
@@ -3480,7 +3566,7 @@ async function dtRefresh(showMsg) {
   const limit = showMsg ? 0 : 200;  // รีเฟรชปกติ = 200, กด "โหลดทั้งหมด" = 0
   dtShowEmpty(`↻ กำลังโหลด${limit > 0 ? ' ' + limit + ' รายการล่าสุด' : 'ทั้งหมด'}…`);
   try {
-    const url = SCRIPT_URL + '?action=getCosts' + (limit > 0 ? '&limit=' + limit : '');
+    const url = SCRIPT_URL + '?action=getCosts&limit=' + limit;  // limit=0 = ทั้งหมด
     const res  = await fetch(url, {mode:'cors'});
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
@@ -3489,9 +3575,12 @@ async function dtRefresh(showMsg) {
     _dtPage  = 0;
     computeNextNo();
     const odNow = ($('f_od') && $('f_od').value) ? $('f_od').value : '';
-    if (odNow && !$('dtSearch').value) $('dtSearch').value = odNow;
+    // auto-fill search เฉพาะตอนโหลดปกติ (ไม่ใช่ "โหลดทั้งหมด") และ search ว่างอยู่
+    if (!showMsg && odNow && !$('dtSearch').value) $('dtSearch').value = odNow;
     _dtFilter = 'all';
     dtRender();
+    // อัปเดต pricing insight หลังโหลดข้อมูลใหม่
+    _updatePricingInsight();
     // แสดง banner ถ้าโหลดแบบ limited
     renderDtLoadBanner(data.total || _dtCache.length, data.limited);
     if (showMsg) Swal.fire({icon:'success',title:'โหลดข้อมูลสำเร็จ ✅',
@@ -3542,10 +3631,33 @@ function dtShowEmpty(msg) {
   if ($('dtSubtitle')) $('dtSubtitle').textContent = msg;
 }
 
+function dtToggleExactSizeFilter() {
+  const cb = $('adv_exact_size');
+  if (!cb) return;
+  const od = parseFloat($('f_od')?.value) || 0;
+  const id_ = parseFloat($('f_id')?.value) || 0;
+  const h  = parseFloat($('f_h')?.value) || 0;
+  if (cb.checked && !od && !id_ && !h) {
+    cb.checked = false;
+    Swal.fire({icon:'info', title:'กรุณากรอก OD / ID / H ก่อน',
+      text:'กรอกขนาดงานในแท็บฟอร์มหลักก่อน แล้วกลับมาติ๊กตัวกรองนี้',
+      timer:2500, showConfirmButton:false, background:'#0a1c2e', color:'#f1f5f9'});
+    return;
+  }
+  _dtPage = 0; dtRender();
+}
+
 function dtToggleOdFilter() {
   const cb  = $('dtOdFilter');
   const lbl = $('dtOdFilterLabel');
   const odNow = $('f_od') ? String($('f_od').value||'').trim() : '';
+  if (cb && cb.checked && !odNow) {
+    cb.checked = false;
+    Swal.fire({icon:'info', title:'กรุณากรอก OD ก่อน',
+      text:'กรอก OD ในแท็บฟอร์มหลักก่อน แล้วกลับมาติ๊กตัวกรองนี้',
+      timer:2500, showConfirmButton:false, background:'#0a1c2e', color:'#f1f5f9'});
+    return;
+  }
   if (cb && cb.checked && odNow) {
     if (lbl) lbl.textContent = `(OD ${odNow})`;
   } else {
@@ -3576,9 +3688,9 @@ function dtRender() {
     if (_dtFilter && _dtFilter !== 'all') {
       if ((r[DT.status]||'').toLowerCase() !== _dtFilter.toLowerCase()) return false;
     }
-    // OD checkbox filter
+    // OD checkbox filter (numeric comparison)
     if (odCb && odCb.checked && odNow) {
-      if (String(r[DT.od]||'').trim() !== odNow) return false;
+      if (Math.abs((parseFloat(r[DT.od])||0) - parseFloat(odNow)) > 0.01) return false;
     }
     // text search across key fields
     if (search) {
@@ -3608,10 +3720,11 @@ function dtRender() {
       }
       if (adv.workType && !(r[DT.workType]||'').toLowerCase().includes(adv.workType)) return false;
       if (adv.status && (r[DT.status]||'').trim() !== adv.status) return false;
-      if (adv.exactSize && (adv._od || adv._id || adv._h)) {
-        if (adv._od && (parseFloat(r[DT.od])||0) !== adv._od) return false;
-        if (adv._id && (parseFloat(r[DT.id])||0) !== adv._id) return false;
-        if (adv._h  && (parseFloat(r[DT.h] )||0) !== adv._h)  return false;
+      if (adv.exactSize) {
+        // กรองตาม OD×ID×H ที่มีค่า (numeric, tolerance 0.01)
+        if (adv._od > 0 && Math.abs((parseFloat(r[DT.od])||0) - adv._od) > 0.01) return false;
+        if (adv._id > 0 && Math.abs((parseFloat(r[DT.id])||0) - adv._id) > 0.01) return false;
+        if (adv._h  > 0 && Math.abs((parseFloat(r[DT.h] )||0) - adv._h)  > 0.01) return false;
       }
       if (adv.dateFrom || adv.dateTo) {
         const iso = _toIso(r[DT.date]);
@@ -3830,11 +3943,13 @@ function dtClearSearch() {
 function dtToggleAdvSearch() {
   const p = $('dtAdvPanel');
   if (!p) return;
-  const open = p.style.display === 'none' || !p.style.display;
-  p.style.display = open ? '' : 'none';
+  const open = p.style.display !== 'block';
+  p.style.display = open ? 'block' : 'none';
   const lbl = $('dtAdvSearchLabel');
   if (lbl) lbl.textContent = open ? 'ปิดค้นหาละเอียด' : 'ค้นหาละเอียด';
 }
+
+function loadDtData(all) { dtRefresh(all); }
 
 function dtClearAdv() {
   ['adv_od_min','adv_od_max','adv_date_from','adv_date_to',
@@ -3844,6 +3959,11 @@ function dtClearAdv() {
   _dtPage = 0; dtRender();
 }
 
+// ── Advanced Search filters ───────────────────────────────────
+// ตัวกรองนอก panel: adv_status (สถานะ), adv_exact_size (OD×ID×H จากฟอร์ม), dtOdFilter (OD เท่านั้น)
+// ตัวกรองใน panel: OD range, วันที่, ราคา, MAT ฝา, MAT ตะแกรง, แบบงาน
+// _countAdvActive() → badge แสดงจำนวน filter ที่ active
+// dtClearAdv() → ล้างทุก filter
 function _getAdvFilters() {
   const g = id => { const el=$(id); return el ? el.value.trim() : ''; };
   const gn = id => parseFloat(g(id)) || null;
@@ -3988,8 +4108,11 @@ function dtLoadIntoForm(idx) {
     if (typeof updateSize === 'function') updateSize();   // อัปเดตช่อง OD×ID×H
     calcAll();
     // ตั้งราคาเสนอขายหลัง calcAll() เพราะ calcAll() จะทับด้วย margin อัตโนมัติ
-    if (_savedSellPrice > 0 && $('f_sellPrice'))
+    if (_savedSellPrice > 0 && $('f_sellPrice')) {
       $('f_sellPrice').value = _savedSellPrice.toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:0});
+      // อัปเดต summary panel อีกรอบหลังใส่ราคาเสนอขายที่บันทึกไว้
+      if (typeof updateSummaryPanel === 'function') updateSummaryPanel();
+    }
     switchTab('breakdown');
     setTimeout(() => {
       Swal.fire({icon:'success',title:'โหลดสำเร็จ ✅',timer:1200,showConfirmButton:false,
@@ -4050,11 +4173,248 @@ function toggleLaborMode() {
   }
 }
 
+// ── Pricing Intelligence ─────────────────────────────────────────────
+// Multi-dimensional similarity: OD × ID × H × จำนวน × ตะแกรง × วัตถุดิบ
+// จัดกลุ่ม 3 ระดับ แล้วเปรียบเทียบกับงานปัจจุบัน
+
+function _piScore(row, cur) {
+  // คืน similarity score 0–110
+  let s = 0;
+
+  // ── OD (35 คะแนน) ──────────────────────────────
+  if (cur.od > 0) {
+    const d = Math.abs((parseFloat(row[DT.od])||0) - cur.od) / cur.od * 100;
+    if      (d <=  2) s += 35;
+    else if (d <=  5) s += 28;
+    else if (d <= 10) s += 20;
+    else if (d <= 20) s += 10;
+    else return 0; // OD เกิน 20% — ตัดออก ไม่นับ
+  }
+
+  // ── ID (15 คะแนน) ──────────────────────────────
+  if (cur.id > 0) {
+    const d = Math.abs((parseFloat(row[DT.id])||0) - cur.id) / cur.id * 100;
+    if      (d <=  5) s += 15;
+    else if (d <= 15) s += 10;
+    else if (d <= 30) s +=  5;
+  }
+
+  // ── H (15 คะแนน) ───────────────────────────────
+  if (cur.h > 0) {
+    const d = Math.abs((parseFloat(row[DT.h])||0) - cur.h) / cur.h * 100;
+    if      (d <=  5) s += 15;
+    else if (d <= 15) s += 10;
+    else if (d <= 30) s +=  5;
+  }
+
+  // ── วัตถุดิบ (20 คะแนน) ─────────────────────────
+  const rowMat = String(row[DT.matTop]||'').trim();
+  const pfx = t => t.split(/[\s_\-\/]/)[0].toUpperCase();
+  if (cur.mat && rowMat) {
+    if (rowMat === cur.mat)              s += 20;
+    else if (pfx(rowMat) === pfx(cur.mat)) s += 12;
+  }
+
+  // ── ตะแกรงนอก (10 คะแนน) ────────────────────────
+  const rMeshOut = !!(String(row[DT.meshOut]||'').trim()) || (parseFloat(row[DT.cMeshOut])||0) > 0;
+  if (rMeshOut === cur.meshOut) s += 10;
+
+  // ── ตะแกรงใน (8 คะแนน) ──────────────────────────
+  const rMeshIn  = !!(String(row[DT.meshIn] ||'').trim()) || (parseFloat(row[DT.cMeshIn]) ||0) > 0;
+  if (rMeshIn === cur.meshIn) s += 8;
+
+  // ── จำนวน tier (7 คะแนน) ─────────────────────────
+  const qTier = n => n<=5?0:n<=20?1:n<=50?2:n<=200?3:4;
+  const dt = Math.abs(qTier(parseFloat(row[DT.unit])||0) - qTier(cur.unit));
+  if (dt === 0) s += 7;
+  else if (dt === 1) s += 3;
+
+  return s; // max ≈ 110
+}
+
+function _updatePricingInsight() {
+  const body = $('spInsightBody');
+  const meta = $('spInsightMeta');
+  if (!body) return;
+
+  // ── ค่างานปัจจุบัน ──────────────────────────────────
+  const cur = {
+    od:      parseFloat($('f_od')?.value)   || 0,
+    id:      parseFloat($('f_id')?.value)   || 0,
+    h:       parseFloat($('f_h')?.value)    || 0,
+    unit:    parseFloat($('f_unit')?.value) || 1,
+    mat:     String($('f_matTop')?.value    || '').trim(),
+    meshOut: !!(String($('f_meshOut')?.value || '').trim()) || (parseFloat($('f_cMeshOut')?.value)||0) > 0,
+    meshIn:  !!(String($('f_meshIn')?.value  || '').trim()) || (parseFloat($('f_cMeshIn')?.value) ||0) > 0,
+  };
+  const currentSP = parseFloat(String($('f_sellPrice')?.value||'').replace(/,/g,'')) || 0;
+
+  if (!cur.od) {
+    body.innerHTML = '<div style="text-align:center;padding:8px 0;color:var(--t3);font-size:.75rem">กรอก OD เพื่อวิเคราะห์</div>';
+    if (meta) meta.textContent = '—'; return;
+  }
+  if (!_dtCache || !_dtCache.length) {
+    body.innerHTML = '<div style="text-align:center;padding:8px 0;color:var(--t3);font-size:.75rem">ยังไม่โหลดข้อมูล DATA</div>';
+    if (meta) meta.textContent = '—'; return;
+  }
+
+  // ── กรอง 3 ปี + ไม่ยกเลิก ───────────────────────────
+  const cutoff3y = new Date(); cutoff3y.setFullYear(cutoff3y.getFullYear()-3);
+  const cutoff1y = new Date(); cutoff1y.setFullYear(cutoff1y.getFullYear()-1);
+  const pool = _dtCache.filter(r => {
+    const iso = thaiShortToIso(String(r[DT.date]||''));
+    if (iso && new Date(iso) < cutoff3y) return false;
+    return String(r[DT.status]||'').trim() !== 'ยกเลิก';
+  });
+
+  if (!pool.length) {
+    body.innerHTML = '<div style="text-align:center;padding:8px 0;color:var(--t3)">ไม่พบข้อมูลใน 3 ปี</div>';
+    if (meta) meta.textContent = '—'; return;
+  }
+
+  // ── Scoring + จัดกลุ่ม ──────────────────────────────
+  const scored = pool.map(r => ({ r, sc: _piScore(r, cur) })).filter(x => x.sc > 0);
+  scored.sort((a,b) => b.sc - a.sc);
+
+  // 3 กลุ่ม: เหมือนมาก (≥65) / คล้ายกัน (35-64) / ขนาดใกล้เคียง (15-34)
+  const grpA = scored.filter(x => x.sc >= 65).map(x=>x.r);   // เหมือนมาก
+  const grpB = scored.filter(x => x.sc>=35 && x.sc<65).map(x=>x.r); // คล้ายกัน
+  const grpC = scored.filter(x => x.sc>=15 && x.sc<35).map(x=>x.r); // ขนาดใกล้เคียง
+
+  if (meta) meta.textContent = `OD${cur.od}×ID${cur.id}×H${cur.h} · ${scored.length}งาน`;
+
+  if (!scored.length) {
+    body.innerHTML = `<div style="text-align:center;padding:10px 0;color:var(--t3);font-size:.75rem">ไม่พบงานที่คล้ายกันใน 3 ปี</div>`;
+    return;
+  }
+
+  // ── helpers ─────────────────────────────────────────
+  const _avg = a => a.reduce((s,v)=>s+v,0)/a.length;
+  const _med = a => { const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+  const B  = n => '฿'+Math.round(n).toLocaleString('th-TH');
+  const P1 = n => n.toFixed(1)+'%';
+  const SN = n => (n>=0?'+':'')+n.toFixed(1)+'%';
+
+  // สถิติของกลุ่ม
+  const grpStats = rows => {
+    if (!rows.length) return null;
+    const prices  = rows.map(r=>parseFloat(r[DT.sellPrice])||0).filter(v=>v>0);
+    const costs   = rows.map(r=>parseFloat(r[DT.totalCost])||0).filter(v=>v>0);
+    const margins = rows.map(r=>{const sp=parseFloat(r[DT.sellPrice])||0,tc=parseFloat(r[DT.totalCost])||0;return sp&&tc?(sp-tc)/sp*100:null;}).filter(v=>v!==null);
+    const wins    = rows.filter(r=>['ผ่าน','อนุมัติ'].includes(String(r[DT.status]||'').trim())).length;
+    const recent  = rows.filter(r=>{const d=thaiShortToIso(String(r[DT.date]||''));return d&&new Date(d)>=cutoff1y;});
+    const older   = rows.filter(r=>{const d=thaiShortToIso(String(r[DT.date]||''));const dt=d&&new Date(d);return dt&&dt<cutoff1y;});
+    const recentP = recent.map(r=>parseFloat(r[DT.sellPrice])||0).filter(v=>v>0);
+    const olderP  = older.map(r=>parseFloat(r[DT.sellPrice])||0).filter(v=>v>0);
+    let trendPct=null,trendDir='→',trendCol='#94a3b8';
+    if(recentP.length&&olderP.length){trendPct=(_avg(recentP)-_avg(olderP))/_avg(olderP)*100;if(trendPct>3){trendDir='↑';trendCol='#34d399';}else if(trendPct<-3){trendDir='↓';trendCol='#f87171';}}
+    return {
+      count: rows.length, winRate: rows.length?wins/rows.length*100:0,
+      avgP: prices.length?_avg(prices):0, medP: prices.length?_med(prices):0,
+      minP: prices.length?Math.min(...prices):0, maxP: prices.length?Math.max(...prices):0,
+      avgC: costs.length?_avg(costs):0,
+      avgMgn: margins.length?_avg(margins):0,
+      spPct: currentSP>0&&prices.length>1?(prices.filter(v=>v<currentSP).length/prices.length)*100:null,
+      vsAvg: currentSP>0&&prices.length?(currentSP-_avg(prices))/_avg(prices)*100:null,
+      trendDir,trendCol,trendPct,
+    };
+  };
+
+  const sA = grpStats(grpA), sB = grpStats(grpB), sC = grpStats(grpC);
+
+  // ── verdict จากกลุ่มที่ดีที่สุด ─────────────────────
+  const bestStat = sA || sB || sC;
+  let verdict='',vColor='#94a3b8',vBg='rgba(148,163,184,.1)',vIcon='—',vSub='';
+  if (bestStat) {
+    const v = bestStat.vsAvg;
+    if (currentSP > 0 && bestStat.avgP > 0) {
+      if      (v> 15){verdict='สูงกว่าตลาด — แข่งยาก';  vColor='#f87171';vBg='rgba(248,113,113,.12)';vIcon='⚠';}
+      else if (v>  5){verdict='สูงกว่าเฉลี่ย';           vColor='#fbbf24';vBg='rgba(251,191,36,.12)'; vIcon='↑';}
+      else if (v< -5){verdict='ต่ำกว่าเฉลี่ย — แข่งขันได้'; vColor='#34d399';vBg='rgba(52,211,153,.12)';vIcon='✓';}
+      else            {verdict='ใกล้ค่าตลาด';             vColor='#34d399';vBg='rgba(52,211,153,.12)';vIcon='✓';}
+      vSub = `vs เฉลี่ย <b style="color:${v>=0?'#34d399':'#f87171'}">${SN(v)}</b>`;
+    } else if (bestStat.avgP > 0) {
+      verdict=`แนะนำ ${B(bestStat.avgP)}–${B(bestStat.avgP*1.1)}`; vColor='#a78bfa';vBg='rgba(167,139,250,.12)';vIcon='💡';
+      vSub=`จาก ${bestStat.count} งานที่คล้าย`;
+    }
+  }
+
+  // progress bar
+  const pBar = pct => {
+    if(pct===null) return '<span style="color:var(--t3);font-size:.7rem">ยังไม่กำหนด</span>';
+    const col=pct>=75?'#f87171':pct>=40?'#fbbf24':'#34d399';
+    return `<div style="display:flex;align-items:center;gap:4px"><div style="flex:1;height:5px;border-radius:3px;background:var(--bc-div);overflow:hidden"><div style="width:${pct.toFixed(0)}%;height:100%;background:${col};border-radius:3px"></div></div><span style="font-size:.75rem;font-weight:700;color:${col}">${pct.toFixed(0)}%</span></div>`;
+  };
+
+  // กลุ่ม card
+  const grpCard = (stat, label, dot) => {
+    if (!stat) return '';
+    const wc = stat.winRate>=50?'#34d399':'#f87171';
+    const mc = stat.avgMgn>=25?'#34d399':stat.avgMgn>=10?'#fbbf24':'#f87171';
+    return `
+    <div style="background:var(--bg-input2);border:1px solid var(--bc-div);border-left:3px solid ${dot};border-radius:8px;padding:8px 10px;margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+        <span style="font-size:.72rem;font-weight:700;color:${dot}">${label}</span>
+        <span style="font-size:.65rem;color:var(--t3)">${stat.count} งาน</span>
+      </div>
+      <!-- ราคา min/avg/max -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:5px">
+        ${[['ต่ำสุด',stat.minP,'#94a3b8'],['เฉลี่ย',stat.avgP,'#60a5fa'],['สูงสุด',stat.maxP,'#f472b6']].map(([l,v,c])=>`
+        <div style="text-align:center;background:rgba(0,0,0,.04);border-radius:5px;padding:3px">
+          <div style="font-size:.58rem;color:var(--t3)">${l}</div>
+          <div style="font-size:.73rem;font-weight:800;color:${c}">${B(v)}</div>
+        </div>`).join('')}
+      </div>
+      <!-- win / margin / trend -->
+      <div style="display:flex;gap:6px;align-items:center;font-size:.65rem;flex-wrap:wrap">
+        <span>🏆 <b style="color:${wc}">${P1(stat.winRate)}</b></span>
+        <span>📈 <b style="color:${mc}">${P1(stat.avgMgn)}</b></span>
+        ${stat.trendPct!==null?`<span style="color:${stat.trendCol}">${stat.trendDir}${SN(stat.trendPct)}</span>`:''}
+      </div>
+      <!-- percentile bar -->
+      ${stat.spPct!==null?`<div style="margin-top:5px"><div style="font-size:.6rem;color:var(--t3);margin-bottom:2px">Percentile ราคาปัจจุบัน</div>${pBar(stat.spPct)}</div>`:''}
+    </div>`;
+  };
+
+  // ── สรุป attributes ปัจจุบัน ───────────────────────
+  const meshTags = [cur.meshOut?'ตะแกรงนอก':'', cur.meshIn?'ตะแกรงใน':''].filter(Boolean).join(', ') || '—';
+  const matTag   = cur.mat || '—';
+
+  body.innerHTML = `
+  <!-- Current job fingerprint -->
+  <div style="font-size:.65rem;color:var(--t3);margin-bottom:8px;line-height:1.7;background:rgba(0,0,0,.04);border-radius:7px;padding:5px 8px">
+    <b style="color:var(--t2)">งานปัจจุบัน:</b>
+    OD ${cur.od} × ID ${cur.id} × H ${cur.h} · ${cur.unit} ลูก<br>
+    MAT: <span style="color:var(--t1)">${matTag}</span> · ตะแกรง: <span style="color:var(--t1)">${meshTags}</span>
+  </div>
+
+  <!-- VERDICT -->
+  ${verdict?`
+  <div style="background:${vBg};border:1.5px solid ${vColor};border-radius:10px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+    <span style="font-size:1.15rem">${vIcon}</span>
+    <div><div style="font-size:.88rem;font-weight:800;color:${vColor}">${verdict}</div>
+    ${vSub?`<div style="font-size:.72rem;color:var(--t2)">${vSub}</div>`:''}</div>
+  </div>`:''}
+
+  <!-- GROUP CARDS -->
+  ${grpCard(sA, '🟢 เหมือนมาก (OD+ID+H+วัตถุดิบ+ตะแกรง)', '#34d399')}
+  ${grpCard(sB, '🟡 คล้ายกัน (OD+บางมิติตรง)', '#fbbf24')}
+  ${grpCard(sC, '🔵 ขนาดใกล้เคียง (OD เป็นหลัก)', '#60a5fa')}
+
+  <!-- AI Detailed Analysis Button -->
+  <button onclick="showPricingAnalysis()"
+    style="width:100%;margin-top:4px;padding:9px 10px;border:none;border-radius:9px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 2px 10px rgba(79,70,229,.35);transition:opacity .15s"
+    onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+    🤖 วิเคราะห์ละเอียด (AI)
+  </button>
+  `;
+}
+
 // ── Summary Panel ────────────────────────────────────
 let _spDonut = null;
 function updateSummaryPanel() {
   const panel = $('summaryPanel');
-  if (!panel || panel.offsetParent === null) return; // hidden on mobile
+  if (!panel || getComputedStyle(panel).display === 'none') return; // hidden on mobile
   const unit      = num('f_unit') || 1;
   const costTop   = num('f_costTop'), costBot = num('f_costBot');
   const cMeshOut  = num('f_cMeshOut'), cMeshIn = num('f_cMeshIn');
@@ -4131,6 +4491,9 @@ function updateSummaryPanel() {
       </div>`;
     }).join('');
   }
+
+  // อัปเดต Pricing Intelligence
+  _updatePricingInsight();
 }
 
 let _beChart = null, _cdChart = null, _pcChart = null;
@@ -4268,18 +4631,23 @@ function _getLaborFingerprint() {
 function _saveLaborFingerprint() {
   _laborFingerprint = _getLaborFingerprint();
   $('btnReloadLabor')?.classList.remove('labor-changed');
+  $('btnReloadLaborSP')?.classList.remove('labor-changed');
 }
 
 function _checkLaborChanged() {
-  const btn = $('btnReloadLabor');
-  if (!btn) return;
-  if (_getLaborFingerprint() !== _laborFingerprint) {
-    btn.classList.add('labor-changed');
-    btn.title = 'ค่าแรงมีการเปลี่ยนแปลง — คลิกเพื่ออัปเดต';
-  } else {
-    btn.classList.remove('labor-changed');
-    btn.title = '';
-  }
+  const btn   = $('btnReloadLabor');
+  const btnSP = $('btnReloadLaborSP');
+  const changed = _getLaborFingerprint() !== _laborFingerprint;
+  [btn, btnSP].forEach(b => {
+    if (!b) return;
+    if (changed) {
+      b.classList.add('labor-changed');
+      b.title = 'ค่าแรงมีการเปลี่ยนแปลง — คลิกเพื่ออัปเดต';
+    } else {
+      b.classList.remove('labor-changed');
+      b.title = '';
+    }
+  });
 }
 
 function recalcBtn() {
@@ -4305,7 +4673,7 @@ function fillSelect(id, items) {
     const code = typeof m === 'object' ? m.code : m;
     const name = typeof m === 'object' && m.name ? m.name : (matNameMap[code] || '');
     const opt = document.createElement('option');
-    opt.value = opt.textContent = code;
+    opt.value = opt.textContent = code;  // form ภายในใช้รหัส
     sel.appendChild(opt);
   });
   const codes = items.map(m => typeof m === 'object' ? m.code : m);
@@ -4460,6 +4828,9 @@ async function loadAllData(showResult) {
         background:'#0a1c2e',color:'#f1f5f9',timer:1500,showConfirmButton:false,
         toast:true,position:'top-end'});
     }
+    // โหลด history (DATA rows) ในพื้นหลังเพื่อให้ Pricing Insight ทำงานได้ทันที
+    // ไม่ต้องรอให้ผู้ใช้ไปแท็บ DATA ก่อน
+    dtRefresh(false).catch(() => {});
   } catch(err) {
     setDbStatus('error', '✗ ' + (err.message||'โหลดไม่สำเร็จ'));
     const errMsg = err.message || String(err);
@@ -4735,22 +5106,20 @@ function _checkMeshFit(res) {
 }
 
 function autoRawMat() {
-  const vals = ['f_matTop','f_matBot','f_meshOut','f_meshIn']
-    .map(id => ($( id) ? $( id).value : '').toUpperCase())
-    .join(' ');
-  if (!vals.trim()) return;
-  const found = [];
-  if (/SUS/.test(vals))              found.push('แสตนเลส SUS');
-  if (/ALU/.test(vals))              found.push('อะลูมิเนียม');
-  if (/\bL[-\d]|\bL\b/.test(vals))  found.push('เหล็ก');
-  if (found.length) {
-    const el = $('f_rawMat');
-    if (el && !el._userEdited) el.value = found.join(' / ');
-  }
+  const wt = ($('f_workType') ? $('f_workType').value : '').toUpperCase();
+  let mat = 'เหล็ก'; // default
+  if (/SUS/.test(wt))       mat = 'แสตนเลส';
+  else if (/ALU/.test(wt))  mat = 'อะลูมิเนียม';
+  else if (/พลาสติก/.test($('f_workType')?.value || '')) mat = 'พลาสติก';
+  else if (/ยาง/.test($('f_workType')?.value || ''))     mat = 'ยาง';
+
+  const el = $('f_rawMat');
+  if (el && !el._userEdited) el.value = mat;
+
   // auto-select ขัดเงา ถ้าวัตถุดิบเป็น SUS
   const plating = $('f_plating');
   if (plating && !plating._userEdited) {
-    plating.value = /SUS/.test(vals) ? 'ขัดเงา' : 'ชุปซิงค์เงิน';
+    plating.value = mat === 'แสตนเลส' ? 'ขัดเงา' : 'ชุปซิงค์เงิน';
   }
 }
 
@@ -4968,6 +5337,7 @@ let _loadedNoQuo = null;   // null = new record; string = editing existing
 
 function setLoadedJob(noQuo) {
   _loadedNoQuo = noQuo ? String(noQuo) : null;
+  // mobile badge
   const badge = $('editingBadge');
   if (badge) {
     if (_loadedNoQuo) {
@@ -4977,9 +5347,22 @@ function setLoadedJob(noQuo) {
       badge.style.display = 'none';
     }
   }
-  // swap button label
-  const btn = $('saveBtnLabel');
-  if (btn) btn.textContent = _loadedNoQuo ? '💾 บันทึกทับแถวเดิม' : '💾 บันทึกลง Sheets';
+  // desktop (summary panel) badge
+  const badgeSP = $('editingBadgeSP');
+  if (badgeSP) {
+    if (_loadedNoQuo) {
+      badgeSP.textContent = '✏️ แก้ไข No.' + _loadedNoQuo;
+      badgeSP.style.display = 'inline-flex';
+    } else {
+      badgeSP.style.display = 'none';
+    }
+  }
+  // swap button labels (mobile + desktop)
+  const btn   = $('saveBtnLabel');
+  const btnSP = $('saveBtnLabelSP');
+  const txt = _loadedNoQuo ? '💾 บันทึกทับแถวเดิม' : '💾 บันทึกลง Sheets';
+  if (btn)   btn.textContent   = txt;
+  if (btnSP) btnSP.textContent = txt;
 }
 
 // ── SUBMIT ───────────────────────────────────────────
@@ -6041,6 +6424,219 @@ function _openAiFilePicker() {
   inp.click();
 }
 
+// ── Text-only AI call (ไม่มีรูป) ────────────────────────────────────
+async function callAiText(prompt, maxTokens = 1800) {
+  const k = AI_KEYS[AI_PROVIDER];
+  if (!k) throw new Error('ยังไม่มี API Key สำหรับ ' + AI_PROVIDER + ' — ตั้งค่าใน แท็บ API');
+
+  if (AI_PROVIDER === 'anthropic') {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': k, 'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error?.message || 'Anthropic error');
+    return d.content?.[0]?.text || '';
+
+  } else if (AI_PROVIDER === 'openai') {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + k, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: maxTokens,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error?.message || 'OpenAI error');
+    return d.choices?.[0]?.message?.content || '';
+
+  } else { // gemini
+    const geminiModel = localStorage.getItem('ptts_gemini_model') || 'gemini-2.0-flash';
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${k}`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      }
+    );
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error?.message || 'Gemini error');
+    return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+}
+
+// ── Pricing Analysis AI ──────────────────────────────────────────────
+async function showPricingAnalysis() {
+  // ── ดึงข้อมูลฟอร์ม ──────────────────────────────────
+  const cur = {
+    od:   parseFloat($('f_od')?.value)   || 0,
+    id:   parseFloat($('f_id')?.value)   || 0,
+    h:    parseFloat($('f_h')?.value)    || 0,
+    unit: parseFloat($('f_unit')?.value) || 1,
+    mat:  String($('f_matTop')?.value || '').trim(),
+    meshOut: !!(String($('f_meshOut')?.value||'').trim()) || (parseFloat($('f_cMeshOut')?.value)||0)>0,
+    meshIn:  !!(String($('f_meshIn')?.value||'').trim())  || (parseFloat($('f_cMeshIn')?.value) ||0)>0,
+    costPerUnit: parseFloat($('f_totalCostUnit')?.value||'') || num('f_totalCost') / (parseFloat($('f_unit')?.value)||1),
+    sellPrice: parseFloat(String($('f_sellPrice')?.value||'').replace(/,/g,'')),
+  };
+
+  // ต้นทุนรวม/ลูก (คำนวณตรงจาก updateSummaryPanel logic ถ้า f_totalCostUnit ไม่มี)
+  if (!cur.costPerUnit) {
+    const u = cur.unit;
+    const costTop=num('f_costTop'),costBot=num('f_costBot'),cMeshOut=num('f_cMeshOut'),cMeshIn=num('f_cMeshIn');
+    const cTestWaste=num('f_cTestWaste'),cOutsource=num('f_cOutsource'),cLaser=num('f_cLaser'),cPlating=num('f_cPlating');
+    const cLabor=num('f_cLabor'),cMachine=num('f_cMachine'),cMold=num('f_cMold'),fixedCost=num('f_fixedCost');
+    const cOther=num('f_cOther1')+num('f_cOther2')+num('f_cOther3');
+    const cTransport=u>0?num('f_transport')/u:num('f_transport');
+    const perUnitVar=costTop+costBot+cTestWaste+cOutsource+cMeshOut+cMeshIn+cLaser+cPlating+cLabor+cTransport+cMachine+cOther;
+    cur.costPerUnit = perUnitVar + (u>0?(cMold+fixedCost)/u:(cMold+fixedCost));
+  }
+  const margin = cur.sellPrice>0 ? (cur.sellPrice-cur.costPerUnit)/cur.sellPrice*100 : 0;
+
+  if (!cur.od) {
+    Swal.fire({icon:'warning',title:'กรอก OD ก่อน',background:'#0a1c2e',color:'#f1f5f9'}); return;
+  }
+  if (!AI_KEYS[AI_PROVIDER]) {
+    Swal.fire({icon:'warning',title:'ยังไม่มี API Key',text:'ตั้งค่าใน แท็บ API',background:'#0a1c2e',color:'#f1f5f9'}); return;
+  }
+
+  // ── คำนวณ stats กลุ่มต่างๆ (เหมือน _updatePricingInsight) ───────
+  const cutoff3y = new Date(); cutoff3y.setFullYear(cutoff3y.getFullYear()-3);
+  const cutoff1y = new Date(); cutoff1y.setFullYear(cutoff1y.getFullYear()-1);
+  const pool = (_dtCache||[]).filter(r => {
+    const iso=thaiShortToIso(String(r[DT.date]||''));
+    if(iso&&new Date(iso)<cutoff3y) return false;
+    return String(r[DT.status]||'').trim()!=='ยกเลิก';
+  });
+  const scored = pool.map(r=>({r,sc:_piScore(r,cur)})).filter(x=>x.sc>0);
+  const grpA = scored.filter(x=>x.sc>=65).map(x=>x.r);
+  const grpB = scored.filter(x=>x.sc>=35&&x.sc<65).map(x=>x.r);
+  const grpC = scored.filter(x=>x.sc>=15&&x.sc<35).map(x=>x.r);
+
+  const _avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
+  const grpInfo = rows => {
+    if(!rows.length) return null;
+    const px=rows.map(r=>parseFloat(r[DT.sellPrice])||0).filter(v=>v>0);
+    const mx=rows.map(r=>parseFloat(r[DT.totalCost])||0).filter(v=>v>0);
+    const mg=rows.map(r=>{const sp=parseFloat(r[DT.sellPrice])||0,tc=parseFloat(r[DT.totalCost])||0;return sp&&tc?(sp-tc)/sp*100:null;}).filter(v=>v!==null);
+    const wins=rows.filter(r=>['ผ่าน','อนุมัติ'].includes(String(r[DT.status]||'').trim())).length;
+    const recentPx=rows.filter(r=>{const d=thaiShortToIso(String(r[DT.date]||''));return d&&new Date(d)>=cutoff1y;}).map(r=>parseFloat(r[DT.sellPrice])||0).filter(v=>v>0);
+    const olderPx=rows.filter(r=>{const d=thaiShortToIso(String(r[DT.date]||''));const dt=d&&new Date(d);return dt&&dt<cutoff1y;}).map(r=>parseFloat(r[DT.sellPrice])||0).filter(v=>v>0);
+    const spPct=cur.sellPrice>0&&px.length>1?(px.filter(v=>v<cur.sellPrice).length/px.length)*100:null;
+    let trend='ข้อมูลน้อย';
+    if(recentPx.length&&olderPx.length){const t=(_avg(recentPx)-_avg(olderPx))/_avg(olderPx)*100;trend=t>3?`ขึ้น +${t.toFixed(1)}%`:t<-3?`ลง ${t.toFixed(1)}%`:'คงที่';}
+    return {count:rows.length,avgP:px.length?_avg(px):0,minP:px.length?Math.min(...px):0,maxP:px.length?Math.max(...px):0,avgC:mx.length?_avg(mx):0,avgMgn:mg.length?_avg(mg):0,winRate:rows.length?wins/rows.length*100:0,trend,spPct};
+  };
+  const sA=grpInfo(grpA), sB=grpInfo(grpB), sC=grpInfo(grpC);
+  const best = sA||sB||sC;
+
+  // ── margin options จากฟอร์ม ──────────────────────────
+  const mOpts=[40,50,60,100,200].map(pct=>{
+    const p=cur.costPerUnit*(1+pct/100);
+    return `+${pct}% → ฿${Math.round(p).toLocaleString('th-TH')} (Margin ${(pct/(1+pct/100)).toFixed(1)}%)`;
+  }).join('\n');
+
+  // ── สร้าง prompt ─────────────────────────────────────
+  const B = n => '฿'+Math.round(n).toLocaleString('th-TH');
+  const P1= n => n.toFixed(1)+'%';
+  const grpTxt = (label, s) => !s ? `${label}: ไม่มีข้อมูล` :
+    `${label} (${s.count} งาน):
+      ราคา: ต่ำสุด ${B(s.minP)} / เฉลี่ย ${B(s.avgP)} / สูงสุด ${B(s.maxP)}
+      Win rate: ${P1(s.winRate)} | Margin เฉลี่ย: ${P1(s.avgMgn)} | ต้นทุนเฉลี่ย: ${B(s.avgC)}
+      แนวโน้ม 12 เดือน: ${s.trend}
+      ${s.spPct!==null?`ราคาเสนอปัจจุบัน (${B(cur.sellPrice)}) อยู่ที่ Percentile ${s.spPct.toFixed(0)}th ของกลุ่มนี้`:''}`;
+
+  const meshDesc = [cur.meshOut?'ตะแกรงนอก':'', cur.meshIn?'ตะแกรงใน':''].filter(Boolean).join('+') || 'ไม่มีตะแกรง';
+
+  const prompt = `คุณเป็นที่ปรึกษาการกำหนดราคาสินค้าชิ้นส่วนโลหะอุตสาหกรรม (ฝากรองกรอง/แผ่นกรอง) มีความเชี่ยวชาญด้านการวิเคราะห์ราคาตลาดและกลยุทธ์การแข่งขัน
+
+═══════════ ข้อมูลงานปัจจุบัน ═══════════
+• ขนาด: OD ${cur.od} × ID ${cur.id} × H ${cur.h} mm
+• จำนวน: ${cur.unit} ลูก
+• วัตถุดิบ (MAT ฝา): ${cur.mat||'ไม่ระบุ'}
+• โครงสร้าง: ${meshDesc}
+• ต้นทุนรวม/ลูก: ${B(cur.costPerUnit)}
+• ราคาเสนอปัจจุบัน: ${cur.sellPrice>0?B(cur.sellPrice):'ยังไม่กำหนด'} ${cur.sellPrice>0?`(Margin ${P1(margin)})`:''}
+• ราคาตามสูตร Margin ต่างๆ:
+  ${mOpts}
+
+═══════════ ข้อมูลประวัติย้อนหลัง 3 ปี ═══════════
+(กรองงานที่คล้ายกันด้วย OD×ID×H×วัตถุดิบ×ตะแกรง)
+
+${grpTxt('กลุ่ม A — เหมือนมาก (OD+ID+H+วัตถุดิบ+ตะแกรงตรง)', sA)}
+
+${grpTxt('กลุ่ม B — คล้ายกัน (OD+บางมิติตรง)', sB)}
+
+${grpTxt('กลุ่ม C — ขนาดใกล้เคียง (OD เป็นหลัก)', sC)}
+
+รวมงานที่คล้าย: ${scored.length} งาน
+
+═══════════ สิ่งที่ต้องการ ═══════════
+กรุณาวิเคราะห์และตอบเป็นภาษาไทยในรูปแบบต่อไปนี้:
+
+1. 🔍 สรุปสถานะราคาปัจจุบัน (2-3 ประโยค: ราคาปัจจุบันอยู่ที่ไหนในตลาด, Percentile, ต่างจากเฉลี่ยเท่าไหร่)
+2. 🎯 กลยุทธ์ 3 แบบพร้อมราคาเป็นตัวเลขชัดเจน:
+   - แบบ 1: ราคาเชิงรุก (ชิงงาน/ลูกค้าใหม่)
+   - แบบ 2: ราคากลาง (สมเหตุสมผล, Win rate ดี)
+   - แบบ 3: ราคาพรีเมียม (งานด่วน/ลูกค้าประจำ)
+   สำหรับแต่ละแบบ: บอกราคา (฿), Margin ที่จะได้, เหตุผล, Win probability
+3. 📝 ฟันธง: ราคาสุดท้ายที่แนะนำคือ ฿_____ พร้อมเหตุผลสั้นๆ 2-3 ประโยค
+
+ตอบแบบกระชับ ตรงประเด็น ใช้ตัวเลขจริงจากข้อมูลข้างต้น`;
+
+  // ── แสดง loading modal ──────────────────────────────
+  Swal.fire({
+    title: '🤖 กำลังวิเคราะห์ราคา…',
+    html: '<div style="color:#94a3b8;font-size:.85rem">AI กำลังประมวลผลข้อมูล 3 ปีย้อนหลัง</div>',
+    background: '#0d1b2a', color: '#cce4ff',
+    allowOutsideClick: false, showConfirmButton: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+  try {
+    const result = await callAiText(prompt, 2000);
+
+    // แปลง markdown เป็น HTML อย่างง่าย
+    const toHtml = txt => txt
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+      .replace(/###\s*(.+)/g,'<div style="font-size:.9rem;font-weight:800;color:#60a5fa;margin:10px 0 4px">$1</div>')
+      .replace(/##\s*(.+)/g,'<div style="font-size:.95rem;font-weight:800;color:#a78bfa;margin:12px 0 4px">$1</div>')
+      .replace(/^(#{1})\s*(.+)/gm,'<div style="font-size:1rem;font-weight:900;color:#c4b5fd;margin:12px 0 5px">$2</div>')
+      .replace(/^[-•]\s(.+)/gm,'<div style="padding:2px 0 2px 12px;border-left:2px solid rgba(99,102,241,.4);margin:2px 0;color:#cbd5e1">$1</div>')
+      .replace(/\n/g,'<br>');
+
+    Swal.fire({
+      title: '🎯 วิเคราะห์ราคา',
+      html: `
+        <div style="text-align:left;font-family:Sarabun,sans-serif;font-size:.82rem;line-height:1.75;color:#cbd5e1;max-height:65vh;overflow-y:auto;padding:4px 2px">
+          <div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:6px 10px;margin-bottom:10px;font-size:.75rem;color:#94a3b8">
+            OD${cur.od}×ID${cur.id}×H${cur.h} · ${cur.unit} ลูก · ${cur.mat||'MAT ไม่ระบุ'} · ${meshDesc} · ต้นทุน ${B(cur.costPerUnit)}/ลูก
+          </div>
+          ${toHtml(result)}
+        </div>`,
+      background: '#0d1b2a', color: '#cce4ff',
+      width: 640,
+      showCloseButton: true,
+      confirmButtonText: '✅ ปิด',
+      confirmButtonColor: '#4f46e5',
+    });
+  } catch(e) {
+    Swal.fire({ icon:'error', title:'วิเคราะห์ไม่สำเร็จ', text: e.message,
+      background:'#0d1b2a', color:'#f1f5f9' });
+  }
+}
+
 async function callAiReader(b64, mime) {
   const k = AI_KEYS[AI_PROVIDER];
   if (!k) throw new Error('ยังไม่มี API Key สำหรับ ' + AI_PROVIDER + ' — ตั้งค่าใน แท็บ API');
@@ -6592,8 +7188,8 @@ function buildShareText(row) {
     d.workType  ? `แบบงาน: ${d.workType}` : '',
     `รายการ: ${size}`,
     `จำนวน: ${d.unit.toLocaleString('th-TH')} ลูก.`,
-    d.meshOut   ? `ตะแกรงนอก: ${d.meshOut}` : '',
-    d.meshIn    ? `ตะแกรงใน: ${d.meshIn}`   : '',
+    d.meshOut   ? `ตะแกรงนอก: ${matLabel(d.meshOut)}` : '',
+    d.meshIn    ? `ตะแกรงใน: ${matLabel(d.meshIn)}`   : '',
     d.gapWeld !== '' ? `ช่องว่างจีบเหลือ: ${d.gapWeld} mm.` : '',
     `หมายเหตุ: ${d.remark || '-'}`,
     `ราคา: @${_fmtShareN(d.sellPrice)}.`,
@@ -6607,91 +7203,104 @@ function buildShareCardHTML(row) {
   const { noQuo, date, od, id2, h, unit, workType, meshOut, meshIn,
           totalCost, sellPrice, profitU, profitJ, gapWeld,
           contact, remark, quoter, rawMat, refId } = d;
-  const size      = (od && id2 && h) ? `${od}×${id2}×${h} mm` : (row[7]||'—');
-  const marginPct = sellPrice > 0 ? ((profitU/sellPrice)*100).toFixed(1) : '0';
-  const profitCol = profitU >= 0 ? '#34d399' : '#f87171';
+  const size = (od && id2 && h) ? `${od} × ${id2} × ${h} mm` : (row[7]||'—');
 
-  const row_ = (icon, label, val, highlight) => `
-    <div style="display:flex;align-items:baseline;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-      <span style="font-size:.82rem;min-width:18px">${icon}</span>
-      <span style="font-size:.78rem;color:#94a3b8;min-width:90px;flex-shrink:0">${label}</span>
-      <span style="font-size:.85rem;font-weight:600;color:${highlight||'#e2e8f0'}">${val}</span>
+  // company logo
+  const logoB64 = localStorage.getItem('ptts_logo_b64');
+  const logoHTML = logoB64
+    ? `<img src="${logoB64}" style="width:44px;height:44px;border-radius:10px;object-fit:contain;background:#fff;padding:2px;flex-shrink:0">`
+    : `<div style="width:44px;height:44px;background:rgba(255,255,255,.2);border-radius:10px;
+        display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🏭</div>`;
+
+  // row helper — light card style
+  const row_ = (icon, label, val, valColor, bg) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;
+      border-bottom:1px solid #f1f5f9;${bg?`background:${bg};`:''}">
+      <span style="font-size:1.05rem;min-width:22px;text-align:center">${icon}</span>
+      <span style="font-size:.82rem;color:#64748b;min-width:90px;flex-shrink:0">${label}</span>
+      <span style="font-size:.88rem;font-weight:600;color:${valColor||'#1e293b'};flex:1">${val}</span>
     </div>`;
 
+  const gapRow = (() => {
+    if (gapWeld === '') return '';
+    const autoG = (d.od > 0 && d.id2 > 0) ? (((d.od-5)-(d.id2+5))/2).toFixed(1) : null;
+    const isCust = autoG !== null && parseFloat(gapWeld) !== parseFloat(autoG);
+    const lbl = isCust ? 'ช่องว่างจีบ <span style="color:#f59e0b;font-size:.72rem">(ลูกค้ากำหนด)</span>' : 'ช่องว่างจีบ';
+    return row_('↔️', lbl, `${gapWeld} mm.`);
+  })();
+
+  const imgSection = ((_lastSavedImage || _attachedImage)) ? (() => {
+    const img = _lastSavedImage || _attachedImage;
+    return `<div style="padding:10px 16px 0">
+      <div style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
+        letter-spacing:.6px;margin-bottom:6px">📎 รูปใบขอราคา</div>
+      <img src="${img.dataUrl}" alt="ใบขอราคา"
+        style="width:100%;border-radius:8px;border:1px solid #e2e8f0;
+        max-height:200px;object-fit:contain;background:#f8fafc;cursor:pointer"
+        onclick="viewAttachedImage()">
+    </div>`;
+  })() : '';
+
   return `
-  <div id="shareCardInner" style="background:linear-gradient(145deg,#0f172a,#1e293b);border-radius:14px;
-    padding:0;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 40px rgba(0,0,0,.5);
-    font-family:'Sarabun',Tahoma,sans-serif;text-align:left;margin:-8px -16px">
+  <div id="shareCardInner" style="background:#fff;border-radius:16px;overflow:hidden;
+    font-family:'Sarabun',Tahoma,sans-serif;text-align:left;
+    box-shadow:0 20px 50px rgba(0,0,0,.18);margin:-8px -16px">
 
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);padding:14px 18px 12px;position:relative">
-      <div style="position:absolute;top:0;left:0;right:0;height:100%;
-        background:radial-gradient(ellipse 80% 100% at 80% -20%,rgba(255,255,255,.12),transparent)"></div>
-      <div style="position:relative;display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:10px;
-          display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">🏭</div>
-        <div>
-          <div style="font-size:.92rem;font-weight:800;color:#fff;letter-spacing:.3px">PTTS Quotation</div>
-          <div style="font-size:.7rem;color:rgba(255,255,255,.7);margin-top:1px">Quotation Summary</div>
+    <div style="background:linear-gradient(135deg,#3b5bdb,#7c3aed);padding:16px 18px 14px;
+      position:relative;overflow:hidden">
+      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;
+        border-radius:50%;background:rgba(255,255,255,.08)"></div>
+      <div style="display:flex;align-items:center;gap:12px;position:relative">
+        ${logoHTML}
+        <div style="flex:1">
+          <div style="font-size:1rem;font-weight:800;color:#fff;letter-spacing:.2px">PTS Quotation</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.75);margin-top:1px">Quotation Summary</div>
         </div>
-        <div style="margin-left:auto;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:999px;
-          font-size:.7rem;color:#fff;font-weight:700;border:1px solid rgba(255,255,255,.25)">✅ บันทึกแล้ว</div>
+        <div style="background:rgba(255,255,255,.18);padding:4px 12px;border-radius:999px;
+          font-size:.72rem;color:#fff;font-weight:700;border:1px solid rgba(255,255,255,.3)">
+          ✅ บันทึกแล้ว
+        </div>
       </div>
     </div>
 
-    <!-- Body -->
-    <div style="padding:12px 18px 14px">
-
-      <!-- Job Info — วันที่ + Ref เท่านั้น -->
-      <div style="margin-bottom:10px">
-        ${row_('📅','วันที่', date)}
-        ${row_('🔗','Ref', `<span style="font-size:.75rem;color:#a78bfa">${refId}</span>`,null)}
-      </div>
-
-      <!-- Size Info -->
-      <div style="margin-bottom:10px">
-        <div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.8px;color:#64748b;
-          font-weight:700;margin-bottom:6px">ข้อมูลชิ้นงาน</div>
-        ${rawMat    ? row_('🧱','วัตถุดิบ', rawMat) : ''}
-        ${workType  ? row_('🔧','แบบงาน', workType) : ''}
-        ${row_('📐','ขนาด', size)}
-        ${unit > 0  ? row_('🔢','จำนวน', `${unit.toLocaleString('th-TH')} ลูก`) : ''}
-        ${meshOut   ? row_('🔲','ตะแกรงนอก', meshOut) : ''}
-        ${meshIn    ? row_('⬜','ตะแกรงใน', meshIn)   : ''}
-        ${(() => {
-            if (gapWeld === '') return '';
-            const autoG = (d.od > 0 && d.id2 > 0) ? (((d.od-5)-(d.id2+5))/2).toFixed(1) : null;
-            const isCust = autoG !== null && parseFloat(gapWeld) !== parseFloat(autoG);
-            const label  = isCust ? 'ช่องว่างจีบ <span style="color:#fbbf24;font-size:.68rem">(ลูกค้ากำหนด)</span>' : 'ช่องว่างจีบ';
-            return row_('↔️', label, `${gapWeld} mm.`);
-          })()}
-        ${remark    ? row_('📝','หมายเหตุ', remark, '#fde68a') : ''}
-      </div>
-
-      <!-- ราคา — เฉพาะราคาเสนอ -->
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07);margin-top:4px">
-        <span style="font-size:.82rem;min-width:18px">💰</span>
-        <span style="font-size:.78rem;color:#94a3b8;flex-shrink:0">ราคาเสนอ / ลูก</span>
-        <span style="font-size:1.15rem;font-weight:800;color:#4ade80;
-          border:2px solid rgba(74,222,128,.5);border-radius:999px;
-          padding:2px 14px;letter-spacing:.5px;white-space:nowrap">
-          ${Math.round(sellPrice).toLocaleString('th-TH')}.-
-        </span>
-      </div>
-
-
-      ${(_lastSavedImage || _attachedImage) ? (() => {
-          const img = _lastSavedImage || _attachedImage;
-          return `<div style="margin-top:${remark?'0':'10px'}">
-            <div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.8px;color:#64748b;
-              font-weight:700;margin-bottom:6px">📎 รูปใบขอราคา</div>
-            <img src="${img.dataUrl}" alt="ใบขอราคา"
-              style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,.1);
-              max-height:220px;object-fit:contain;background:#0a1c2e;cursor:pointer"
-              onclick="viewAttachedImage()">
-          </div>`;
-        })() : ''}
+    <!-- Date + Ref -->
+    <div style="background:#fff">
+      ${row_('📅','วันที่', date)}
+      ${row_('🔗','Ref', `<span style="color:#6366f1;font-size:.82rem">${refId}</span>`, null)}
     </div>
+
+    <!-- Section: ข้อมูลชิ้นงาน -->
+    <div style="padding:8px 16px 4px;background:#f8fafc;
+      border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
+      <span style="font-size:.72rem;font-weight:800;color:#475569;
+        letter-spacing:.5px;text-transform:uppercase">ข้อมูลชิ้นงาน</span>
+    </div>
+    <div style="background:#fff">
+      ${rawMat   ? row_('🧱','วัตถุดิบ', rawMat) : ''}
+      ${workType ? row_('🔧','แบบงาน', workType) : ''}
+      ${row_('📐','ขนาด', size)}
+      ${unit > 0 ? row_('🔢','จำนวน', `${unit.toLocaleString('th-TH')} ลูก`) : ''}
+      ${meshOut  ? row_('🟪','ตะแกรงนอก', matLabel(meshOut), '#1e293b', meshIn?'':'') : ''}
+      ${meshIn   ? row_('🟫','ตะแกรงใน',  matLabel(meshIn),  '#1e293b', '') : ''}
+      ${gapRow}
+      ${remark   ? row_('📝','หมายเหตุ', remark, '#d97706') : ''}
+    </div>
+
+    <!-- ราคา -->
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;
+      background:#fff;border-top:2px solid #f1f5f9">
+      <span style="font-size:1.1rem">💰</span>
+      <span style="font-size:.88rem;color:#475569;font-weight:600;white-space:nowrap">ราคาเสนอ / ลูก</span>
+      <span style="font-size:1.45rem;font-weight:800;color:#16a34a;
+        border:2.5px solid #16a34a;border-radius:999px;
+        padding:3px 20px;letter-spacing:.5px;white-space:nowrap">
+        ${Math.round(sellPrice).toLocaleString('th-TH')}.-
+      </span>
+    </div>
+
+    ${imgSection}
+    <div style="padding-bottom:6px"></div>
   </div>`;
 }
 
@@ -6748,7 +7357,7 @@ async function downloadShareImage(row) {
     if (!canvas) return;
     const noQuo = row[1] || 'quo';
     const link  = document.createElement('a');
-    link.download = `PTTS-${noQuo}.png`;
+    link.download = `PTS-${noQuo}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   } catch(e) {
@@ -6763,7 +7372,7 @@ async function shareCardImage(row) {
     const canvas = await shareCardAsImage(row);
     if (!canvas) return;
     const noQuo = row[1] || 'quo';
-    const fileName = `PTTS-${noQuo}.png`;
+    const fileName = `PTS-${noQuo}.png`;
 
     // ใช้ Web Share API พร้อม files (mobile native share sheet → เลือก Telegram ได้)
     if (navigator.canShare && navigator.share) {
@@ -6797,28 +7406,60 @@ async function shareCardImage(row) {
 function showSaveSuccessCard(row, isUpdate) {
   Swal.fire({
     html: buildShareCardHTML(row),
-    background: 'transparent',
-    backdrop: 'rgba(0,0,0,.75)',
+    background: '#fff',
+    backdrop: 'rgba(15,23,42,.7)',
     showConfirmButton: false,
     showCloseButton: true,
-    width: 520,
-    padding: '8px 16px 16px',
-    customClass: { popup: 'share-card-popup' },
+    width: 480,
+    padding: '0',
+    customClass: { popup: 'share-card-popup', closeButton: 'share-card-close' },
     footer: `
-      <div style="display:flex;gap:8px;width:100%;justify-content:center;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;width:100%;flex-wrap:wrap;padding:0 4px 4px">
+        <!-- Upload รูป -->
+        <label style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;
+          gap:5px;padding:10px 8px;border-radius:10px;border:1.5px dashed #cbd5e1;
+          background:#f8fafc;color:#64748b;font-family:Sarabun,sans-serif;font-size:.82rem;
+          font-weight:600;cursor:pointer" title="อัปโหลดรูปใบขอราคา">
+          📎 อัปโหลดรูป
+          <input type="file" accept="image/*" style="display:none"
+            onchange="(function(e){
+              const f=e.target.files[0]; if(!f) return;
+              const r=new FileReader();
+              r.onload=ev=>{
+                _attachedImage={dataUrl:ev.target.result,name:f.name,size:f.size};
+                _lastSavedImage=_attachedImage;
+                Swal.close();
+                showSaveSuccessCard(_lastSavedRow,false);
+              };
+              r.readAsDataURL(f);
+            })(event)">
+        </label>
+        <!-- คัดลอก -->
         <button onclick="copyShareText(_lastSavedRow).then(()=>{
           this.textContent='✅ คัดลอกแล้ว!';setTimeout(()=>this.textContent='📋 คัดลอก',1500)})"
-          style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;border:1px solid rgba(148,163,184,.3);
-          background:rgba(30,41,59,.9);color:#e2e8f0;font-family:Sarabun,sans-serif;font-size:.85rem;
-          font-weight:600;cursor:pointer">📋 คัดลอก</button>
+          style="flex:1;min-width:110px;padding:10px 8px;border-radius:10px;
+          border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;
+          font-family:Sarabun,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer">
+          📋 คัดลอก</button>
+        <!-- ส่งรูป -->
         <button onclick="shareCardImage(_lastSavedRow)"
-          style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;border:none;
-          background:linear-gradient(135deg,#0088cc,#229ed9);color:#fff;font-family:Sarabun,sans-serif;
-          font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,136,204,.35)">✈️ ส่งรูป</button>
+          style="flex:1;min-width:110px;padding:10px 8px;border-radius:10px;border:none;
+          background:linear-gradient(135deg,#0088cc,#229ed9);color:#fff;
+          font-family:Sarabun,sans-serif;font-size:.82rem;font-weight:700;
+          cursor:pointer;box-shadow:0 3px 10px rgba(0,136,204,.3)">
+          ✈️ ส่งรูป</button>
+        <!-- บันทึกรูป -->
         <button onclick="downloadShareImage(_lastSavedRow)"
-          style="flex:1;min-width:120px;padding:10px 14px;border-radius:10px;border:1px solid rgba(148,163,184,.3);
-          background:rgba(30,41,59,.9);color:#e2e8f0;font-family:Sarabun,sans-serif;font-size:.85rem;
-          font-weight:600;cursor:pointer">🖼 บันทึกรูป</button>
+          style="flex:1;min-width:110px;padding:10px 8px;border-radius:10px;
+          border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;
+          font-family:Sarabun,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer">
+          🖼 บันทึกรูป</button>
+        <!-- ปิด -->
+        <button onclick="Swal.close()"
+          style="flex:1;min-width:110px;padding:10px 8px;border-radius:10px;
+          border:1.5px solid #fca5a5;background:#fff1f2;color:#dc2626;
+          font-family:Sarabun,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">
+          ✕ ปิด</button>
       </div>`,
   });
 }
@@ -6951,7 +7592,7 @@ function showHelp(section) {
         <div style="flex:1;padding:14px 16px;overflow-y:auto">${contentHtml}</div>
       </div>`,
     background: '#0d1b2a', color: '#e2e8f0',
-    title: '📖 คู่มือการใช้งาน PTTS',
+    title: '📖 คู่มือการใช้งาน PTS',
     showConfirmButton: false,
     showCloseButton: true,
     width: 620,
@@ -6970,18 +7611,81 @@ function reshowShareCard() {
 
 function _enableShareBtn(row) {
   _lastSavedRow = row;
+  // enable mobile btn
   const btn = $('btnReshowCard');
-  if (!btn) return;
-  btn.disabled = false;
-  btn.style.opacity = '1';
-  btn.style.cursor  = 'pointer';
-  btn.title = 'เปิดการ์ดแชร์อีกครั้ง';
+  if (btn) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor  = 'pointer';
+    btn.title = 'เปิดการ์ดแชร์อีกครั้ง';
+  }
+  // enable desktop (SP) btn
+  const btnSP = $('btnReshowCardSP');
+  if (btnSP) {
+    btnSP.disabled = false;
+    btnSP.style.opacity = '1';
+    btnSP.style.cursor  = 'pointer';
+    btnSP.title = 'เปิดการ์ดแชร์อีกครั้ง';
+  }
+}
+
+// ── Summary Panel Resize ─────────────────────────────────────────
+// ใช้ CSS variable --sp-width เพื่อให้ทั้ง panel width และ body padding-right sync กัน
+const SP_WIDTH_KEY = 'ptts_sp_width';
+const SP_DEFAULT   = 544;   // px — ค่าเริ่มต้น (กว้างกว่าเดิม 2x)
+const SP_MIN       = 220;   // px — แคบสุด
+const SP_MAX       = 900;   // px — กว้างสุด
+
+function _spSetWidth(w) {
+  w = Math.max(SP_MIN, Math.min(SP_MAX, Math.round(w)));
+  document.documentElement.style.setProperty('--sp-width', w + 'px');
+  localStorage.setItem(SP_WIDTH_KEY, w);
+}
+
+function _spInitResize() {
+  // โหลดความกว้างที่บันทึกไว้ (หรือใช้ default)
+  const saved = parseInt(localStorage.getItem(SP_WIDTH_KEY));
+  _spSetWidth(isNaN(saved) ? SP_DEFAULT : saved);
+
+  const handle = $('spResizeHandle');
+  if (!handle) return;
+
+  let dragging = false, startX = 0, startW = 0;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startW = parseInt(getComputedStyle($('summaryPanel')).width) || SP_DEFAULT;
+    handle.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const delta = startX - e.clientX; // ลากซ้าย = กว้างขึ้น
+    _spSetWidth(startW + delta);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.userSelect = '';
+  });
+
+  // ดับเบิ้ลคลิก = reset กลับ default
+  handle.addEventListener('dblclick', () => _spSetWidth(SP_DEFAULT));
 }
 
 // ── Init ────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Render tab bar from saved config
+  // Init summary panel resize (ต้องก่อน switchTab เพื่อให้ padding-right ถูกต้อง)
+  _spInitResize();
+  // Render tab bar from saved config (sidebar logo ถูกสร้างตรงนี้)
   renderTabBar();
+  // Apply saved logo หลัง renderTabBar เพื่อให้ครบทุก element
+  _applyLogoAll();
   switchTab('breakdown');
 
   // Init labor fingerprint (baseline = ค่าที่โหลดมาตอนเปิดฟอร์ม)
@@ -7212,12 +7916,12 @@ function buildDocuments() {
     const perUnit = isPerJob ? c/unit : c;
     lines.push({ label, detail, perUnit, total: perUnit*unit });
   }
-  addLine('ฝาบน (Top Cap)',       $('f_matTop').value,  num('f_costTop'),    false);
-  addLine('ฝาล่าง (Bottom Cap)',  $('f_matBot').value,  num('f_costBot'),    false);
+  addLine('ฝาบน (Top Cap)',       matLabel($('f_matTop').value),  num('f_costTop'),    false);
+  addLine('ฝาล่าง (Bottom Cap)',  matLabel($('f_matBot').value),  num('f_costBot'),    false);
   addLine('งานเทสเสีย (Testing Waste)', $('f_testWaste').value, num('f_cTestWaste'), false);
   addLine('จ้างภายนอก (Outsource)', $('f_outsource').value, num('f_cOutsource'), false);
-  addLine('ตะแกรงนอก (Outer Mesh)', $('f_meshOut').value,   num('f_cMeshOut'),  false);
-  addLine('ตะแกรงใน (Inner Mesh)', $('f_meshIn').value,    num('f_cMeshIn'),   false);
+  addLine('ตะแกรงนอก (Outer Mesh)', matLabel($('f_meshOut').value), num('f_cMeshOut'),  false);
+  addLine('ตะแกรงใน (Inner Mesh)',  matLabel($('f_meshIn').value),  num('f_cMeshIn'),   false);
   addLine('เลเซอร์ (Laser)',       $('f_laser').value,     num('f_cLaser'),    false);
   addLine('ร้าน/ชุป (Plating)',    $('f_plating').value || 'ชุบซิงค์ครั้ง', num('f_cPlating'), false);
   addLine('แม่พิมพ์ (Mold)',       $('f_mold').value,      num('f_cMold'),     true);
@@ -7258,8 +7962,11 @@ function buildDocuments() {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;
     padding:22px 28px 14px;border-bottom:3px solid #2563eb;gap:12px;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:46px;height:46px;background:#2563eb;border-radius:10px;flex-shrink:0;
-        display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.05rem">PT</div>
+      <div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;overflow:hidden;
+        display:flex;align-items:center;justify-content:center">
+        <img src="${_getLogoSrc()}" alt="PTS" style="width:100%;height:100%;object-fit:contain"
+          onerror="this.parentNode.style.background='#2563eb';this.style.display='none';this.parentNode.innerHTML='<span style=color:#fff;font-weight:800;font-size:1.05rem>PT</span>'">
+      </div>
       <div>
         <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn}</div>
@@ -7523,7 +8230,57 @@ function buildDocuments() {
 </div>`;
 }
 
-// Company config save
+// ── Logo helpers ──────────────────────────────────────────────
+// โลโก้บริษัทเก็บเป็น base64 ใน localStorage key: ptts_logo_b64
+// ถ้าไม่มี fallback → PTS.png (ไฟล์ในโฟลเดอร์เดียวกัน)
+// เชื่อมทุกจุด: header (.ph-logo), sidebar (.sidebar-logo), ใบเสนอราคา (buildDocuments)
+// ตั้งค่าผ่าน: ดูแบบเสนอราคา → ⚙️ ตั้งค่าบริษัท → คลิกกรอบโลโก้
+// ลบ: กด 🗑 ลบ ใน modal → กลับเป็น PTS.png อัตโนมัติ
+function _getLogoSrc() {
+  return localStorage.getItem('ptts_logo_b64') || 'PTS.png';
+}
+function _applyLogoAll() {
+  const src = _getLogoSrc();
+  document.querySelectorAll('.app-logo-img').forEach(el => { el.src = src; });
+}
+function handleLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    localStorage.setItem('ptts_logo_b64', e.target.result);
+    _refreshLogoPreview();
+    _applyLogoAll();
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+function deleteLogo() {
+  localStorage.removeItem('ptts_logo_b64');
+  _refreshLogoPreview();
+  _applyLogoAll();
+}
+function _refreshLogoPreview() {
+  const src = localStorage.getItem('ptts_logo_b64');
+  const img = $('cfg_logoImg');
+  const ph  = $('cfg_logoPlaceholder');
+  const del = $('cfg_logoDelBtn');
+  if (src) {
+    if (img) { img.src = src; img.style.display = 'block'; }
+    if (ph)  ph.style.display = 'none';
+    if (del) del.style.display = 'inline-block';
+  } else {
+    if (img) { img.src = ''; img.style.display = 'none'; }
+    if (ph)  ph.style.display = 'block';
+    if (del) del.style.display = 'none';
+  }
+}
+
+// ── Company config ────────────────────────────────────────────
+// ข้อมูลบริษัทเก็บใน localStorage key: ptts_company_cfg (JSON)
+// fields: name, nameEn, addr, tel, email, taxId
+// ใช้ใน: buildDocuments() → ใบเสนอราคา + ใบจำแนกต้นทุน
+// ตั้งค่าผ่าน: ดูแบบเสนอราคา → ⚙️ ตั้งค่าบริษัท
 function saveCompanyCfg() {
   const cfg = {
     name:   $('cfg_coName').value.trim(),
@@ -7546,6 +8303,7 @@ function openDocCfg() {
   $('cfg_coTel').value    = cfg.tel    || '02-345-6789, 081-999-8888';
   $('cfg_coEmail').value  = cfg.email  || 'sales@patitta-engine.co.th';
   $('cfg_coTaxId').value  = cfg.taxId  || '0105574001897';
+  _refreshLogoPreview();
   $('docCfgModal').style.display = 'flex';
 }
 function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
@@ -7588,6 +8346,7 @@ function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
 </div>
 
 <!-- ═══ COMPANY CONFIG MODAL ═══════════════════════════════════ -->
+<input type="file" id="cfg_logoFile" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
 <div id="docCfgModal" style="display:none;position:fixed;inset:0;z-index:400;
   background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
   align-items:center;justify-content:center">
@@ -7595,6 +8354,26 @@ function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
     border:1px solid rgba(255,255,255,.1);color:#cce4ff">
     <div style="font-size:.85rem;font-weight:700;margin-bottom:16px;color:#60a5fa">
       ⚙️ ข้อมูลบริษัท (ปรากฏในเอกสาร)</div>
+
+    <!-- Logo upload -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;
+      padding:10px 12px;border-radius:10px;border:1px dashed rgba(255,255,255,.15);background:rgba(255,255,255,.03)">
+      <div id="cfg_logoPreview" onclick="$('cfg_logoFile').click()" style="width:56px;height:56px;border-radius:10px;
+        overflow:hidden;cursor:pointer;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;
+        flex-shrink:0;border:2px dashed rgba(255,255,255,.2)">
+        <img id="cfg_logoImg" src="" alt="" style="width:100%;height:100%;object-fit:contain;display:none">
+        <span id="cfg_logoPlaceholder" style="font-size:1.4rem">🖼</span>
+      </div>
+      <div style="flex:1;font-size:.76rem;color:#94a3b8;line-height:1.6">
+        <div style="font-weight:600;color:#cce4ff;margin-bottom:2px">โลโก้บริษัท</div>
+        คลิกที่กรอบเพื่อเลือกไฟล์รูป<br>
+        <span style="font-size:.68rem">(PNG, JPG — แนะนำสี่เหลี่ยมจัตุรัส)</span>
+      </div>
+      <button onclick="deleteLogo()" id="cfg_logoDelBtn" style="display:none;padding:5px 10px;border-radius:7px;
+        border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.1);color:#f87171;
+        font-family:'Sarabun',sans-serif;font-size:.74rem;cursor:pointer;white-space:nowrap">🗑 ลบ</button>
+    </div>
+
     <div style="display:flex;flex-direction:column;gap:10px;font-size:.8rem">
       <label>ชื่อบริษัท (ภาษาไทย)<br>
         <input id="cfg_coName" style="width:100%;margin-top:3px;padding:6px 10px;border-radius:7px;
