@@ -1297,6 +1297,46 @@ select option { background: var(--sel-bg); color: var(--t1); }
       <input type="number" id="f_unit" placeholder="0" oninput="calcAll();autoCalcFill()">
     </div>
   </div>
+  <!-- ODฝา2 (optional) -->
+  <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;color:var(--t2);user-select:none">
+      <input type="checkbox" id="f_hasOd2" onchange="toggleOd2Panel()"
+        style="width:15px;height:15px;accent-color:var(--c1);cursor:pointer">
+      มีฝา 2 ขนาด (ODฝา2)
+    </label>
+  </div>
+  <div id="od2Panel" style="display:none;margin-top:8px;padding:10px 12px;border-radius:10px;
+    border:1px solid rgba(251,191,36,.25);background:rgba(251,191,36,.05)">
+    <div style="font-size:.72rem;color:#fbbf24;font-weight:600;margin-bottom:8px">⬡ ฝา 2 ขนาด</div>
+    <div class="grid g2">
+      <div class="field">
+        <label>OD ฝา2 (mm)</label>
+        <input type="number" id="f_od2" placeholder="0" step="0.01" oninput="updateSize();od2AutoCost()">
+      </div>
+      <div class="field">
+        <label>MAT ฝา2</label>
+        <select id="f_matOd2" onchange="od2AutoCost()"><option value="">— เลือก —</option></select>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label style="font-size:.78rem;color:var(--t2)">การคำนวณ:</label>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.78rem">
+        <input type="radio" name="od2calc" id="r_od2calc_yes" value="1" checked onchange="od2AutoCost()" style="accent-color:#4ade80">
+        <span style="color:#4ade80;font-weight:600">คำนวณ</span> — รวมต้นทุนฝา2
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.78rem">
+        <input type="radio" name="od2calc" id="r_od2calc_no" value="0" onchange="od2AutoCost()" style="accent-color:#94a3b8">
+        <span style="color:#94a3b8;font-weight:600">ไม่คำนวณ</span> — แจ้งราคาเฉยๆ
+      </label>
+    </div>
+    <div class="pair-row" style="margin-top:8px">
+      <div class="field">
+        <label>Cost ฝา2 (฿/ลูก) <span id="od2costLabel" style="color:#4ade80;font-size:.68rem">●auto</span></label>
+        <input type="number" class="cost-input" id="f_costOd2" placeholder="0.00" step="0.01" oninput="calcAll()">
+      </div>
+    </div>
+  </div>
+
   <div class="grid g2" style="margin-top:10px">
     <div class="field">
       <label>Size (auto)</label>
@@ -2168,15 +2208,127 @@ select option { background: var(--sel-bg); color: var(--t1); }
              background:none;border:none;color:var(--t3);cursor:pointer;font-size:.9rem;padding:4px">✕</button>
   </div>
 
-  <!-- OD filter checkbox -->
-  <label style="display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;user-select:none">
-    <input type="checkbox" id="dtOdFilter" onchange="dtToggleOdFilter()"
-      style="width:16px;height:16px;accent-color:var(--c1);cursor:pointer">
-    <span style="font-size:.78rem;color:var(--t2)">
-      กรองตาม OD ในฟอร์มปัจจุบัน
-      <span id="dtOdFilterLabel" style="color:var(--c1);font-weight:700"></span>
-    </span>
-  </label>
+  <!-- Advanced Search toggle row -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+
+    <!-- สถานะ -->
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:.75rem;color:var(--t3);white-space:nowrap">สถานะ</span>
+      <select id="adv_status" onchange="_dtPage=0;dtRender()"
+        style="padding:4px 8px;border-radius:7px;border:1px solid var(--bc-input);
+        background:var(--bg-input);color:var(--t1);font-size:.76rem;font-family:Sarabun,sans-serif;cursor:pointer">
+        <option value="">ทั้งหมด</option>
+        <option value="ผ่าน">ผ่าน</option>
+        <option value="อนุมัติ">อนุมัติ</option>
+        <option value="รอสรุป">รอสรุป</option>
+        <option value="ยกเลิก">ยกเลิก</option>
+      </select>
+    </div>
+
+    <!-- กรองตรง OD×ID×H -->
+    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none">
+      <input type="checkbox" id="adv_exact_size" onchange="_dtPage=0;dtRender()"
+        style="width:14px;height:14px;accent-color:#7c3aed;cursor:pointer">
+      <span style="font-size:.78rem;color:var(--t2)">กรองตรง OD×ID×H
+        <span id="adv_exact_size_label" style="color:#b09fff;font-weight:700"></span>
+      </span>
+    </label>
+
+    <!-- กรองตาม OD -->
+    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+      <input type="checkbox" id="dtOdFilter" onchange="dtToggleOdFilter()"
+        style="width:15px;height:15px;accent-color:var(--c1);cursor:pointer">
+      <span style="font-size:.78rem;color:var(--t2)">กรองตาม OD ในฟอร์มปัจจุบัน
+        <span id="dtOdFilterLabel" style="color:var(--c1);font-weight:700"></span>
+      </span>
+    </label>
+
+    <button onclick="dtToggleAdvSearch()"
+      style="margin-left:auto;padding:5px 12px;border-radius:8px;border:1px solid rgba(155,143,255,.3);
+      background:rgba(155,143,255,.08);color:#b09fff;font-size:.75rem;cursor:pointer;
+      font-family:Sarabun,sans-serif;display:flex;align-items:center;gap:5px">
+      🔎 <span id="dtAdvSearchLabel">ค้นหาละเอียด</span>
+      <span id="dtAdvActiveCount" style="display:none;background:#b09fff;color:#0d1b2a;
+        border-radius:20px;padding:0 6px;font-size:.68rem;font-weight:700"></span>
+    </button>
+    <button onclick="dtClearAdv()" id="dtAdvClearBtn" style="display:none;padding:5px 10px;border-radius:8px;
+      border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.06);color:#f87171;
+      font-size:.73rem;cursor:pointer;font-family:Sarabun,sans-serif">✕ ล้างตัวกรอง</button>
+  </div>
+
+  <!-- Advanced Search panel -->
+  <div id="dtAdvPanel" style="display:none;background:rgba(155,143,255,.06);border:1px solid rgba(155,143,255,.2);
+    border-radius:12px;padding:14px 16px;margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px">
+
+      <!-- OD range -->
+      <div>
+        <div style="font-size:.7rem;color:#b09fff;font-weight:600;margin-bottom:4px">OD (mm)</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="adv_od_min" placeholder="min" oninput="_dtPage=0;dtRender()"
+            style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--bc-input);
+            background:var(--bg-input);color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif">
+          <span style="color:var(--t3);font-size:.75rem">–</span>
+          <input type="number" id="adv_od_max" placeholder="max" oninput="_dtPage=0;dtRender()"
+            style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--bc-input);
+            background:var(--bg-input);color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif">
+        </div>
+      </div>
+
+      <!-- Date range -->
+      <div>
+        <div style="font-size:.7rem;color:#b09fff;font-weight:600;margin-bottom:4px">วันที่</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="date" id="adv_date_from" oninput="_dtPage=0;dtRender()"
+            style="width:100%;padding:5px 6px;border-radius:6px;border:1px solid var(--bc-input);
+            background:var(--bg-input);color:var(--t1);font-size:.72rem;font-family:Sarabun,sans-serif">
+          <span style="color:var(--t3);font-size:.75rem">–</span>
+          <input type="date" id="adv_date_to" oninput="_dtPage=0;dtRender()"
+            style="width:100%;padding:5px 6px;border-radius:6px;border:1px solid var(--bc-input);
+            background:var(--bg-input);color:var(--t1);font-size:.72rem;font-family:Sarabun,sans-serif">
+        </div>
+      </div>
+
+      <!-- ราคา range -->
+      <div>
+        <div style="font-size:.7rem;color:#b09fff;font-weight:600;margin-bottom:4px">ราคาเสนอขาย/ลูก (฿)</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="adv_price_min" placeholder="min" oninput="_dtPage=0;dtRender()"
+            style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--bc-input);
+            background:var(--bg-input);color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif">
+          <span style="color:var(--t3);font-size:.75rem">–</span>
+          <input type="number" id="adv_price_max" placeholder="max" oninput="_dtPage=0;dtRender()"
+            style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid var(--bc-input);
+            background:var(--bg-input);color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif">
+        </div>
+      </div>
+
+      <!-- MAT ฝาบน/ล่าง -->
+      <div>
+        <div style="font-size:.7rem;color:#b09fff;font-weight:600;margin-bottom:4px">MAT ฝา (บน/ล่าง)</div>
+        <input type="text" id="adv_mat_flap" placeholder="เช่น SPCC-0.6" oninput="_dtPage=0;dtRender()"
+          style="width:100%;box-sizing:border-box;padding:5px 8px;border-radius:6px;border:1px solid var(--bc-input);
+          background:var(--bg-input);color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif">
+      </div>
+
+      <!-- MAT ตะแกรง -->
+      <div>
+        <div style="font-size:.7rem;color:#b09fff;font-weight:600;margin-bottom:4px">MAT ตะแกรง (นอก/ใน)</div>
+        <input type="text" id="adv_mat_mesh" placeholder="เช่น L-5-0.7" oninput="_dtPage=0;dtRender()"
+          style="width:100%;box-sizing:border-box;padding:5px 8px;border-radius:6px;border:1px solid var(--bc-input);
+          background:var(--bg-input);color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif">
+      </div>
+
+      <!-- แบบงาน -->
+      <div>
+        <div style="font-size:.7rem;color:#b09fff;font-weight:600;margin-bottom:4px">แบบงาน</div>
+        <input type="text" id="adv_worktype" placeholder="เช่น หัว-ท้าย" oninput="_dtPage=0;dtRender()"
+          style="width:100%;box-sizing:border-box;padding:5px 8px;border-radius:6px;border:1px solid var(--bc-input);
+          background:var(--bg-input);color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif">
+      </div>
+
+    </div>
+  </div>
 
   <!-- Result count -->
   <div style="font-size:.72rem;color:var(--t3);margin-bottom:4px;padding:0 2px" id="dtCount"></div>
@@ -2553,13 +2705,59 @@ function calcGapWeld() {
 }
 
 function updateSize() {
-  const od = $('f_od').value.trim();
-  const id = $('f_id').value.trim();
-  const h  = $('f_h').value.trim();
-  if (od || id || h) $('f_size').value = [od,id,h].filter(Boolean).join('x');
+  const od  = $('f_od').value.trim();
+  const id  = $('f_id').value.trim();
+  const h   = $('f_h').value.trim();
+  const od2 = ($('f_hasOd2')?.checked && $('f_od2')?.value.trim()) ? $('f_od2').value.trim() : '';
+  const base = [od,id,h].filter(Boolean).join('x');
+  if (od || id || h) $('f_size').value = od2 ? `${od2}/${base}` : base;
   checkMold(parseFloat(od) || 0, parseFloat(id) || 0);
   _validateDimensions();
   calcGapWeld();
+}
+
+// ── ODฝา2 helpers ──────────────────────────────────────
+function toggleOd2Panel() {
+  const on = $('f_hasOd2')?.checked;
+  const p  = $('od2Panel');
+  if (p) p.style.display = on ? '' : 'none';
+  if (!on) {
+    if ($('f_od2'))      $('f_od2').value = '';
+    if ($('f_matOd2'))   $('f_matOd2').value = '';
+    if ($('f_costOd2'))  $('f_costOd2').value = '';
+  }
+  updateSize(); calcAll();
+}
+
+function od2AutoCost() {
+  const doCalc = $('r_od2calc_yes')?.checked;
+  const lbl    = $('od2costLabel');
+  const inp    = $('f_costOd2');
+  if (!doCalc) {
+    if (lbl) lbl.textContent = '';
+    if (inp) { inp.value = ''; inp.setAttribute('readonly',''); inp.style.background=''; }
+    calcAll(); return;
+  }
+  if (inp) inp.removeAttribute('readonly');
+  if (lbl) lbl.textContent = '●auto';
+  const matCode = $('f_matOd2')?.value;
+  const od2     = parseFloat($('f_od2')?.value) || 0;
+  if (!matCode || !od2) { calcAll(); return; }
+  const price = matPriceMap[matCode] || 0;
+  if (!price) { calcAll(); return; }
+  // ใช้สูตรเดียวกับฝาบน/ล่าง: cw = od2 + 50, cl = od2 + 50 (จาก _partFormulas[0])
+  const fTop  = _partFormulas?.[0];
+  const evalF = expr => { try { return new Function('od','id','h','unit','pi','sqrt','pow','custgap',
+    '"use strict";return('+expr+')')(od2, 0, 0, 1, Math.PI, Math.sqrt, Math.pow, 0)||0; } catch(e){return od2+50;} };
+  const cw = fTop ? evalF(fTop.cw) : od2 + 50;
+  const cl = fTop ? evalF(fTop.cl) : od2 + 50;
+  const DEF  = specMatData['4 X 8 ฟุต(ปรกติ)'] || {w:1219, l:2438};
+  const spec  = specMatData[matCode] || DEF;
+  const sw = spec.w, sl = spec.l;
+  const pieces = Math.floor(sw/cw) * Math.floor(sl/cl);
+  const ppc = pieces > 0 ? price / pieces : price;
+  if (inp) inp.value = ppc.toFixed(2);
+  calcAll();
 }
 
 function _validateDimensions() {
@@ -3076,10 +3274,15 @@ function calcAll() {
     if (lbl) lbl.textContent = `●auto ${machinePct}%`;
   }
 
+  // ODฝา2: รวมต้นทุนเฉพาะเมื่อ checkbox เปิด + radio = คำนวณ
+  const hasOd2   = $('f_hasOd2')?.checked;
+  const doCalcOd2 = hasOd2 && $('r_od2calc_yes')?.checked;
+  const cOd2     = doCalcOd2 ? num('f_costOd2') : 0;
+
   // per-unit costs; cMold+fixedCost are per-job (cTransport now per-unit)
   const perUnitVar = costTop+costBot+cTestWaste+cOutsource+cMeshOut+cMeshIn+
                      cLaser+cPlating+cLabor+cTransport+num('f_cMachine')+
-                     cOther1+cOther2+cOther3;
+                     cOther1+cOther2+cOther3+cOd2;
   const total = perUnitVar*unit + cMold + fixedCost;
   const costPerUnit2 = perUnitVar + (unit > 0 ? (cMold + fixedCost) / unit : (cMold + fixedCost));
   // auto sell price from margin — per unit
@@ -3222,7 +3425,7 @@ let _dtFilter  = '';          // status filter ('all' | status string)
 let _dtSortCol = 'noQuo';    // default sort: Quo No.
 let _dtSortDir = -1;          // -1 = desc, 1 = asc
 let _dtPage    = 0;           // current page (0-based)
-const DT_PAGE_SIZE = 10;      // rows per page
+const DT_PAGE_SIZE = 50;      // rows per page
 
 // Column indices (0-based, matching the save order in submitForm)
 const DT = {
@@ -3261,7 +3464,12 @@ const DT = {
   quoter:   47,  // AV
   rawMat:   48,  // AW
   // AX=49, AY=50, AZ=51, BA=52 — reserved / empty
-  refId:    53   // BB = เลขอ้างอิง (Q-YYYYMMDD-XXXX)
+  refId:    53,  // BB = เลขอ้างอิง (Q-YYYYMMDD-XXXX)
+  // ── ODฝา2 (BC-BF = index 54-57) ──────────────────────
+  od2:      54,  // BC = OD ฝา2 (mm)
+  matOd2:   55,  // BD = MAT ฝา2 code
+  costOd2:  56,  // BE = cost ฝา2 / ลูก
+  calcOd2:  57   // BF = 1=คำนวณ, 0=ไม่คำนวณ
 };
 
 async function dtRefresh(showMsg) {
@@ -3354,6 +3562,14 @@ function dtRender() {
   const lbl = $('dtOdFilterLabel');
   if (lbl && odNow) lbl.textContent = `(OD ${odNow})`;
 
+  const adv = _getAdvFilters();
+  const advActive = _countAdvActive(adv);
+  // update adv active badge
+  const advCount = $('dtAdvActiveCount');
+  const advClearBtn = $('dtAdvClearBtn');
+  if (advCount) { advCount.style.display = advActive ? '' : 'none'; advCount.textContent = advActive; }
+  if (advClearBtn) advClearBtn.style.display = advActive ? '' : 'none';
+
   const rows = _dtCache.filter(r => {
     if (!Array.isArray(r)) return false;
     // status filter
@@ -3369,9 +3585,39 @@ function dtRender() {
       const hay = [
         r[DT.noQuo], r[DT.od], r[DT.id], r[DT.h],
         r[DT.workType], r[DT.remark], r[DT.contact],
-        `${r[DT.od]}×${r[DT.id]}×${r[DT.h]}`
+        `${r[DT.od]}×${r[DT.id]}×${r[DT.h]}`,
+        r[DT.matOd2], String(Math.abs(parseFloat(r[DT.od2])||0)||'')
       ].join(' ').toLowerCase();
       if (!hay.includes(search)) return false;
+    }
+    // ── Advanced filters ──
+    if (advActive) {
+      const od = parseFloat(r[DT.od]) || 0;
+      if (adv.odMin !== null && od < adv.odMin) return false;
+      if (adv.odMax !== null && od > adv.odMax) return false;
+      const sp = parseFloat(r[DT.sellPrice]) || 0;
+      if (adv.priceMin !== null && sp < adv.priceMin) return false;
+      if (adv.priceMax !== null && sp > adv.priceMax) return false;
+      if (adv.matFlap) {
+        const f = [(r[DT.matTop]||'').toLowerCase(),(r[DT.matBot]||'').toLowerCase()].join(' ');
+        if (!f.includes(adv.matFlap)) return false;
+      }
+      if (adv.matMesh) {
+        const m = [(r[DT.meshOut]||'').toLowerCase(),(r[DT.meshIn]||'').toLowerCase()].join(' ');
+        if (!m.includes(adv.matMesh)) return false;
+      }
+      if (adv.workType && !(r[DT.workType]||'').toLowerCase().includes(adv.workType)) return false;
+      if (adv.status && (r[DT.status]||'').trim() !== adv.status) return false;
+      if (adv.exactSize && (adv._od || adv._id || adv._h)) {
+        if (adv._od && (parseFloat(r[DT.od])||0) !== adv._od) return false;
+        if (adv._id && (parseFloat(r[DT.id])||0) !== adv._id) return false;
+        if (adv._h  && (parseFloat(r[DT.h] )||0) !== adv._h)  return false;
+      }
+      if (adv.dateFrom || adv.dateTo) {
+        const iso = _toIso(r[DT.date]);
+        if (adv.dateFrom && iso < adv.dateFrom) return false;
+        if (adv.dateTo   && iso > adv.dateTo)   return false;
+      }
     }
     return true;
   });
@@ -3580,6 +3826,73 @@ function dtClearSearch() {
   if ($('dtSearch')) { $('dtSearch').value = ''; _dtPage = 0; dtRender(); }
 }
 
+// ── Advanced Search ──────────────────────────────────
+function dtToggleAdvSearch() {
+  const p = $('dtAdvPanel');
+  if (!p) return;
+  const open = p.style.display === 'none' || !p.style.display;
+  p.style.display = open ? '' : 'none';
+  const lbl = $('dtAdvSearchLabel');
+  if (lbl) lbl.textContent = open ? 'ปิดค้นหาละเอียด' : 'ค้นหาละเอียด';
+}
+
+function dtClearAdv() {
+  ['adv_od_min','adv_od_max','adv_date_from','adv_date_to',
+   'adv_price_min','adv_price_max','adv_mat_flap','adv_mat_mesh','adv_worktype','adv_status']
+    .forEach(id => { const el=$(id); if(el) el.value=''; });
+  const cb=$('adv_exact_size'); if(cb) cb.checked=false;
+  _dtPage = 0; dtRender();
+}
+
+function _getAdvFilters() {
+  const g = id => { const el=$(id); return el ? el.value.trim() : ''; };
+  const gn = id => parseFloat(g(id)) || null;
+  const gb = id => { const el=$(id); return el ? el.checked : false; };
+  // update exact-size label dynamically
+  const lbl = $('adv_exact_size_label');
+  const od = parseFloat($('f_od')?.value)||0;
+  const id_ = parseFloat($('f_id')?.value)||0;
+  const h  = parseFloat($('f_h')?.value)||0;
+  if (lbl) lbl.textContent = (od||id_||h) ? `(OD${od}×ID${id_}×H${h})` : '(จากฟอร์ม)';
+  return {
+    odMin:     gn('adv_od_min'),
+    odMax:     gn('adv_od_max'),
+    dateFrom:  g('adv_date_from'),
+    dateTo:    g('adv_date_to'),
+    priceMin:  gn('adv_price_min'),
+    priceMax:  gn('adv_price_max'),
+    matFlap:   g('adv_mat_flap').toLowerCase(),
+    matMesh:   g('adv_mat_mesh').toLowerCase(),
+    workType:  g('adv_worktype').toLowerCase(),
+    status:    g('adv_status'),
+    exactSize: gb('adv_exact_size'),
+    _od: od, _id: id_, _h: h,
+  };
+}
+
+function _countAdvActive(f) {
+  let n = 0;
+  if (f.odMin !== null || f.odMax !== null) n++;
+  if (f.dateFrom || f.dateTo) n++;
+  if (f.priceMin !== null || f.priceMax !== null) n++;
+  if (f.matFlap) n++;
+  if (f.matMesh) n++;
+  if (f.workType) n++;
+  if (f.status) n++;
+  if (f.exactSize) n++;
+  return n;
+}
+
+function _toIso(thaiShort) {
+  if (!thaiShort) return '';
+  const p = String(thaiShort).split('/');
+  if (p.length === 3) {
+    const y = parseInt(p[2]) > 2500 ? parseInt(p[2])-543 : parseInt(p[2]);
+    return `${y}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  }
+  return thaiShort;
+}
+
 function dtLoadIntoForm(idx) {
   const tbody = $('dtBody');
   const rows = tbody && tbody._filteredRows;
@@ -3629,6 +3942,24 @@ function dtLoadIntoForm(idx) {
     sv('f_remark',    r[DT.remark]);
     sv('f_quoter',    r[DT.quoter]);
     sv('f_rawMat',    r[DT.rawMat]);
+    // โหลด ODฝา2
+    { const od2raw = parseFloat(r[DT.od2]) || 0;
+      const hasOd2  = od2raw > 0;
+      const doCalc  = (parseFloat(r[DT.calcOd2]) || 0) === 1;
+      const od2val  = od2raw;
+      const cb = $('f_hasOd2');
+      if (cb) { cb.checked = hasOd2; toggleOd2Panel(); }
+      if (hasOd2) {
+        if ($('f_od2')) $('f_od2').value = od2val;
+        const matEl = $('f_matOd2');
+        if (matEl) matEl.value = r[DT.matOd2] || '';
+        const rYes = $('r_od2calc_yes'), rNo = $('r_od2calc_no');
+        if (rYes) rYes.checked = doCalc;
+        if (rNo)  rNo.checked  = !doCalc;
+        const costEl = $('f_costOd2');
+        if (costEl) { costEl.value = parseFloat(r[DT.costOd2]) || ''; }
+      }
+    }
     // โหลดรูปใบขอราคา (AY = index 50)
     { const imgUrl = r[50]; if (imgUrl) _loadAttachFromUrl(imgUrl); else clearAttachedImage(); }
     // เลขอ้างอิง BB — โหลดของเดิม ถ้าไม่มีให้สร้างใหม่
@@ -3983,7 +4314,7 @@ function fillSelect(id, items) {
 
 // ── Seed dropdowns from local MAT on startup ──────────
 (function(){
-  if (_localMatFlap.length) { MAT_FLAP.forEach(id => fillSelect(id, _localMatFlap)); _syncMatToMaps(); }
+  if (_localMatFlap.length) { MAT_FLAP.forEach(id => fillSelect(id, _localMatFlap)); fillSelect('f_matOd2', _localMatFlap); _syncMatToMaps(); }
   if (_localMatMesh.length) { MAT_MESH.forEach(id => fillSelect(id, _localMatMesh)); _syncMatToMaps(); }
 })();
 
@@ -4818,6 +5149,10 @@ function submitForm() {
     /* 52 */ '',                     // AZ (reserved)
     /* 53 */ '',                     // BA (reserved)
     /* 54 */ $('f_refId') ? $('f_refId').value : generateRefId(),  // BB = เลขอ้างอิง
+    /* 55 */ ($('f_hasOd2')?.checked ? (parseFloat($('f_od2')?.value)||0) : 0),  // BC = OD ฝา2
+    /* 56 */ ($('f_hasOd2')?.checked ? ($('f_matOd2')?.value||'') : ''),         // BD = MAT ฝา2
+    /* 57 */ ($('f_hasOd2')?.checked ? num('f_costOd2') : 0),                    // BE = cost ฝา2
+    /* 58 */ ($('f_hasOd2')?.checked ? ($('r_od2calc_yes')?.checked ? 1 : 0) : 0), // BF = flag
   ];
 
   const isUpdate = !!_loadedNoQuo;
