@@ -107,6 +107,22 @@ body {
 .tab-content { display: none; padding: 0 12px 16px; }
 .tab-content.active { display: block; }
 
+/* ── "เพิ่มเติม" floating menu (รวมแท็บย่อย) ────────── */
+.more-menu {
+  position: fixed; z-index: 200; display: none;
+  background: var(--tabbar); backdrop-filter: blur(16px);
+  border: 1px solid var(--bc-div); border-radius: 12px;
+  padding: 6px; min-width: 168px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.35);
+}
+.more-menu.show { display: flex; flex-direction: column; gap: 2px; }
+.more-menu .tab-btn {
+  flex-direction: row; justify-content: flex-start; gap: 10px;
+  height: 42px; border-radius: 8px; padding: 0 10px;
+}
+.more-menu .tab-btn .t-label { font-size: .8rem; }
+.more-menu .tab-btn .t-icon { font-size: 1.05rem; }
+
 /* ── TAB MANAGER ─────────────────────────────────── */
 .tmr-row {
   display:flex;align-items:center;gap:8px;
@@ -393,17 +409,6 @@ select option { background: var(--sel-bg); color: var(--t1); }
 .btn-pdf   { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.28); color:#10b981; }
 
 /* ── Help FAB ───────────────────────────────────────── */
-.help-fab {
-  position:fixed; bottom:76px; right:16px; z-index:9000;
-  width:42px; height:42px; border-radius:50%;
-  background:linear-gradient(135deg,#1d4ed8,#7c3aed);
-  border:none; color:#fff; font-size:1.1rem; font-weight:800;
-  cursor:pointer; box-shadow:0 4px 16px rgba(99,102,241,.5);
-  display:flex; align-items:center; justify-content:center;
-  transition:transform .15s, box-shadow .15s;
-}
-.help-fab:hover { transform:scale(1.1); box-shadow:0 6px 24px rgba(99,102,241,.65); }
-
 /* ── ℹ️ Tooltip trigger ─────────────────────────────── */
 .tip-icon {
   display:inline-flex; align-items:center; justify-content:center;
@@ -1041,9 +1046,6 @@ select option { background: var(--sel-bg); color: var(--t1); }
   .sidebar-title { font-size: .88rem; font-weight: 700; color: var(--t1); line-height: 1.2; }
   .sidebar-sub   { font-size: .68rem; color: var(--t3); }
 
-  /* Help FAB: shift to not overlap sidebar */
-  .help-fab { bottom: 20px; right: 20px; }
-
   /* Page header stripe covers full width already (position:relative in flow) */
   .page-header::before,
   .page-header::after { left: 0; }
@@ -1153,9 +1155,6 @@ select option { background: var(--sel-bg); color: var(--t1); }
 <!-- SHARE CARD (hidden, used for image generation) -->
 <div id="shareCardEl" style="position:fixed;left:-9999px;top:-9999px;width:480px;font-family:'Sarabun',sans-serif;font-size:14px;z-index:-1;"></div>
 
-<!-- Help FAB -->
-<button class="help-fab" onclick="showHelp()" title="คู่มือการใช้งาน">?</button>
-
 <!-- HEADER -->
 <div class="page-header">
   <div class="ph-inner">
@@ -1166,7 +1165,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v5.11</span>
+      <span class="ph-chip ver">v5.42</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2052,11 +2051,18 @@ select option { background: var(--sel-bg); color: var(--t1); }
 <div id="tab-api" class="tab-content">
   <div class="tab-title" style="padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:8px"><div class="ticon ic-blue">🔧</div>ตั้งค่า</div>
-    <button onclick="openDevLogs()"
-      style="padding:8px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;
-      cursor:pointer;font-family:'Sarabun',sans-serif;font-size:.78rem;font-weight:700;
-      display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#0f172a,#1e293b);
-      color:#cbd5e1">📋 Dev Logs</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="showHelp()" title="คู่มือการใช้งาน"
+        style="padding:8px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;
+        cursor:pointer;font-family:'Sarabun',sans-serif;font-size:.78rem;font-weight:700;
+        display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);
+        color:#fff">❓ วิธีใช้</button>
+      <button onclick="openDevLogs()"
+        style="padding:8px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;
+        cursor:pointer;font-family:'Sarabun',sans-serif;font-size:.78rem;font-weight:700;
+        display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#0f172a,#1e293b);
+        color:#cbd5e1">📋 Dev Logs</button>
+    </div>
   </div>
 
   <!-- Google Apps Script URL -->
@@ -2494,6 +2500,242 @@ select option { background: var(--sel-bg); color: var(--t1); }
 </div>
 </div><!-- end tab-data -->
 
+<!-- ══ TAB: ORDER ══════════════════════════════════ -->
+<div id="tab-order" class="tab-content">
+<div style="max-width:880px;margin:0 auto;padding:12px 8px 80px">
+
+  <!-- สร้าง Order จากใบเสนอราคา -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon ic-ext">📦</div>
+      <h2>สร้าง Order จากใบเสนอราคา</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;margin-bottom:12px">
+      <div class="field"><label>No.PO</label>
+        <input type="text" id="ord_noPO" placeholder="เลขที่ใบสั่งซื้อ">
+      </div>
+      <div class="field"><label>วันที่สั่งซื้อ</label>
+        <input type="date" id="ord_orderDate">
+      </div>
+      <div class="field"><label>วันที่ต้องการ</label>
+        <input type="date" id="ord_wantDate">
+      </div>
+      <div class="field"><label>Process</label>
+        <select id="ord_status">
+          <option value="กำลังผลิต">กำลังผลิต</option>
+          <option value="ส่งซุป">ส่งซุป</option>
+          <option value="ส่งตัวอย่างเทส+รอสรุป">ส่งตัวอย่างเทส+รอสรุป</option>
+          <option value="ส่งยังไม่ครบ">ส่งยังไม่ครบ</option>
+          <option value="รอConfirm">รอConfirm</option>
+          <option value="FG รอเรียก">FG รอเรียก</option>
+          <option value="Stock">Stock</option>
+          <option value="เรียบร้อย">เรียบร้อย</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;align-items:stretch">
+      <!-- ข้อมูลจากใบเสนอราคาที่เปิดอยู่ + ฟิลด์แก้ไขได้ -->
+      <div style="background:var(--bg-soft,rgba(99,102,241,.06));border:1px solid var(--bc-div);border-radius:10px;padding:12px 14px;font-size:.8rem;line-height:2;display:flex;flex-direction:column">
+        <div style="font-size:.7rem;color:var(--t3);margin-bottom:4px">ดึงข้อมูลจากใบเสนอราคาที่เปิดอยู่</div>
+        <div>No.Quo: <b id="ord_previewNoQuo" style="color:var(--c1)">—</b></div>
+        <div>ลูกค้า: <b id="ord_previewCustomer">—</b></div>
+        <div>แบบงาน: <b id="ord_previewWorkType">—</b></div>
+        <div>รายการสินค้า: <b id="ord_previewProductList">—</b></div>
+        <div>จำนวน: <b id="ord_previewQty">—</b></div>
+        <div>ราคา: <b id="ord_previewPrice">—</b></div>
+        <div style="display:flex;align-items:center;gap:6px">แม่พิมพ์:
+          <input type="text" id="ord_mold" placeholder="แม่พิมพ์"
+            style="flex:1;min-width:0;padding:3px 8px;font-size:.78rem;font-weight:700;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg1,#fff)">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">สถานะงาน:
+          <select id="ord_workStatus" style="flex:1;min-width:0;padding:3px 8px;font-size:.78rem;font-weight:700;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg1,#fff)">
+            <option value="ปรกติ">ปรกติ</option>
+            <option value="เร่งด่วน">เร่งด่วน</option>
+            <option value="สต็อก">สต็อก</option>
+          </select>
+        </div>
+        <div>วัตถุดิบ: <b id="ord_material">—</b></div>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;flex:1">
+          <span>หมายเหตุ:</span>
+          <textarea id="ord_note" placeholder="หมายเหตุเพิ่มเติม" rows="3" style="flex:1;resize:vertical;padding:6px 8px;font-size:.78rem;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg1,#fff);font-family:inherit"></textarea>
+        </div>
+      </div>
+      <!-- แนบไฟล์ PO + พรีวิวภาพ -->
+      <div style="display:flex;flex-direction:column">
+        <img id="ord_poFilePreview" style="display:none;width:100%;flex:1;min-height:200px;max-height:380px;object-fit:contain;border-radius:10px;border:1px solid var(--bc-div);margin-bottom:8px;background:var(--bg1,#fff)">
+        <div class="field"><label>แนบไฟล์ PO</label>
+          <input type="file" id="ord_poFile" accept="image/*,.pdf" style="display:none" onchange="_ordPoFileChanged('ord')">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button type="button" class="btn" onclick="$('ord_poFile').click()" style="padding:6px 14px;font-size:.78rem">เลือกไฟล์</button>
+            <span id="ord_poFileName" style="font-size:.76rem;color:var(--t3)">ยังไม่ได้เลือกไฟล์ใด</span>
+            <button type="button" id="ord_poFileClear" onclick="_ordClearPoFile('ord')" title="ลบไฟล์"
+              style="display:none;border:none;background:none;color:#ef4444;font-size:1rem;cursor:pointer;line-height:1;padding:2px 4px">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="ord_productList">
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <button class="btn btn-primary" id="ord_createBtn" onclick="_ordCreateBtnClick()" style="padding:10px 18px;font-size:.88rem">
+        ➕ สร้าง Order
+      </button>
+      <button class="btn" id="ord_clearBtn" onclick="_ordResetCard()" style="padding:10px 18px;font-size:.88rem;background:rgba(255,255,255,.06);color:var(--t2)">
+        🧹 เคลียร์การ์ด
+      </button>
+      <span id="ord_createStatus" style="font-size:.76rem;color:var(--t3)"></span>
+    </div>
+  </div>
+
+  <!-- รายการ Order -->
+  <div class="card" style="margin-top:14px">
+    <div class="card-header">
+      <div class="icon ic-ext">🗂️</div>
+      <h2>รายการ Order</h2>
+      <button onclick="fetchOrders()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        🔄 รีเฟรช
+      </button>
+    </div>
+    <div style="position:relative;margin-bottom:10px">
+      <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:.85rem">🔍</span>
+      <input id="ordSearch" type="text" placeholder="ค้นหา No.Quo, No.PO, ลูกค้า, รายการสินค้า…"
+        style="width:100%;box-sizing:border-box;padding:10px 12px 10px 36px;border-radius:10px;
+               border:1px solid var(--bc-input);background:var(--bg-input);
+               color:var(--t1);font-size:.8rem;font-family:Sarabun,sans-serif;outline:none"
+        oninput="_ordPage=1; renderOrderTable()">
+    </div>
+    <!-- ── ตัวกรองแบบละเอียด ── -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+      <div class="field" style="margin:0;min-width:180px">
+        <label style="font-size:.7rem;color:var(--t2)">Process</label>
+        <select id="ordFilterStatus" onchange="_ordPage=1; renderOrderTable()"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;
+                 border:1px solid var(--bc-input);background:var(--bg-input);
+                 color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif;outline:none">
+          <option value="_not_done" selected>ทั้งหมด (ซ่อนที่เรียบร้อยแล้ว)</option>
+          <option value="_all">ทั้งหมด (รวมเรียบร้อยแล้ว)</option>
+          <option value="กำลังผลิต">กำลังผลิต</option>
+          <option value="ส่งซุป">ส่งซุป</option>
+          <option value="ส่งตัวอย่างเทส+รอสรุป">ส่งตัวอย่างเทส+รอสรุป</option>
+          <option value="ส่งยังไม่ครบ">ส่งยังไม่ครบ</option>
+          <option value="รอConfirm">รอConfirm</option>
+          <option value="FG รอเรียก">FG รอเรียก</option>
+          <option value="Stock">Stock</option>
+          <option value="เรียบร้อย">เรียบร้อย</option>
+          <option value="">(ไม่ระบุ/ว่าง)</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;min-width:160px">
+        <label style="font-size:.7rem;color:var(--t2)">ลูกค้า</label>
+        <input id="ordFilterCustomer" type="text" placeholder="ทุกลูกค้า" oninput="_ordPage=1; renderOrderTable()"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;
+                 border:1px solid var(--bc-input);background:var(--bg-input);
+                 color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif;outline:none">
+      </div>
+      <div class="field" style="margin:0;min-width:140px">
+        <label style="font-size:.7rem;color:var(--t2)">วันที่ต้องการ ตั้งแต่</label>
+        <input id="ordFilterWantFrom" type="date" oninput="_ordPage=1; renderOrderTable()"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;
+                 border:1px solid var(--bc-input);background:var(--bg-input);
+                 color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif;outline:none">
+      </div>
+      <div class="field" style="margin:0;min-width:140px">
+        <label style="font-size:.7rem;color:var(--t2)">ถึง</label>
+        <input id="ordFilterWantTo" type="date" oninput="_ordPage=1; renderOrderTable()"
+          style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;
+                 border:1px solid var(--bc-input);background:var(--bg-input);
+                 color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif;outline:none">
+      </div>
+      <button onclick="_ordResetFilters()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--bc-card);
+        background:var(--bg-card);color:var(--t2);font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif;align-self:flex-end">
+        ↺ ล้างตัวกรอง
+      </button>
+    </div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--bc-card)">
+      <table style="width:100%;border-collapse:collapse;min-width:760px;table-layout:fixed">
+        <thead>
+          <tr style="background:var(--bg-deep)">
+            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.Quo</th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.PO</th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่สั่งซื้อ</th>
+            <th style="width:11%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">ลูกค้า</th>
+            <th style="width:24%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">รายการสินค้า</th>
+            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">จำนวน</th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:right;border-bottom:1px solid var(--bc-div)">ราคาขาย</th>
+            <th style="width:11%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">Process</th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่ต้องการ</th>
+            <th style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">ปฏิบัติการ</th>
+          </tr>
+        </thead>
+        <tbody id="ordBody">
+          <tr><td colspan="10" style="padding:40px;text-align:center;color:var(--t3);font-size:.8rem">
+            กำลังโหลดข้อมูล…
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="ordPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;font-size:.78rem;color:var(--t2)"></div>
+  </div>
+</div>
+</div><!-- end tab-order -->
+
+<!-- Order Edit Modal -->
+<div id="orderEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;
+  align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bg-card);border:1px solid var(--bc-card);border-radius:14px;
+    padding:18px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="font-weight:700;font-size:.95rem;color:var(--t1);margin-bottom:12px">
+      ✏️ แก้ไข Order — <span id="ordEdit_noPO" style="color:var(--c1)"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;margin-bottom:14px">
+      <div class="field"><label>วันที่สั่งซื้อ</label><input type="date" id="ordEdit_orderDate"></div>
+      <div class="field"><label>วันที่ต้องการ</label><input type="date" id="ordEdit_wantDate"></div>
+      <div class="field"><label>Process</label>
+        <select id="ordEdit_status">
+          <option value="กำลังผลิต">กำลังผลิต</option>
+          <option value="ส่งซุป">ส่งซุป</option>
+          <option value="ส่งตัวอย่างเทส+รอสรุป">ส่งตัวอย่างเทส+รอสรุป</option>
+          <option value="ส่งยังไม่ครบ">ส่งยังไม่ครบ</option>
+          <option value="รอConfirm">รอConfirm</option>
+          <option value="FG รอเรียก">FG รอเรียก</option>
+          <option value="Stock">Stock</option>
+          <option value="เรียบร้อย">เรียบร้อย</option>
+        </select>
+      </div>
+      <div class="field"><label>สถานะงาน</label>
+        <select id="ordEdit_workStatus">
+          <option value="ปรกติ">ปรกติ</option>
+          <option value="เร่งด่วน">เร่งด่วน</option>
+          <option value="สต็อก">สต็อก</option>
+        </select>
+      </div>
+      <div class="field"><label>จำนวน</label><input type="number" id="ordEdit_qty"></div>
+      <div class="field"><label>ราคา</label><input type="number" id="ordEdit_price" step="0.01"></div>
+      <div class="field" style="grid-column:1/-1"><label>รายการสินค้า</label><input type="text" id="ordEdit_productList"></div>
+      <div class="field"><label>วัตถุดิบ</label><input type="text" id="ordEdit_material"></div>
+      <div class="field" style="grid-column:1/-1"><label>แนบไฟล์ PO</label>
+        <input type="file" id="ordEdit_poFile" accept="image/*,.pdf" style="display:none" onchange="_ordPoFileChanged('ordEdit')">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn" onclick="$('ordEdit_poFile').click()" style="padding:6px 14px;font-size:.78rem">เลือกไฟล์</button>
+          <span id="ordEdit_poFileName" style="font-size:.76rem;color:var(--t3)">ยังไม่ได้เลือกไฟล์ใด</span>
+          <button type="button" id="ordEdit_poFileClear" onclick="_ordClearPoFile('ordEdit')" title="ลบไฟล์"
+            style="display:none;border:none;background:none;color:#ef4444;font-size:1rem;cursor:pointer;line-height:1;padding:2px 4px">✕</button>
+        </div>
+        <img id="ordEdit_poFilePreview" style="display:none;max-width:120px;max-height:120px;margin-top:6px;border-radius:6px;border:1px solid var(--bc-div)">
+        <div id="ordEdit_poLinkWrap" style="margin-top:4px;font-size:.74rem"></div>
+      </div>
+      <div class="field" style="grid-column:1/-1"><label>หมายเหตุ</label><input type="text" id="ordEdit_note"></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <button class="btn btn-primary" id="ordEdit_saveBtn" onclick="saveOrderEdit()" style="padding:10px 18px;font-size:.88rem">💾 บันทึก</button>
+      <button class="btn" onclick="closeOrderEdit()" style="padding:10px 18px;font-size:.88rem">ยกเลิก</button>
+      <span id="ordEdit_status_msg" style="font-size:.76rem;color:var(--t3)"></span>
+    </div>
+  </div>
+</div>
+
 <!-- ══ TAB: MAT ════════════════════════════════════ -->
 <div id="tab-mat" class="tab-content">
 <div style="max-width:620px;margin:0 auto;padding:12px 8px 100px">
@@ -2537,6 +2779,9 @@ select option { background: var(--sel-bg); color: var(--t1); }
 <!-- BOTTOM TAB BAR                                    -->
 <!-- ══════════════════════════════════════════════════ -->
 <div class="tab-bar" id="mainTabBar">
+  <!-- rendered dynamically by renderTabBar() -->
+</div>
+<div class="more-menu" id="moreMenu">
   <!-- rendered dynamically by renderTabBar() -->
 </div>
 
@@ -2668,13 +2913,16 @@ const TAB_DEFS = [
   { id:'labor',     icon:'👷', label:'แรงงาน'  },
   { id:'mold',      icon:'🔩', label:'แม่พิมพ์' },
   { id:'data',      icon:'🗂️', label:'DATA'     },
+  { id:'order',     icon:'📦', label:'Order'    },
   { id:'api',       icon:'🔧', label:'ตั้งค่า'  },
   { id:'mat',       icon:'🧱', label:'MAT'      },
 ];
 
 function _loadTabCfg() {
-  const order  = JSON.parse(localStorage.getItem('ptts_tab_order')  || 'null') || TAB_DEFS.map(t=>t.id);
+  let order  = JSON.parse(localStorage.getItem('ptts_tab_order')  || 'null') || TAB_DEFS.map(t=>t.id);
   const hidden = JSON.parse(localStorage.getItem('ptts_tab_hidden') || '[]');
+  // เผื่อมีแท็บใหม่ (เช่น order) ที่ไม่อยู่ใน config เก่าที่บันทึกไว้ — เติมต่อท้ายให้ครบ
+  TAB_DEFS.forEach(t => { if (!order.includes(t.id)) order.push(t.id); });
   return { order, hidden };
 }
 function _saveTabCfg(order, hidden) {
@@ -2684,6 +2932,9 @@ function _saveTabCfg(order, hidden) {
 
 let _activeTab = 'breakdown';
 
+// แท็บย่อยที่ถูกรวมไว้ใต้ปุ่ม "เพิ่มเติม" (ลดจำนวนปุ่มในแถบแท็บ)
+const SUB_TAB_IDS = ['labor', 'mold', 'api', 'mat'];
+
 function renderTabBar() {
   const bar = $('mainTabBar');
   if (!bar) return;
@@ -2692,16 +2943,73 @@ function renderTabBar() {
     <div class="sidebar-logo"><img src="${_getLogoSrc()}" alt="PTS" class="app-logo-img" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.parentNode.textContent='PT'"></div>
     <div><div class="sidebar-title">PTS</div><div class="sidebar-sub">Cost Breakdown</div></div>
   </div>`;
+  let subItems = [];
+  let moreInserted = false;
   const buttons = order.map(id => {
     if (hidden.includes(id)) return '';
     const def = TAB_DEFS.find(t=>t.id===id);
     if (!def) return '';
+    if (SUB_TAB_IDS.includes(id)) {
+      subItems.push(def);
+      if (moreInserted) return '';
+      moreInserted = true;
+      const isActive = SUB_TAB_IDS.includes(_activeTab);
+      return `<button class="tab-btn${isActive?' active':''}" id="tbtn-more" onclick="_toggleMoreMenu(event)">
+        <span class="t-icon">⋯</span><span class="t-label">เพิ่มเติม</span>
+      </button>`;
+    }
     const isActive = id === _activeTab;
     return `<button class="tab-btn${isActive?' active':''}" id="tbtn-${id}" onclick="switchTab('${id}')">
       <span class="t-icon">${def.icon}</span><span class="t-label">${def.label}</span>
     </button>`;
   }).join('');
   bar.innerHTML = sidebarHdr + buttons;
+
+  const menu = $('moreMenu');
+  if (menu) {
+    menu.innerHTML = subItems.map(def => {
+      const isActive = def.id === _activeTab;
+      return `<button class="tab-btn${isActive?' active':''}" id="tbtn-${def.id}" onclick="switchTab('${def.id}');_closeMoreMenu()">
+        <span class="t-icon">${def.icon}</span><span class="t-label">${def.label}</span>
+      </button>`;
+    }).join('');
+  }
+}
+
+function _toggleMoreMenu(e) {
+  const menu = $('moreMenu');
+  const btn  = $('tbtn-more');
+  if (!menu || !btn) return;
+  if (menu.classList.contains('show')) { _closeMoreMenu(); return; }
+  const r = btn.getBoundingClientRect();
+  if (window.innerWidth >= 1024) {
+    // เดสก์ท็อป: sidebar อยู่ซ้าย → เปิดเมนูทางขวาของปุ่ม
+    menu.style.left   = (r.right + 6) + 'px';
+    menu.style.top    = r.top + 'px';
+    menu.style.bottom = 'auto';
+    menu.style.right  = 'auto';
+  } else {
+    // มือถือ: tab bar อยู่ล่าง → เปิดเมนูเหนือปุ่ม
+    menu.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+    menu.style.right  = (window.innerWidth - r.right) + 'px';
+    menu.style.left   = 'auto';
+    menu.style.top    = 'auto';
+  }
+  menu.classList.add('show');
+  if (e) e.stopPropagation();
+  setTimeout(() => document.addEventListener('click', _onMoreMenuOutsideClick), 0);
+}
+function _closeMoreMenu() {
+  const menu = $('moreMenu');
+  if (menu) menu.classList.remove('show');
+  document.removeEventListener('click', _onMoreMenuOutsideClick);
+}
+function _onMoreMenuOutsideClick(e) {
+  const menu = $('moreMenu');
+  const btn  = $('tbtn-more');
+  if (!menu) return;
+  if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+  _closeMoreMenu();
 }
 
 function switchTab(name) {
@@ -2713,6 +3021,8 @@ function switchTab(name) {
     if (tab)  tab.classList.remove('active');
     if (tbtn) tbtn.classList.remove('active');
   });
+  const moreBtn = $('tbtn-more');
+  if (moreBtn) moreBtn.classList.toggle('active', SUB_TAB_IDS.includes(name));
   const tabEl  = $('tab-'  + name);
   const tbtnEl = $('tbtn-' + name);
   if (tabEl)  tabEl.classList.add('active');
@@ -2725,6 +3035,7 @@ function switchTab(name) {
   if (name === 'data')      dtRefresh(false);
   if (name === 'api')       { initCfgTheme(); renderTabManager(); }
   if (name === 'mat')       { renderMatTable('flap'); renderMatTable('mesh'); }
+  if (name === 'order')     { updateOrderPreview(); fetchOrders(); }
 }
 
 // ── Tab Manager UI ───────────────────────────────────
@@ -3953,6 +4264,12 @@ function dtRender() {
                  font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
           📋 สเปค
         </button>
+        ${(r[DT.status]||'') === 'รอสรุป' ? `
+        <button onclick="dtAddOrder(${globalIdx})"
+          style="padding:5px 10px;border-radius:7px;border:none;background:#f59e0b;color:#1a1200;
+                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px;font-weight:700">
+          📦 Order
+        </button>` : ''}
         <button onclick="dtDelete('${String(r[DT.noQuo]||'').replace(/'/g,"\\'")}',this)"
           style="padding:5px 8px;border-radius:7px;border:1px solid rgba(248,113,113,.35);
                  background:rgba(248,113,113,.1);color:#f87171;font-size:.7rem;cursor:pointer;margin:1px">
@@ -9215,6 +9532,549 @@ function openDocCfg() {
   $('docCfgModal').style.display = 'flex';
 }
 function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
+
+// ══════════════════════════════════════════════════════
+// ══ TAB: Order — เชื่อมกับชีต "Order" (ใช้ร่วมกับ AppSheet) ══
+// ══════════════════════════════════════════════════════
+// คอลัมน์ A-AB (28 คอลัมน์, 0-based) — L-T (11-19) เป็นช่องสำรองของ AppSheet ห้ามแก้
+const ORDER_COLS = {
+  noQuo: 0, noPO: 1, orderDate: 2, mold: 3, workType: 4, productList: 5,
+  qty: 6, material: 7, switch_: 8,
+  price: 10,        // K = ราคาขาย
+  note: 11,         // L = หมายเหตุ
+  poFile: 12,       // M = รูปภาพPO. (ไฟล์แนบ PO)
+  statusDeliver: 15,// P = สถานะส่งงาน (แสดงในตาราง, อ่านอย่างเดียว)
+  process: 16,      // Q = Process (สถานะงานที่แก้ไขได้ — กำลังผลิต/ส่งซุป/.../เรียบร้อย)
+  update: 20, linkImages: 21, status: 22, totalTax: 23, add: 24, my: 25,
+  wantDate: 26, customer: 27
+};
+const ORDER_NUM_COLS = 28;
+let _orderCache = [];
+let _ordEditNoPO = null;
+
+function _todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+// แปลงวันที่ dd/MM/yyyy (จาก Sheet) <-> yyyy-MM-dd (สำหรับ <input type=date>)
+function _ordDateToInput(s) {
+  s = String(s||'').trim();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  return s;
+}
+function _ordDateToSheet(s) {
+  s = String(s||'').trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${parseInt(m[3])}/${parseInt(m[2])}/${parseInt(m[1])+543}`;
+  return s;
+}
+
+// อัปเดตพรีวิวข้อมูลจากใบเสนอราคาที่เปิดอยู่
+// แถวข้อมูลจากแท็บ DATA ที่เลือกผ่านปุ่ม "📦 AddOrder" — ใช้แทนระบบเดิมที่ดึงจากฟอร์มที่เปิดอยู่ (ช้า/สับสน)
+let _ordSourceRow = null;
+
+function updateOrderPreview() {
+  const r = _ordSourceRow;
+  if (!r) {
+    ['ord_previewNoQuo','ord_previewCustomer','ord_previewWorkType','ord_previewProductList','ord_previewQty','ord_previewPrice'].forEach(id => {
+      if ($(id)) $(id).textContent = '—';
+    });
+    if ($('ord_productList')) $('ord_productList').value = '';
+    if ($('ord_material'))    $('ord_material').textContent = '—';
+    _ordUpdateCreateBtn();
+    return;
+  }
+  if ($('ord_previewNoQuo'))    $('ord_previewNoQuo').textContent    = r[DT.noQuo] || '—';
+  if ($('ord_previewCustomer')) $('ord_previewCustomer').textContent = (() => {
+    const sel = $('f_contact');
+    const val = r[DT.contact] || '';
+    if (sel) {
+      const opt = Array.from(sel.options).find(o => o.value === val);
+      if (opt) return opt.text || '—';
+    }
+    return val || '—';
+  })();
+  if ($('ord_previewWorkType')) $('ord_previewWorkType').textContent = r[DT.workType] || '—';
+  if ($('ord_previewQty'))      $('ord_previewQty').textContent      = r[DT.unit] || '—';
+  if ($('ord_previewPrice'))    $('ord_previewPrice').textContent    = r[DT.sellPrice] || '—';
+
+  // รายการสินค้า = ขนาด (OD×ID×H) จาก DATA — ห้ามแก้ไขในการ์ด Order
+  const od = r[DT.od]||'', id2 = r[DT.id]||'', h = r[DT.h]||'';
+  const sizeVal = (od && id2 && h) ? `${od}×${id2}×${h}` : (r[DT.size]||'');
+  const plEl = $('ord_productList');
+  if (plEl) plEl.value = sizeVal;
+  if ($('ord_previewProductList')) $('ord_previewProductList').textContent = sizeVal || '—';
+
+  // แม่พิมพ์ — ตรวจสอบ OD จาก DATA เทียบกับตารางแม่พิมพ์ ว่ามีหรือไม่ (แก้ไขเพิ่มเติมได้ ไม่ทับค่าที่แก้เอง)
+  _ordAutoFill('ord_mold', _ordCheckMoldOd());
+
+  // หมายเหตุ — ดึงค่ามาให้อัตโนมัติ แต่แก้ไขเพิ่มเติมได้ (ไม่ทับค่าที่แก้เอง)
+  _ordAutoFill('ord_note', r[DT.remark] || '');
+
+  // วัตถุดิบ — ดึงจาก DATA แสดงเป็น label อย่างเดียว
+  if ($('ord_material')) $('ord_material').textContent = r[DT.rawMat] || '—';
+
+  _ordUpdateCreateBtn();
+}
+// เปลี่ยนข้อความ/พฤติกรรมปุ่มหลัก ตามว่าการ์ดมีข้อมูลจาก DATA แล้วหรือยัง
+function _ordUpdateCreateBtn() {
+  const btn = $('ord_createBtn');
+  if (!btn) return;
+  btn.innerHTML = _ordSourceRow ? '➕ สร้าง Order' : '🚀 เริ่มสร้าง Order';
+}
+// กดปุ่มหลัก: ถ้ายังไม่มีข้อมูลจาก DATA → ไปแท็บ DATA เพื่อกด "Order", ถ้ามีแล้ว → สร้าง Order
+function _ordCreateBtnClick() {
+  if (!_ordSourceRow) {
+    switchTab('data');
+    return;
+  }
+  createOrder();
+}
+// ตรวจสอบว่า OD ของรายการ ตรงกับตารางแม่พิมพ์หรือไม่ -> คืนค่า OD ถ้าตรง, "ไม่มี" ถ้าไม่ตรง
+function _ordCheckMoldOd() {
+  const odVal = parseFloat(_ordSourceRow ? _ordSourceRow[DT.od] : NaN);
+  if (!odVal) return 'ไม่มี';
+  const row = (_moldData || []).find(m => m.od === odVal);
+  if (!row) return 'ไม่มี';
+  const ids = row.ids || [];
+  const noMold = ids.some(v => v.includes('ไม่มีพิมพ์'));
+  if (noMold || ids.length === 0) return 'ไม่มี';
+  return String(odVal);
+}
+// เติมค่าอัตโนมัติลงช่อง โดยไม่ทับค่าที่ผู้ใช้แก้ไขเองแล้ว
+function _ordAutoFill(id, val) {
+  const el = $(id);
+  if (!el) return;
+  if (el.value === '' || el.value === el.dataset.autoVal) {
+    el.value = val;
+    el.dataset.autoVal = val;
+  }
+}
+
+// เคลียร์การ์ด "สร้าง Order" กลับสู่สถานะว่าง (ใช้ทั้งตอนสร้างสำเร็จ และตอนพบ No.Quo+No.PO ซ้ำ)
+function _ordResetCard() {
+  if ($('ord_noPO')) $('ord_noPO').value = '';
+  if ($('ord_note'))  { $('ord_note').value = ''; delete $('ord_note').dataset.autoVal; }
+  if ($('ord_mold'))  { $('ord_mold').value = ''; delete $('ord_mold').dataset.autoVal; }
+  if ($('ord_workStatus')) $('ord_workStatus').value = 'ปรกติ';
+  _ordSourceRow = null;
+  updateOrderPreview();
+  _ordClearPoFile('ord');
+}
+
+// ปุ่ม "📦 AddOrder" จากตาราง DATA (เฉพาะแถวที่สถานะ = "รอสรุป")
+function dtAddOrder(idx) {
+  const tbody = $('dtBody');
+  const rows = tbody && tbody._filteredRows;
+  if (!rows || !rows[idx]) return;
+  const r = rows[idx];
+
+  Swal.fire({
+    title: 'สร้าง Order จากใบเสนอราคานี้?',
+    html: `<small>No.Quo: <b>${r[DT.noQuo]}</b> — ข้อมูลในการ์ด "สร้าง Order" จะถูกแทนที่ด้วยข้อมูลจากรายการนี้</small>`,
+    icon: 'question', showCancelButton: true,
+    confirmButtonText: '✅ ดึงข้อมูล', cancelButtonText: 'ยกเลิก',
+    background: '#0a1c2e', color: '#f1f5f9',
+    confirmButtonColor: '#f59e0b', cancelButtonColor: '#475569'
+  }).then(res => {
+    if (!res.isConfirmed) return;
+    _ordResetCard();   // ล้างค่าเก่าก่อน
+    _ordSourceRow = r; // แล้วค่อยตั้งแถวใหม่
+    switchTab('order');
+  });
+}
+
+// เมื่อเลือกไฟล์ PO ใหม่ — แสดงชื่อไฟล์ + รูปตัวอย่าง (ถ้าเป็นรูปภาพ) + ปุ่มลบ
+function _ordPoFileChanged(prefix) {
+  const input = $(prefix + '_poFile');
+  const file  = input?.files?.[0];
+  const nameEl  = $(prefix + '_poFileName');
+  const clearEl = $(prefix + '_poFileClear');
+  const imgEl   = $(prefix + '_poFilePreview');
+  if (!file) { _ordClearPoFile(prefix); return; }
+  if (nameEl)  nameEl.textContent = file.name;
+  if (clearEl) clearEl.style.display = 'inline-block';
+  if (imgEl) {
+    if (file.type && file.type.startsWith('image/')) {
+      imgEl.src = URL.createObjectURL(file);
+      imgEl.style.display = 'block';
+    } else {
+      imgEl.style.display = 'none';
+      imgEl.removeAttribute('src');
+    }
+  }
+}
+// ลบไฟล์ PO ที่เลือกไว้
+function _ordClearPoFile(prefix) {
+  const input  = $(prefix + '_poFile');
+  const nameEl = $(prefix + '_poFileName');
+  const clearEl = $(prefix + '_poFileClear');
+  const imgEl  = $(prefix + '_poFilePreview');
+  if (input)  input.value = '';
+  if (nameEl) nameEl.textContent = 'ยังไม่ได้เลือกไฟล์ใด';
+  if (clearEl) clearEl.style.display = 'none';
+  if (imgEl) { imgEl.style.display = 'none'; imgEl.removeAttribute('src'); }
+}
+
+// แปลงไฟล์เป็น base64 (ตัด prefix data:...;base64, ออก)
+function _ordFileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result || '';
+      const idx = result.indexOf('base64,');
+      resolve(idx >= 0 ? result.slice(idx + 7) : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+// อัปโหลดไฟล์ PO ไปยัง Drive ผ่าน Apps Script แล้วคืน URL
+async function _ordUploadPoFile(file) {
+  const base64 = await _ordFileToBase64(file);
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST', mode: 'cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'uploadOrderFile', fileName: file.name, mimeType: file.type, base64 })
+  });
+  const data = await res.json();
+  if (data && data.status === 'ok') return data.url;
+  throw new Error((data && data.message) || 'upload failed');
+}
+
+// สร้าง Order ใหม่จากใบเสนอราคาที่เปิดอยู่
+async function createOrder() {
+  if (!SCRIPT_URL) {
+    Swal.fire({icon:'info',title:'ยังไม่ตั้งค่า URL',text:'กรุณาใส่ Apps Script URL ก่อน',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
+    return;
+  }
+  const noQuo = _ordSourceRow ? (_ordSourceRow[DT.noQuo] || '') : '';
+  const noPO  = $('ord_noPO').value.trim();
+  if (!noQuo) {
+    Swal.fire({icon:'warning',title:'ไม่พบข้อมูลใบเสนอราคา',text:'กรุณากดปุ่ม "📦 AddOrder" จากตาราง DATA ก่อนสร้าง Order',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
+    return;
+  }
+  if (!noPO) {
+    Swal.fire({icon:'warning',title:'กรุณาใส่ No.PO',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
+    return;
+  }
+
+  // ตรวจสอบว่ากรอกข้อมูลครบถ้วนก่อนบันทึก
+  const missing = [];
+  if (!$('ord_orderDate')?.value)            missing.push('วันที่สั่งซื้อ');
+  if (!$('ord_wantDate')?.value)             missing.push('วันที่ต้องการ');
+  if (!($('ord_mold')?.value || '').trim())  missing.push('แม่พิมพ์');
+  if (!($('ord_note')?.value || '').trim())  missing.push('หมายเหตุ');
+  if (!$('ord_poFile')?.files?.[0])          missing.push('แนบไฟล์ PO');
+  if (missing.length) {
+    Swal.fire({
+      icon:'warning', title:'กรอกข้อมูลไม่ครบถ้วน',
+      html:'กรุณากรอก/แนบข้อมูลให้ครบก่อนสร้าง Order:<br><b>' + missing.join(', ') + '</b>',
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1'
+    });
+    return;
+  }
+
+  // ตรวจสอบ No.Quo ซ้ำ (คอลัมน์ A ห้ามซ้ำ)
+  const dupQuo = (_orderCache || []).some(r =>
+    String(r[ORDER_COLS.noQuo] || '').trim() === String(noQuo).trim()
+  );
+  if (dupQuo) {
+    await Swal.fire({
+      icon: 'error', title: 'พบ No.Quo ซ้ำ',
+      html: `มี Order ที่ใช้ <b>No.Quo: ${noQuo}</b> อยู่แล้ว<br><span style="font-size:.8rem;color:#8b8aaa">No.Quo ห้ามซ้ำ ไม่สามารถสร้าง Order นี้ได้</span>`,
+      background:'#0d1b2a', color:'#cce4ff',
+      confirmButtonText: 'ตกลง', confirmButtonColor:'#dc2626'
+    });
+    if ($('ord_noPO')) { $('ord_noPO').value = ''; $('ord_noPO').focus(); }
+    return;
+  }
+
+  // ตรวจสอบ No.PO ซ้ำ (คอลัมน์ B ห้ามซ้ำ)
+  const dupPO = (_orderCache || []).some(r =>
+    String(r[ORDER_COLS.noPO] || '').trim() === String(noPO).trim()
+  );
+  if (dupPO) {
+    await Swal.fire({
+      icon: 'error', title: 'พบ No.PO ซ้ำ',
+      html: `มี Order ที่ใช้ <b>No.PO: ${noPO}</b> อยู่แล้ว<br><span style="font-size:.8rem;color:#8b8aaa">No.PO ห้ามซ้ำ ไม่สามารถสร้าง Order นี้ได้</span>`,
+      background:'#0d1b2a', color:'#cce4ff',
+      confirmButtonText: 'ตกลง', confirmButtonColor:'#dc2626'
+    });
+    if ($('ord_noPO')) { $('ord_noPO').value = ''; $('ord_noPO').focus(); }
+    return;
+  }
+
+  // ยืนยันก่อนสร้าง Order จริง
+  const confirmRes = await Swal.fire({
+    icon: 'question', title: 'ยืนยันการสร้าง Order?',
+    html: `No.Quo: <b>${noQuo}</b><br>No.PO: <b>${noPO}</b>`,
+    showCancelButton: true,
+    confirmButtonText: '✅ ยืนยัน', cancelButtonText: 'ยกเลิก',
+    background: '#0a1c2e', color: '#f1f5f9',
+    confirmButtonColor: '#22c55e', cancelButtonColor: '#475569'
+  });
+  if (!confirmRes.isConfirmed) return;
+
+  const customer = ($('ord_previewCustomer')?.textContent || '').trim().replace(/^—$/, '') || '';
+
+  const row = new Array(ORDER_NUM_COLS).fill('');
+  row[ORDER_COLS.noQuo]       = noQuo;
+  row[ORDER_COLS.noPO]        = noPO;
+  row[ORDER_COLS.orderDate]   = _ordDateToSheet($('ord_orderDate').value || _todayStr());
+  row[ORDER_COLS.mold]        = $('ord_mold')?.value || '';
+  row[ORDER_COLS.workType]    = _ordSourceRow[DT.workType] || '';
+  row[ORDER_COLS.productList] = $('ord_productList').value || '';
+  row[ORDER_COLS.qty]         = _ordSourceRow[DT.unit] || '';
+  row[ORDER_COLS.material]    = ($('ord_material')?.textContent || '').trim().replace(/^—$/, '') || '';
+  row[ORDER_COLS.price]       = _ordSourceRow[DT.sellPrice] || '';
+  row[ORDER_COLS.note]        = $('ord_note').value || '';
+  row[ORDER_COLS.process]     = $('ord_status').value || 'กำลังผลิต';
+  row[ORDER_COLS.status]      = $('ord_workStatus')?.value || 'ปรกติ';
+  row[ORDER_COLS.wantDate]    = _ordDateToSheet($('ord_wantDate').value || '');
+  row[ORDER_COLS.customer]    = customer;
+
+  const createBtn = $('ord_createBtn');
+  const statusEl  = $('ord_createStatus');
+  if (createBtn) createBtn.disabled = true;
+
+  try {
+    const poFile = $('ord_poFile')?.files?.[0];
+    if (poFile) {
+      if (statusEl) statusEl.textContent = '⏳ กำลังอัปโหลดไฟล์ PO...';
+      row[ORDER_COLS.poFile] = await _ordUploadPoFile(poFile);
+    }
+
+    await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'addOrder', row }) });
+
+    // อัปเดตสถานะของรายการต้นทาง (DATA) เป็น "ผ่าน" — แถวเดียวเท่านั้น (ตรวจ noQuo ก่อนส่ง)
+    if (statusEl) statusEl.textContent = '⏳ กำลังอัปเดตสถานะ DATA...';
+    await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'updateDataStatus', noQuo, status:'ผ่าน' }) });
+
+    Swal.fire({icon:'success',title:'สร้าง Order แล้ว ✅',
+      html:`บันทึก Order เรียบร้อย<br><span style="font-size:.8rem;color:#8b8aaa">อัปเดตสถานะ DATA ของ No.Quo: <b>${noQuo}</b> เป็น "ผ่าน" แล้ว</span>`,
+      background:'#0d1b2a',color:'#cce4ff',
+      confirmButtonColor:'#6366f1', timer:2200, showConfirmButton:false});
+    _ordResetCard();
+    if (statusEl) statusEl.textContent = '';
+    setTimeout(fetchOrders, 1200);
+  } catch (err) {
+    Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:'ส่งข้อมูลไม่สำเร็จ',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
+    if (statusEl) statusEl.textContent = '';
+  } finally {
+    if (createBtn) createBtn.disabled = false;
+  }
+}
+
+// โหลดรายการ Order จากชีต "Order"
+async function fetchOrders() {
+  const tbody = $('ordBody');
+  if (!tbody) return;
+  if (!SCRIPT_URL) {
+    tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">⚠️ ยังไม่ได้ตั้งค่า Script URL</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">↻ กำลังโหลด…</td></tr>`;
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getOrders', {mode:'cors'});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.status === 'error') throw new Error(data.message || 'unknown');
+    _orderCache = (data.rows || []).slice().reverse(); // ใหม่สุดก่อน
+    _ordPage = 1;
+    renderOrderTable();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:#f87171;font-size:.8rem">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
+  }
+}
+
+const ORD_PAGE_SIZE = 20;
+let _ordPage = 1;
+
+function _ordGoPage(p) {
+  _ordPage = p;
+  renderOrderTable();
+}
+
+function _ordTruncate(s, n) {
+  s = String(s||'');
+  return s.length > n ? s.slice(0, n-1) + '…' : s;
+}
+
+function _ordResetFilters() {
+  $('ordSearch').value = '';
+  $('ordFilterStatus').value = '_not_done';
+  $('ordFilterCustomer').value = '';
+  $('ordFilterWantFrom').value = '';
+  $('ordFilterWantTo').value = '';
+  _ordPage = 1;
+  renderOrderTable();
+}
+
+function renderOrderTable() {
+  const tbody = $('ordBody');
+  if (!tbody) return;
+  const q = ($('ordSearch')?.value || '').trim().toLowerCase();
+  let rows = _orderCache;
+  if (q) {
+    rows = rows.filter(r => [r[ORDER_COLS.noQuo], r[ORDER_COLS.noPO], r[ORDER_COLS.customer], r[ORDER_COLS.productList]]
+      .some(v => String(v||'').toLowerCase().includes(q)));
+  }
+
+  // ── ตัวกรอง: สถานะงาน (ค่าเริ่มต้น = ซ่อนรายการที่ "เรียบร้อย") ──
+  const statusFilter = $('ordFilterStatus')?.value ?? '_not_done';
+  if (statusFilter === '_not_done') {
+    rows = rows.filter(r => String(r[ORDER_COLS.process]||'').trim() !== 'เรียบร้อย');
+  } else if (statusFilter !== '_all') {
+    rows = rows.filter(r => String(r[ORDER_COLS.process]||'').trim() === statusFilter);
+  }
+
+  // ── ตัวกรอง: ลูกค้า ──
+  const custFilter = ($('ordFilterCustomer')?.value || '').trim().toLowerCase();
+  if (custFilter) {
+    rows = rows.filter(r => String(r[ORDER_COLS.customer]||'').toLowerCase().includes(custFilter));
+  }
+
+  // ── ตัวกรอง: ช่วงวันที่ต้องการ ──
+  const wantFrom = $('ordFilterWantFrom')?.value || '';
+  const wantTo   = $('ordFilterWantTo')?.value || '';
+  if (wantFrom || wantTo) {
+    rows = rows.filter(r => {
+      const iso = _ordDateToInput(r[ORDER_COLS.wantDate]);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+      if (wantFrom && iso < wantFrom) return false;
+      if (wantTo   && iso > wantTo)   return false;
+      return true;
+    });
+  }
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">ไม่มีข้อมูล Order</td></tr>`;
+    $('ordPager').innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / ORD_PAGE_SIZE));
+  if (_ordPage > totalPages) _ordPage = totalPages;
+  if (_ordPage < 1) _ordPage = 1;
+  const startIdx = (_ordPage - 1) * ORD_PAGE_SIZE;
+  const pageRows = rows.slice(startIdx, startIdx + ORD_PAGE_SIZE);
+
+  tbody.innerHTML = pageRows.map(r => {
+    const noPO  = String(r[ORDER_COLS.noPO]||'');
+    const price = parseFloat(r[ORDER_COLS.price]) || 0;
+    const productList = String(r[ORDER_COLS.productList]||'');
+    const customer    = String(r[ORDER_COLS.customer]||'');
+    return `<tr style="border-bottom:1px solid var(--bc-div)">
+      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[ORDER_COLS.noQuo]||'—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;font-weight:600;color:var(--c1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${noPO||'—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;white-space:nowrap">${r[ORDER_COLS.orderDate]||'—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${customer.replace(/"/g,'&quot;')}">${_ordTruncate(customer,12)||'—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${productList.replace(/"/g,'&quot;')}">${_ordTruncate(productList,28)||'—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;text-align:center">${r[ORDER_COLS.qty]||'—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;text-align:right;white-space:nowrap">${price ? price.toLocaleString('th-TH',{minimumFractionDigits:2}) : '—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[ORDER_COLS.process]||'—'}</td>
+      <td style="padding:8px 8px;font-size:.78rem;white-space:nowrap">${r[ORDER_COLS.wantDate]||'—'}</td>
+      <td style="padding:8px 8px;text-align:center">
+        <button onclick="openEditOrder('${noPO.replace(/'/g,"\\'")}')"
+          style="padding:5px 10px;border-radius:7px;border:1px solid rgba(99,102,241,.35);
+          background:rgba(99,102,241,.1);color:#9b8fff;font-size:.72rem;cursor:pointer">✏️ แก้ไข</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // ── ตัวควบคุมแบ่งหน้า ──
+  const pager = $('ordPager');
+  if (pager) {
+    if (totalPages <= 1) {
+      pager.innerHTML = `<span>ทั้งหมด ${rows.length} รายการ</span>`;
+    } else {
+      pager.innerHTML = `
+        <button onclick="_ordGoPage(${_ordPage-1})" ${_ordPage<=1?'disabled':''}
+          style="padding:5px 12px;border-radius:7px;border:1px solid var(--bc-card);background:var(--bg-card);color:var(--t1);font-size:.75rem;cursor:pointer;${_ordPage<=1?'opacity:.4;cursor:not-allowed':''}">‹ ก่อนหน้า</button>
+        <span>หน้า ${_ordPage} / ${totalPages} (ทั้งหมด ${rows.length} รายการ)</span>
+        <button onclick="_ordGoPage(${_ordPage+1})" ${_ordPage>=totalPages?'disabled':''}
+          style="padding:5px 12px;border-radius:7px;border:1px solid var(--bc-card);background:var(--bg-card);color:var(--t1);font-size:.75rem;cursor:pointer;${_ordPage>=totalPages?'opacity:.4;cursor:not-allowed':''}">ถัดไป ›</button>
+      `;
+    }
+  }
+}
+
+function openEditOrder(noPO) {
+  const r = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(noPO));
+  if (!r) return;
+  _ordEditNoPO = noPO;
+  $('ordEdit_noPO').textContent  = noPO;
+  $('ordEdit_orderDate').value   = _ordDateToInput(r[ORDER_COLS.orderDate]);
+  $('ordEdit_wantDate').value    = _ordDateToInput(r[ORDER_COLS.wantDate]);
+  $('ordEdit_status').value      = r[ORDER_COLS.process] || '';
+  $('ordEdit_qty').value         = r[ORDER_COLS.qty] || '';
+  $('ordEdit_price').value       = r[ORDER_COLS.price] || '';
+  $('ordEdit_productList').value = r[ORDER_COLS.productList] || '';
+  $('ordEdit_material').value    = r[ORDER_COLS.material] || '';
+  $('ordEdit_note').value        = r[ORDER_COLS.note] || '';
+  if ($('ordEdit_workStatus')) $('ordEdit_workStatus').value = r[ORDER_COLS.status] || 'ปรกติ';
+  _ordClearPoFile('ordEdit');
+  const poUrl = r[ORDER_COLS.poFile] || '';
+  if ($('ordEdit_poLinkWrap')) {
+    $('ordEdit_poLinkWrap').innerHTML = poUrl
+      ? `<a href="${poUrl}" target="_blank" rel="noopener">📎 ดูไฟล์ PO เดิม</a>`
+      : '';
+  }
+  $('orderEditModal').style.display = 'flex';
+}
+function closeOrderEdit() {
+  $('orderEditModal').style.display = 'none';
+  _ordEditNoPO = null;
+}
+async function saveOrderEdit() {
+  if (!_ordEditNoPO) return;
+  const r = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(_ordEditNoPO));
+  if (!r) return;
+  const row = r.slice();
+  while (row.length < ORDER_NUM_COLS) row.push('');
+  row[ORDER_COLS.orderDate]   = _ordDateToSheet($('ordEdit_orderDate').value);
+  row[ORDER_COLS.wantDate]    = _ordDateToSheet($('ordEdit_wantDate').value);
+  row[ORDER_COLS.process]     = $('ordEdit_status').value;
+  row[ORDER_COLS.status]      = $('ordEdit_workStatus')?.value || row[ORDER_COLS.status] || 'ปรกติ';
+  row[ORDER_COLS.qty]         = $('ordEdit_qty').value;
+  row[ORDER_COLS.price]       = $('ordEdit_price').value;
+  row[ORDER_COLS.productList] = $('ordEdit_productList').value;
+  row[ORDER_COLS.material]    = $('ordEdit_material').value;
+  row[ORDER_COLS.note]        = $('ordEdit_note').value;
+  row[ORDER_COLS.poFile]      = r[ORDER_COLS.poFile] || '';
+
+  const saveBtn  = $('ordEdit_saveBtn');
+  const statusEl = $('ordEdit_status_msg');
+  if (saveBtn) saveBtn.disabled = true;
+
+  try {
+    const poFile = $('ordEdit_poFile')?.files?.[0];
+    if (poFile) {
+      if (statusEl) statusEl.textContent = '⏳ กำลังอัปโหลดไฟล์ PO...';
+      row[ORDER_COLS.poFile] = await _ordUploadPoFile(poFile);
+    }
+
+    await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'updateOrder', noPO: _ordEditNoPO, row }) });
+
+    Swal.fire({icon:'success',title:'บันทึกแล้ว ✅',background:'#0d1b2a',color:'#cce4ff',
+      confirmButtonColor:'#6366f1', timer:1300, showConfirmButton:false});
+    if (statusEl) statusEl.textContent = '';
+    closeOrderEdit();
+    setTimeout(fetchOrders, 1000);
+  } catch (err) {
+    Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:'บันทึกไม่สำเร็จ',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
+    if (statusEl) statusEl.textContent = '';
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
 </script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
@@ -9344,9 +10204,253 @@ function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
+    ref: '#REV-20260611-I',
+    date: '2026-06-11',
+    current: true,
+    items: [
+      'ย้ายปุ่มคู่มือการใช้งาน (❓) ออกจากปุ่มลอยมุมขวาล่าง ไปไว้ในแท็บ "ตั้งค่า" ข้างปุ่ม "Dev Logs" แทน',
+      'ลบ CSS .help-fab ที่ไม่ใช้แล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260611-H',
+    date: '2026-06-11',
+    items: [
+      'ลดจำนวนปุ่มในแถบแท็บ (มือถือ/เดสก์ท็อป): รวมแท็บ "แรงงาน, แม่พิมพ์, ตั้งค่า, MAT" ไว้ใต้ปุ่ม "⋯ เพิ่มเติม" ปุ่มเดียว เหลือปุ่มหลัก 5 ปุ่ม (ฟอร์ม, คำนวณ, DATA, Order, เพิ่มเติม)',
+      'กดปุ่ม "เพิ่มเติม" จะเปิดเมนูลอยแสดงแท็บย่อยทั้ง 4 ให้เลือก ปิดอัตโนมัติเมื่อเลือกหรือคลิกนอกเมนู',
+      'ปุ่ม "เพิ่มเติม" จะ highlight เป็น active เมื่อแท็บที่เปิดอยู่เป็นหนึ่งในแท็บย่อย',
+      'ระบบจัดการแท็บ (ลำดับ/ซ่อน) ในหน้าตั้งค่ายังทำงานเหมือนเดิม — การซ่อนแท็บย่อยจะซ่อนจากเมนู "เพิ่มเติม" ด้วย',
+    ],
+  },
+  {
+    ref: '#REV-20260611-G',
+    date: '2026-06-11',
+    items: [
+      'เพิ่ม popup ยืนยันก่อนสร้าง Order จริง (แสดง No.Quo + No.PO ให้ตรวจสอบ) — หลังผ่านการตรวจสอบข้อมูลครบถ้วนและไม่ซ้ำแล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260611-F',
+    date: '2026-06-11',
+    items: [
+      'ปุ่มหลักในการ์ด "สร้าง Order" เปลี่ยนชื่อ/การทำงานอัตโนมัติ: ถ้าการ์ดยังไม่มีข้อมูลจาก DATA จะแสดง "🚀 เริ่มสร้าง Order" กดแล้วพาไปแท็บ DATA เพื่อกดปุ่ม "Order"; ถ้าการ์ดมีข้อมูลแล้ว จะแสดง "➕ สร้าง Order" กดแล้วบันทึก Order ตามเดิม',
+      'เพิ่มปุ่ม "🧹 เคลียร์การ์ด" ข้างปุ่มหลัก สำหรับล้างข้อมูลการ์ดทั้งหมดด้วยตนเอง',
+    ],
+  },
+  {
+    ref: '#REV-20260611-E',
+    date: '2026-06-11',
+    items: [
+      'แก้ชื่อปุ่มในตาราง DATA จาก "📦 AddOrder" เป็น "📦 Order"',
+    ],
+  },
+  {
+    ref: '#REV-20260611-D',
+    date: '2026-06-11',
+    items: [
+      'เมื่อพบ No.Quo หรือ No.PO ซ้ำ และกดยืนยัน popup: เปลี่ยนจากเคลียร์ข้อมูลทั้งการ์ด เป็นเคลียร์เฉพาะช่อง "เลขที่ PO" แล้ว focus ไว้ให้กรอกใหม่ (ข้อมูลอื่นๆ ในการ์ดยังอยู่ครบ)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-C',
+    date: '2026-06-11',
+    items: [
+      'แก้การตรวจสอบความซ้ำตอนสร้าง Order: เดิมเช็คเฉพาะคู่ No.Quo+No.PO ซ้ำ เปลี่ยนเป็นเช็คแยก — No.Quo (คอลัมน์ A) ห้ามซ้ำ และ No.PO (คอลัมน์ B) ห้ามซ้ำ ถ้าซ้ำอย่างใดอย่างหนึ่งจะแจ้งเตือนและไม่ให้สร้าง',
+    ],
+  },
+  {
+    ref: '#REV-20260611-B',
+    date: '2026-06-11',
+    items: [
+      'เมื่อสร้าง Order สำเร็จ ระบบจะอัปเดตคอลัมน์ "สถานะ" ของรายการต้นทางใน DATA (ตาม No.Quo) เป็น "ผ่าน" อัตโนมัติ — แถวเดียวเท่านั้น (ฝั่ง Apps Script ตรวจสอบไม่ให้แก้ผิดแถวหรือแก้ซ้ำ)',
+      'เพิ่ม action "updateDataStatus" ใน Code.gs',
+      'แจ้งเตือนผลลัพธ์การอัปเดตสถานะ DATA ใน popup สำเร็จของ Order',
+    ],
+  },
+  {
+    ref: '#REV-20260611-A',
+    date: '2026-06-11',
+    items: [
+      'แก้ฟอร์แมทวันที่ที่ส่งไปชีต Order (วันที่สั่งซื้อ/วันที่ต้องการ) จาก ค.ศ. แบบ DD/MM/YYYY (เช่น 11/06/2026) เป็น พ.ศ. แบบ D/M/YYYY (เช่น 10/6/2569) ให้ AppSheet อ่านค่าได้ถูกต้อง',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BM',
+    date: '2026-06-10',
+    items: [
+      'เพิ่มการตรวจสอบข้อมูลให้ครบถ้วนก่อนสร้าง Order: วันที่สั่งซื้อ, วันที่ต้องการ, แม่พิมพ์, หมายเหตุ, แนบไฟล์ PO ถ้ายังไม่ครบจะแจ้งเตือนรายการที่ขาดและไม่ให้บันทึก',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BL',
+    date: '2026-06-10',
+    items: [
+      'แก้กรณีพบ No.Quo + No.PO ซ้ำ: ไม่รีโหลดหน้าใหม่แล้ว เปลี่ยนเป็นแค่เคลียร์ข้อมูลในการ์ด "สร้าง Order" กลับเป็นค่าว่าง',
+      'เพิ่ม helper _ordResetCard() ใช้ร่วมกันทั้งตอนสร้าง Order สำเร็จ และตอนพบ No.Quo+No.PO ซ้ำ',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BK',
+    date: '2026-06-10',
+    items: [
+      'เพิ่มปุ่ม "📦 AddOrder" ในตารางคลังใบเสนอราคา (แท็บ DATA) — แสดงเฉพาะแถวที่สถานะ = "รอสรุป"',
+      'กดปุ่มแล้วแจ้งเตือนยืนยันก่อน จากนั้นดึงข้อมูลจากแถวนั้นเข้าการ์ด "สร้าง Order จากใบเสนอราคา" โดยตรง แล้วสลับไปแท็บ Order ทันที',
+      'ยกเลิกระบบเดิมที่ดึงข้อมูลจากใบเสนอราคาที่เปิดอยู่ในฟอร์ม (live preview จาก f_noQuo/f_contact/...) — เปลี่ยนเป็นใช้ข้อมูลจากแถวที่เลือกผ่าน AddOrder เท่านั้น',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BJ',
+    date: '2026-06-10',
+    items: [
+      'แก้ไขการตรวจสอบ No.Quo + No.PO ซ้ำ: ถ้าซ้ำ ห้ามสร้าง Order เด็ดขาด ขึ้น popup แจ้งเตือนแล้วรีโหลดหน้าใหม่ทันที (ตัดตัวเลือก "สร้างต่อ" ออก)',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BI',
+    date: '2026-06-10',
+    items: [
+      'ตอนสร้าง Order (createOrder): ตรวจสอบ No.Quo + No.PO ซ้ำกับรายการที่มีอยู่ในชีต Order ถ้าซ้ำจะแจ้งเตือนและให้เลือกยืนยัน/ยกเลิก',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BH',
+    date: '2026-06-10',
+    items: [
+      'แม่พิมพ์ในการ์ด "สร้าง Order": เปลี่ยนเป็นตรวจสอบ OD ของรายการที่เปิดอยู่กับตารางแม่พิมพ์อัตโนมัติ — ถ้าตรงใส่ค่า OD, ถ้าไม่ตรง/ยังไม่มีแม่พิมพ์ใส่ "ไม่มี" (ยังแก้ไขเพิ่มเติมเองได้)',
+      'ช่อง "วัตถุดิบ" ในการ์ด "สร้าง Order": เปลี่ยนจากช่องกรอกเป็น label แสดงค่าจาก DATA (วัตถุดิบ/AW) อัตโนมัติ',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BG',
+    date: '2026-06-10',
+    items: [
+      'จัดเลย์เอาต์การ์ด "สร้าง Order" ใหม่อีกครั้ง: รวมข้อมูลฝั่งซ้ายเป็นกล่องเดียว (ข้อมูลอ้างอิง + แม่พิมพ์ + สถานะงาน + วัตถุดิบ + หมายเหตุ) เรียงต่อกันในกล่องเดียว',
+      'ฝั่งขวาเหลือเฉพาะรูปตัวอย่างไฟล์ PO ขนาดใหญ่ (ขยายความสูงเต็มกล่อง) + ปุ่มแนบไฟล์ PO ด้านล่าง',
+      'ลบแถว 2fr/1fr/1fr เดิมที่แยกหมายเหตุ/สถานะงาน/วัตถุดิบออกไป (ย้ายเข้ากล่องซ้ายแทน)',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BF',
+    date: '2026-06-10',
+    items: [
+      'จัดเลย์เอาต์การ์ด "สร้าง Order" ใหม่: กล่องข้อมูลซ้ายเพิ่มช่อง "แม่พิมพ์" แบบแก้ไขได้ (ดึงจากฟอร์มอัตโนมัติ), ขวาเป็นรูปตัวอย่างไฟล์ PO ขนาดใหญ่ + ปุ่มแนบไฟล์',
+      'เพิ่มแถวใหม่: หมายเหตุ (ดึงจาก DATA แก้ไขได้, เป็น textarea), สถานะงาน, วัตถุดิบ อยู่แถวเดียวกัน',
+      'เพิ่ม helper _ordAutoFill() สำหรับเติมค่าอัตโนมัติจากฟอร์มโดยไม่ทับค่าที่ผู้ใช้แก้ไขเอง (ใช้กับแม่พิมพ์และหมายเหตุ)',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BE',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: ช่อง "แนบไฟล์ PO" (ทั้งฟอร์มสร้างและแก้ไข) เพิ่มปุ่ม ✕ ลบไฟล์ที่เลือกไว้ และแสดงรูปตัวอย่าง (preview) ถ้าไฟล์ที่เลือกเป็นรูปภาพ',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BD',
+    date: '2026-06-10',
+    items: [
+      'จัดรูปแบบการ์ด "สร้าง Order จากใบเสนอราคา" ใหม่: แถวบนเป็น No.PO/วันที่สั่งซื้อ/วันที่ต้องการ/Process, แถวกลางแบ่ง 2 คอลัมน์ (ซ้าย=กล่องข้อมูลที่ดึงจากใบเสนอราคา อ่านอย่างเดียว, ขวา=สถานะงาน/วัตถุดิบ/แนบไฟล์ PO), ตามด้วยหมายเหตุและปุ่มสร้าง Order',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BC',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: ช่อง "รายการสินค้า" ในการ์ดสร้าง Order เปลี่ยนเป็นดึงค่า "Size" (เช่น 100x20x500) จากฟอร์มที่เปิดอยู่เพียงอย่างเดียว และตั้งเป็นแก้ไขไม่ได้ (ต้องไปแก้ที่ฟอร์มก่อน)',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BB',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: ช่อง "รายการสินค้า" ในฟอร์มสร้าง Order ดึงค่าอัตโนมัติจากแบบงาน + ขนาด (OD x ID x H) ของฟอร์มที่เปิดอยู่ (อัปเดตแบบ real-time, ไม่ทับค่าที่แก้เอง)',
+    ],
+  },
+  {
+    ref: '#REV-20260610-BA',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: ปรับช่อง "แนบไฟล์ PO" (ทั้งฟอร์มสร้างและแก้ไข) ให้เป็นปุ่ม "เลือกไฟล์" + ข้อความแสดงชื่อไฟล์ภาษาไทย เริ่มต้นเป็น "ยังไม่ได้เลือกไฟล์ใด"',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AZ',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: เพิ่มช่อง "แนบไฟล์ PO" (คอลัมน์ M) ในฟอร์มสร้าง Order และฟอร์มแก้ไข — อัปโหลดขึ้น Google Drive อัตโนมัติแล้วบันทึกลิงก์ลงชีต',
+      'แท็บ Order: เพิ่มช่อง "สถานะงาน" (ปรกติ/เร่งด่วน/สต็อก, คอลัมน์ W) เลือกได้ทั้งตอนสร้างและแก้ไข Order',
+      'ฟอร์มแก้ไข Order: แสดงลิงก์ไฟล์ PO เดิม (ถ้ามี) และเปลี่ยนไฟล์ใหม่ได้',
+      'พรีวิวข้อมูลในแท็บ Order อัปเดตแบบ real-time ตามฟอร์มใบเสนอราคาที่เปิดอยู่ (No.Quo, ลูกค้า, แบบงาน, แม่พิมพ์, จำนวน, ราคา)',
+      'เพิ่ม Code.gs action ใหม่ "uploadOrderFile" สำหรับบันทึกไฟล์แนบ PO ขึ้น Google Drive โฟลเดอร์ Order_PO_Files',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AY',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: เปลี่ยนช่อง "Process" ในฟอร์มสร้าง Order และฟอร์มแก้ไข จาก text+datalist เป็น dropdown (select) แสดงตัวเลือกทั้งหมดให้เลือกตรงๆ',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AX',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: เปลี่ยนป้ายชื่อ "สถานะงาน" → "Process" ในฟอร์มสร้าง Order, ตัวกรอง, หัวตาราง และฟอร์มแก้ไข ให้ตรงกับชื่อคอลัมน์จริง (Q) ป้องกันความสับสน',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AW',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: เพิ่มระบบกรองแบบละเอียด — กรองตามสถานะงาน, ลูกค้า, ช่วงวันที่ต้องการ + ปุ่ม "ล้างตัวกรอง"',
+      'ค่าเริ่มต้นของตัวกรองสถานะงาน = "ทั้งหมด (ซ่อนที่เรียบร้อยแล้ว)" — ไม่แสดงรายการที่สถานะ "เรียบร้อย" จนกว่าจะเปลี่ยนตัวกรองเอง',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AV',
+    date: '2026-06-10',
+    items: [
+      'แท็บ Order: เปลี่ยนคอลัมน์ "สถานะงาน" ในตารางให้ดึงจาก Process (คอลัมน์ Q) แทนสถานะส่งงาน (P)',
+      'ปรับความกว้างคอลัมน์ในตาราง Order ให้เหมาะสม + ตัดข้อความยาวด้วย ... (โฮเวอร์ดูข้อความเต็มได้) สำหรับคอลัมน์ ลูกค้า/รายการสินค้า',
+      'เพิ่มระบบแบ่งหน้ารายการ Order หน้าละ 20 รายการ พร้อมปุ่มก่อนหน้า/ถัดไป',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AU',
+    date: '2026-06-10',
+    items: [
+      'แก้ผังคอลัมน์ชีต "Order" ให้ตรงกับชีตจริง: ราคาขาย=คอลัมน์ K, สถานะส่งงาน(แสดงในตาราง)=คอลัมน์ P, สถานะงาน/Process(แก้ไขได้ในฟอร์ม)=คอลัมน์ Q, หมายเหตุ=คอลัมน์ L',
+      'เปลี่ยนหัวตาราง "ราคา"→"ราคาขาย" และ "สถานะงาน"→"สถานะส่งงาน" ให้ตรงกับข้อมูลจริง',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AT',
+    date: '2026-06-10',
+    items: [
+      'แก้ตัวเลือก "สถานะงาน" ในแท็บ Order ให้ตรงกับ AppSheet: กำลังผลิต, ส่งซุป, ส่งตัวอย่างเทส+รอสรุป, ส่งยังไม่ครบ, รอConfirm, FG รอเรียก, Stock, เรียบร้อย',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AS',
+    date: '2026-06-10',
+    items: [
+      'แก้ปัญหาแท็บ "Order" ไม่ขึ้นในแถบแท็บ — เดิมแอปอ่านลำดับแท็บที่บันทึกไว้ใน localStorage (ซึ่งบันทึกไว้ก่อนมีแท็บ Order) จึงไม่มีแท็บใหม่ในรายการ ตอนนี้เติมแท็บใหม่ที่ขาดเข้าไปในลำดับอัตโนมัติ',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AR',
+    date: '2026-06-10',
+    items: [
+      'เพิ่มแท็บ "Order" — เชื่อมต่อกับชีต "Order" เดิมที่ใช้ร่วมกับ AppSheet (28 คอลัมน์ A-AB)',
+      'ดูรายการ Order ทั้งหมดได้ (ค้นหาด้วย No.Quo / No.PO / ลูกค้า / รายการสินค้า)',
+      'สร้าง Order ใหม่จากใบเสนอราคาที่เปิดอยู่ — ดึง No.Quo, แม่พิมพ์, แบบงาน, จำนวน, ราคา, ลูกค้า มาให้อัตโนมัติ',
+      'แก้ไข/อัปเดตสถานะ Order (สถานะงาน, วันที่ต้องการ, จำนวน, ราคา, รายการสินค้า, วัตถุดิบ, หมายเหตุ) ผ่านหน้าต่างแก้ไข',
+      'เพิ่มฟังก์ชัน getOrders / addOrder / updateOrder ใน Code.gs (ใช้ LockService กันชนกัน, คอลัมน์ L-T สำรองของ AppSheet จะไม่ถูกแก้)',
+    ],
+  },
+  {
     ref: '#REV-20260610-AQ',
     date: '2026-06-10',
-    current: true,
     items: [
       'แก้ปัญหาแอป (PWA) ที่ติดตั้งบนมือถือไม่อัปเดตเวอร์ชันใหม่ — เดิม fetch หน้า HTML ใช้ HTTP cache เก่าได้ (network-first แต่ยังโดนแคชของเบราว์เซอร์), ตอนนี้บังคับ no-store เพื่อดึงไฟล์ล่าสุดเสมอเมื่อมีเน็ต',
       'เพิ่มระบบเช็ก Service Worker เวอร์ชันใหม่ทุกครั้งที่เปิดแอป (reg.update()) และรีโหลดหน้าอัตโนมัติเมื่อมี SW ใหม่เข้าควบคุม',
