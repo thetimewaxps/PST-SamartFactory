@@ -1166,7 +1166,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v5.10</span>
+      <span class="ph-chip ver">v5.11</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -9344,9 +9344,18 @@ function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260610-AP',
+    ref: '#REV-20260610-AQ',
     date: '2026-06-10',
     current: true,
+    items: [
+      'แก้ปัญหาแอป (PWA) ที่ติดตั้งบนมือถือไม่อัปเดตเวอร์ชันใหม่ — เดิม fetch หน้า HTML ใช้ HTTP cache เก่าได้ (network-first แต่ยังโดนแคชของเบราว์เซอร์), ตอนนี้บังคับ no-store เพื่อดึงไฟล์ล่าสุดเสมอเมื่อมีเน็ต',
+      'เพิ่มระบบเช็ก Service Worker เวอร์ชันใหม่ทุกครั้งที่เปิดแอป (reg.update()) และรีโหลดหน้าอัตโนมัติเมื่อมี SW ใหม่เข้าควบคุม',
+      'อัปเดต CACHE_NAME ใน sw.js เป็น v5.10 เพื่อบังคับล้างแคชเก่า',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AP',
+    date: '2026-06-10',
     items: [
       'แก้แผง "สรุปต้นทุน" ด้านขวาบนแท็บเล็ตแนวนอนที่ใหญ่เกินไป — ตอนนี้จำกัดความกว้างสูงสุดไว้ที่ ~35% ของหน้าจอ และปรับขนาดอัตโนมัติเมื่อหมุนจอ',
     ],
@@ -9694,7 +9703,29 @@ function closeDevLogs() {
 // ===== PWA: ลงทะเบียน Service Worker (ติดตั้งแอปบนมือถือ/แท็บเล็ต) =====
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // เช็ก sw.js ใหม่ทุกครั้งที่เปิดแอป (เผื่อมีการอัปเดต)
+      reg.update().catch(() => {});
+
+      // ถ้าเจอ SW เวอร์ชันใหม่ ให้ skipWaiting แล้วรีโหลดหน้าอัตโนมัติ
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(() => {});
+
+    // เมื่อ SW ใหม่เข้าควบคุมหน้าแล้ว ให้รีโหลดหนึ่งครั้งเพื่อใช้ไฟล์ล่าสุด
+    let _swRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swRefreshed) return;
+      _swRefreshed = true;
+      window.location.reload();
+    });
   });
 }
 </script>
