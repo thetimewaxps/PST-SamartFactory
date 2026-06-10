@@ -1166,7 +1166,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v5.9</span>
+      <span class="ph-chip ver">v5.10</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -8524,7 +8524,10 @@ const SP_MIN       = 220;   // px — แคบสุด
 const SP_MAX       = 900;   // px — กว้างสุด
 
 function _spSetWidth(w) {
-  w = Math.max(SP_MIN, Math.min(SP_MAX, Math.round(w)));
+  // จำกัดความกว้างสูงสุดตามหน้าจอจริง (กันแผงสรุปต้นทุนใหญ่เกินไปบนแท็บเล็ตแนวนอน)
+  const viewportCap = Math.floor(window.innerWidth * 0.35);
+  const cap = Math.max(SP_MIN, Math.min(SP_MAX, viewportCap));
+  w = Math.max(SP_MIN, Math.min(cap, Math.round(w)));
   document.documentElement.style.setProperty('--sp-width', w + 'px');
   localStorage.setItem(SP_WIDTH_KEY, w);
 }
@@ -8533,6 +8536,12 @@ function _spInitResize() {
   // โหลดความกว้างที่บันทึกไว้ (หรือใช้ default)
   const saved = parseInt(localStorage.getItem(SP_WIDTH_KEY));
   _spSetWidth(isNaN(saved) ? SP_DEFAULT : saved);
+
+  // ปรับขนาดใหม่อัตโนมัติเมื่อหมุนจอ/เปลี่ยนขนาดหน้าจอ
+  window.addEventListener('resize', () => {
+    const sv = parseInt(localStorage.getItem(SP_WIDTH_KEY));
+    _spSetWidth(isNaN(sv) ? SP_DEFAULT : sv);
+  });
 
   const handle = $('spResizeHandle');
   if (!handle) return;
@@ -9335,9 +9344,16 @@ function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260610-AO',
+    ref: '#REV-20260610-AP',
     date: '2026-06-10',
     current: true,
+    items: [
+      'แก้แผง "สรุปต้นทุน" ด้านขวาบนแท็บเล็ตแนวนอนที่ใหญ่เกินไป — ตอนนี้จำกัดความกว้างสูงสุดไว้ที่ ~35% ของหน้าจอ และปรับขนาดอัตโนมัติเมื่อหมุนจอ',
+    ],
+  },
+  {
+    ref: '#REV-20260610-AO',
+    date: '2026-06-10',
     items: [
       'แก้ปุ่ม "➕ เพิ่มกระบวนการ" ในแท็บค่าแรงที่หายไป — เกิดจากใช้คลาส .btn-row (กริด 5 ช่อง กว้างสูงสุด 860px) ผิดที่ เปลี่ยนเป็น flex แถวธรรมดา ตอนนี้ปุ่มแสดงและกดได้ตามปกติ',
     ],
