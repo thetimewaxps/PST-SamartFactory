@@ -1145,7 +1145,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v3.2</span>
+      <span class="ph-chip ver">v3.7</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1299,7 +1299,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
         Rev.
         <span style="font-size:.65rem;color:#34d399;font-weight:400">●BH</span>
       </label>
-      <input type="text" id="f_rev" value="1" readonly
+      <input type="text" id="f_rev" value="0" readonly
         style="background:var(--readonly-bg);border-color:var(--readonly-bc);color:var(--readonly-col);font-size:.78rem;text-align:center">
     </div>
     <div class="field"><label>ผู้เสนอราคา</label><input type="text" id="f_quoter" value="คุณกิ๊ฟ" placeholder="ชื่อผู้เสนอ"></div>
@@ -4147,8 +4147,8 @@ function dtLoadIntoForm(idx) {
     }
     // โหลด Rev. (BH) — แสดงเฉพาะตอนโหลดจ๊อบเก่าเข้าฟอร์ม
     { _loadedRev = parseInt(r[DT.rev]) || 0;
-      if ($('f_rev')) $('f_rev').value = _loadedRev || 1;
-      if ($('revField')) $('revField').style.display = '';
+      if ($('f_rev')) $('f_rev').value = String(_loadedRev);
+      if ($('revField')) $('revField').style.display = (_loadedRev > 0) ? '' : 'none';
     }
     // โหลดผลวิเคราะห์ AI เคาะราคา (BG)
     { const aiSaleVal = r[DT.aiSale] || '';
@@ -5395,7 +5395,7 @@ function clearForm() {
     $('f_date').value = new Date().toISOString().split('T')[0];
     if ($('f_custGap')) $('f_custGap').value = '0';
     if ($('aiSaleHint')) $('aiSaleHint').style.display = 'none';
-    if ($('f_rev')) $('f_rev').value = '1';
+    if ($('f_rev')) $('f_rev').value = '0';
     _loadedDraftId = null;
     _loadedRev = 0;
     // restore defaults
@@ -5414,15 +5414,15 @@ function clearForm() {
 
 // ── LOADED JOB TRACKER ──────────────────────────────
 let _loadedNoQuo = null;   // null = new record; string = editing existing
-let _loadedRev   = 0;      // Rev. ของแถวที่กำลังแก้ไข (0 = งานใหม่ → จะเซฟเป็น Rev.1)
+let _loadedRev   = 0;      // Rev. ของแถวที่กำลังแก้ไข (0 = งานใหม่/ยังไม่เคยแก้ → ครั้งแรกที่แก้จะเซฟเป็น Rev.1)
 
 function setLoadedJob(noQuo) {
   _loadedNoQuo = noQuo ? String(noQuo) : null;
   if (noQuo) {
     _loadedDraftId = null; // โหลดงานจริงจาก DATA → ไม่ผูกกับแบบร่างใดๆ
   } else {
-    _loadedRev = 0; // ไม่ได้แก้ไขแถวเดิม → งานนี้จะเซฟเป็น Rev.1
-    if ($('f_rev')) $('f_rev').value = '1';
+    _loadedRev = 0; // ไม่ได้แก้ไขแถวเดิม → งานนี้จะเซฟ Rev. = 0 (ยังไม่เคยแก้ไข)
+    if ($('f_rev')) $('f_rev').value = '0';
     if ($('revField')) $('revField').style.display = 'none';
   }
   // mobile badge
@@ -5785,7 +5785,7 @@ function submitForm() {
     /* 57 */ ($('f_hasOd2')?.checked ? num('f_costOd2') : 0),                    // BE = cost ฝา2
     /* 58 */ ($('f_hasOd2')?.checked ? ($('r_od2calc_yes')?.checked ? 1 : 0) : 0), // BF = flag
     /* 59 */ $('f_aiSale')?.value || '', // BG = AI Sale (ผลวิเคราะห์ AI เคาะราคา)
-    /* 60 */ (_loadedNoQuo ? (_loadedRev || 1) + 1 : 1), // BH = Rev. (เริ่ม 1, +1 เมื่อบันทึกทับแถวเดิม)
+    /* 60 */ (_loadedNoQuo ? (_loadedRev + 1) : 0), // BH = Rev. (0 = ยังไม่เคยแก้ไข, แก้ครั้งแรก = 1, +1 ทุกครั้งที่บันทึกทับแถวเดิม)
   ];
 
   const isUpdate = !!_loadedNoQuo;
@@ -5796,14 +5796,14 @@ function submitForm() {
     : '—';
   const _cfCust = ($('f_contact') && $('f_contact').value) ? $('f_contact').value : '—';
   const _cfNo   = isUpdate ? _loadedNoQuo : $('f_noQuo').value;
-  const _cfRev  = isUpdate ? (_loadedRev || 1) + 1 : 1;
+  const _cfRev  = isUpdate ? (_loadedRev + 1) : 0;
   const confirmHtml = `
     <div style="text-align:left;font-size:.83rem;line-height:2;margin-top:4px">
       <div>📋 <b>No.Quo:</b> ${_cfNo}</div>
       <div>👤 <b>ลูกค้า:</b> ${_cfCust}</div>
       <div>📐 <b>Size:</b> ${_cfSize}</div>
       <div>🔢 <b>จำนวน:</b> ${num('f_unit').toLocaleString('th-TH')} ชิ้น</div>
-      <div>🔁 <b>Rev.:</b> ${_cfRev}</div>
+      ${isUpdate ? `<div>🔁 <b>Rev.:</b> ${_cfRev}</div>` : ''}
       ${isUpdate ? '<div style="color:#f59e0b;font-size:.78rem">⚠️ จะบันทึกทับแถวเดิม</div>' : ''}
     </div>`;
 
@@ -5926,7 +5926,7 @@ function _resetFormSilent() {
   _clearRemarkChips();
   computeNextNo();   // เลขที่ใบถัดไป
   initRefId();       // เลขอ้างอิงใหม่
-  if ($('f_rev')) $('f_rev').value = '1';
+  if ($('f_rev')) $('f_rev').value = '0';
   _loadedRev = 0;
   calcAll();
 }
@@ -7586,6 +7586,7 @@ function _shareRow(row) {
     quoter   : row[47] || '',
     rawMat   : row[48] || '',
     refId    : row[53] || '—',
+    rev      : parseInt(row[59]) || 0,
   };
 }
 
@@ -7602,7 +7603,7 @@ function buildShareText(row) {
   return [
     '📢 แจ้งเสนอราคา',
     '---------------------------------',
-    `เลขอ้างอิง: ${d.refId}`,
+    `เลขอ้างอิง: ${d.refId}${d.rev > 0 ? ' Rev.'+d.rev : ''}`,
     d.workType  ? `แบบงาน: ${d.workType}` : '',
     `รายการ: ${size}`,
     `จำนวน: ${d.unit.toLocaleString('th-TH')} ลูก.`,
@@ -7620,7 +7621,7 @@ function buildShareCardHTML(row) {
   const d = _shareRow(row);
   const { noQuo, date, od, id2, h, od2, unit, workType, meshOut, meshIn,
           totalCost, sellPrice, profitU, profitJ, gapWeld,
-          contact, remark, quoter, rawMat, refId } = d;
+          contact, remark, quoter, rawMat, refId, rev } = d;
   const size = (od && id2 && h)
     ? (od2 > 0 ? `${od2} / ${od} × ${id2} × ${h} mm` : `${od} × ${id2} × ${h} mm`)
     : (row[7]||'—');
@@ -7687,7 +7688,7 @@ function buildShareCardHTML(row) {
     <!-- Date + Ref -->
     <div style="background:#fff">
       ${row_('📅','วันที่', date)}
-      ${row_('🔗','Ref', `<span style="color:#6366f1;font-size:.82rem">${refId}</span>`, null)}
+      ${row_('🔗','Ref', `<span style="color:#6366f1;font-size:.82rem">${refId}${rev > 0 ? ' Rev.'+rev : ''}</span>`, null)}
     </div>
 
     <!-- Section: ข้อมูลชิ้นงาน -->
@@ -8328,7 +8329,9 @@ function buildDocuments() {
   const profitUnit = num('f_profitUnit');
   const profitJob  = num('f_profitJob');
 
-  const quoNo = refId;   // ใช้เลขอ้างอิง BB แทน No.Quo ภายใน
+  const revNo = parseInt($('f_rev')?.value) || 0;
+  const revSuffix = revNo > 0 ? ` Rev.${revNo}` : '';
+  const quoNo = `${refId}${revSuffix}`;   // ใช้เลขอ้างอิง BB + Rev. (ถ้ามีการแก้ไข) แทน No.Quo ภายใน
 
   // ── COST LINE ITEMS ─────────────────────────────────────────
   const lines = [];
@@ -8532,11 +8535,11 @@ function buildDocuments() {
       <div style="font-size:1.1rem;font-weight:800;margin-bottom:2px">ใบพิกัดจำแนกสเปคและต้นทุนฟิลเตอร์ (ภายใน)</div>
       <div style="font-size:.7rem;color:#7090a8">
         วันที่ประเมิน: ${fmtDate(dateVal)} &nbsp;|&nbsp;
-        เลขอ้างอิง: ${refId}
+        เลขอ้างอิง: ${refId}${revSuffix}
       </div>
     </div>
     <div style="text-align:right;flex-shrink:0">
-      <div style="font-size:.78rem;margin-bottom:2px">อ้างอิง <b style="color:#60a5fa">${refId}</b></div>
+      <div style="font-size:.78rem;margin-bottom:2px">อ้างอิง <b style="color:#60a5fa">${refId}${revSuffix}</b></div>
       <div style="font-size:.76rem">เรียนส่ง: ${contactName}</div>
       ${contactCo?`<div style="font-size:.7rem;color:#7090a8">${contactCo}</div>`:''}
       <div style="margin-top:5px;font-size:.68rem;display:inline-block;
@@ -8867,9 +8870,46 @@ function closeDocCfg() { $('docCfgModal').style.display = 'none'; }
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260610-N',
+    ref: '#REV-20260610-S',
     date: '2026-06-10',
     current: true,
+    items: [
+      'แก้: ช่อง Rev. ในฟอร์มจะไม่แสดงเลย ถ้างานนั้นยังไม่เคยถูกแก้ไข (Rev.=0) — แสดงเฉพาะตอนโหลดงานที่เคยแก้ไขแล้ว (Rev. ≥ 1)',
+    ],
+  },
+  {
+    ref: '#REV-20260610-R',
+    date: '2026-06-10',
+    items: [
+      'แก้บัค Rev. นับเลขผิด: งานใหม่จะเซฟ Rev.=0 (ยังไม่เคยแก้ไข) แทนที่จะเป็น 1 → แก้ครั้งแรกจะได้ Rev.1 (เดิมกระโดดเป็น Rev.2)',
+      'การแสดงผล "Rev.X" ในการ์ด/ใบเสนอราคา/ข้อความแชร์ จะซ่อนเมื่อ Rev.=0 และแสดงเมื่อมีการแก้ไขแล้ว (Rev. ≥ 1)',
+    ],
+  },
+  {
+    ref: '#REV-20260610-Q',
+    date: '2026-06-10',
+    items: [
+      'แก้: การแสดงเลขอ้างอิง (Ref) ในการ์ดผลลัพธ์/ใบเสนอราคา/ใบต้นทุน/ข้อความแชร์ จะไม่ต่อท้าย "Rev.X" สำหรับงานที่ยังไม่เคยแก้ไข (Rev.1) — จะแสดง "Rev.X" เฉพาะเมื่อมีการแก้ไขจริง (Rev. มากกว่า 1) เท่านั้น',
+    ],
+  },
+  {
+    ref: '#REV-20260610-P',
+    date: '2026-06-10',
+    items: [
+      'แก้: กล่องยืนยันก่อนบันทึก จะไม่แสดง "Rev." สำหรับงานใหม่ (ที่ยังไม่เคยถูกแก้ไข) อีกต่อไป — แสดงเฉพาะตอนบันทึกทับแถวเดิมเท่านั้น',
+    ],
+  },
+  {
+    ref: '#REV-20260610-O',
+    date: '2026-06-10',
+    items: [
+      'แก้บัค: งานเก่าที่ยังไม่เคยมีค่า Rev. (BH ว่าง) พอแก้ไข+บันทึกครั้งแรก ระบบเซฟเป็น Rev.1 (ของเดิมกระโดดไป Rev.2)',
+      'เลขอ้างอิง (Ref) ที่แสดงในการ์ดผลลัพธ์/ใบเสนอราคา/ใบต้นทุน/ข้อความแชร์ ต่อท้ายด้วย "Rev.X" ทุกที่',
+    ],
+  },
+  {
+    ref: '#REV-20260610-N',
+    date: '2026-06-10',
     items: [
       'เปลี่ยนช่อง "แบบงาน" จาก dropdown ยาวๆ เป็นช่องพิมพ์ค้นหา (พิมพ์คำที่ต้องการ ระบบจะกรองรายการให้เลือกทันที)',
     ],
