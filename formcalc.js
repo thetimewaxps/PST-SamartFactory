@@ -70,7 +70,7 @@ async function loadAllData(showResult) {
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
 
   try {
-    const [matData, specData, workData, contactData, nextNoData, moldDataRes, laborData] = await Promise.all([
+    const [matData, specData, workData, contactData, nextNoData, moldDataRes, laborData, draftsData] = await Promise.all([
       fetchJSON('getMAT'),
       fetchJSON('getSpecMat'),
       fetchJSON('getWorkTypes'),
@@ -78,6 +78,7 @@ async function loadAllData(showResult) {
       fetchJSON('getNextNo'),
       fetchJSON('getModl'),
       fetchJSON('getLaborConfig'),
+      fetchJSON('getDrafts'),
     ]);
 
     // MAT — server เป็นข้อมูลหลักเสมอ (sync ข้ามเครื่อง) คงค่า w/l เดิมไว้ถ้ามี
@@ -168,6 +169,12 @@ async function loadAllData(showResult) {
       }
       if (typeof renderProcTable === 'function' && $('proc_tbody')) renderProcTable();
       if (typeof calcLaborByProcess === 'function') calcLaborByProcess();
+    }
+
+    // แบบร่าง (Drafts) — sync ทุกเครื่องจาก Sheet (server เป็นข้อมูลหลัก)
+    if (draftsData && draftsData.status === 'ok' && Array.isArray(draftsData.drafts)) {
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(draftsData.drafts));
+      _updateDraftBadge();
     }
 
     setDbStatus('ok', '✓ เชื่อมต่อแล้ว');
@@ -736,6 +743,13 @@ function _getDrafts() {
 function _setDrafts(arr) {
   localStorage.setItem(DRAFTS_KEY, JSON.stringify(arr));
   _updateDraftBadge();
+  // sync ขึ้น Sheet "Drafts" เพื่อให้เห็นแบบร่างเดียวกันทุกเครื่อง
+  if (SCRIPT_URL) {
+    fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'saveDrafts', drafts: arr }) })
+      .catch(()=>{});
+  }
 }
 function _updateDraftBadge() {
   const n = _getDrafts().length;
@@ -802,7 +816,17 @@ function saveDraft() {
 }
 
 // แสดงรายการแบบร่างทั้งหมด พร้อมปุ่มโหลด/ลบ
-function openDrafts() {
+async function openDrafts() {
+  // ดึงแบบร่างล่าสุดจากเซิร์ฟเวอร์ก่อน (เผื่อมีคนบันทึกจากเครื่องอื่น)
+  if (SCRIPT_URL) {
+    try {
+      const res = await fetch(SCRIPT_URL + '?action=getDrafts', {mode:'cors'}).then(r=>r.json());
+      if (res && res.status === 'ok' && Array.isArray(res.drafts)) {
+        localStorage.setItem(DRAFTS_KEY, JSON.stringify(res.drafts));
+        _updateDraftBadge();
+      }
+    } catch(e) {}
+  }
   const drafts = _getDrafts();
   const listHtml = drafts.length ? drafts.map(d => `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;
@@ -1081,25 +1105,32 @@ function submitForm() {
   const _cfCust = ($('f_contact') && $('f_contact').value) ? $('f_contact').value : '—';
   const _cfNo   = isUpdate ? _loadedNoQuo : $('f_noQuo').value;
   const _cfRev  = isUpdate ? (_loadedRev + 1) : 0;
+  // ⚠️ เตือนถ้าราคาเสนอขาย ต่ำกว่าต้นทุนรวม/ลูก (ขาดทุน)
+  const _cfSellPrice = num('f_sellPrice');
+  const _cfTotalCost = num('f_totalCost');
+  const _cfBelowCost = _cfSellPrice > 0 && _cfTotalCost > 0 && _cfSellPrice < _cfTotalCost;
   const confirmHtml = `
     <div style="text-align:left;font-size:.83rem;line-height:2;margin-top:4px">
       <div>📋 <b>No.Quo:</b> ${_cfNo}</div>
       <div>👤 <b>ลูกค้า:</b> ${_cfCust}</div>
       <div>📐 <b>Size:</b> ${_cfSize}</div>
       <div>🔢 <b>จำนวน:</b> ${num('f_unit').toLocaleString('th-TH')} ชิ้น</div>
-      <div>💰 <b>ราคาเสนอขาย:</b> ${num('f_sellPrice').toLocaleString('th-TH')} บาท/ลูก</div>
+      <div>💰 <b>ราคาเสนอขาย:</b> ${_cfSellPrice.toLocaleString('th-TH')} บาท/ลูก</div>
       ${isUpdate ? `<div>🔁 <b>Rev.:</b> ${_cfRev}</div>` : ''}
       ${isUpdate ? '<div style="color:#f59e0b;font-size:.78rem">⚠️ จะบันทึกทับแถวเดิม</div>' : ''}
+      ${_cfBelowCost ? `<div style="color:#f87171;font-weight:700;font-size:.8rem;margin-top:4px">
+        🚨 ราคาเสนอขาย (${_cfSellPrice.toLocaleString('th-TH')}) ต่ำกว่าต้นทุนรวม/ลูก (${_cfTotalCost.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}) — จะขาดทุน!
+        </div>` : ''}
     </div>`;
 
   Swal.fire({
-    title: isUpdate ? 'บันทึกทับแถวเดิม?' : 'บันทึกข้อมูล?',
+    title: _cfBelowCost ? '⚠️ ราคาต่ำกว่าต้นทุน!' : (isUpdate ? 'บันทึกทับแถวเดิม?' : 'บันทึกข้อมูล?'),
     html: confirmHtml,
-    icon:'question', showCancelButton:true,
-    confirmButtonText: isUpdate ? '✅ อัปเดต' : '✅ บันทึก',
+    icon: _cfBelowCost ? 'warning' : 'question', showCancelButton:true,
+    confirmButtonText: _cfBelowCost ? '⚠️ ยืนยันบันทึกทั้งที่ขาดทุน' : (isUpdate ? '✅ อัปเดต' : '✅ บันทึก'),
     cancelButtonText:'ยกเลิก',
     background:'#0a1c2e', color:'#f1f5f9',
-    confirmButtonColor: isUpdate ? '#f59e0b' : '#2563eb',
+    confirmButtonColor: _cfBelowCost ? '#dc2626' : (isUpdate ? '#f59e0b' : '#2563eb'),
     cancelButtonColor:'#475569'
   }).then(r => {
     if (!r.isConfirmed) return;

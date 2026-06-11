@@ -25,6 +25,38 @@ function thaiShortToIso(thai) {
   return `${ceYear}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
 }
 
+// ── "NEW" badge helper ────────────────────────────────
+// ติด badge "NEW" กระพริบ ที่แถวซึ่งยังไม่เคยถูกเปิด/แก้ไข (เก็บ id ที่ "เห็นแล้ว" ไว้ใน localStorage)
+const SEEN_KEY_DATA  = 'ptts_seen_noquo';
+const SEEN_KEY_ORDER = 'ptts_seen_nopo';
+
+function _getSeenSet(key) {
+  try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); }
+  catch(e) { return new Set(); }
+}
+function _addSeen(key, id) {
+  if (!id) return;
+  const set = _getSeenSet(key);
+  const k = String(id);
+  if (set.has(k)) return;
+  set.add(k);
+  localStorage.setItem(key, JSON.stringify([...set]));
+}
+// ครั้งแรกที่ใช้งาน (ยังไม่เคยมี key นี้เลย) — ตั้ง baseline จากข้อมูลปัจจุบัน
+// เพื่อไม่ให้แถวเก่าทั้งหมดขึ้น "NEW" พร้อมกัน
+function _initSeenIfEmpty(key, ids) {
+  if (localStorage.getItem(key) === null) {
+    localStorage.setItem(key, JSON.stringify(ids.map(String)));
+  }
+}
+function _isNewItem(key, id) {
+  if (!id) return false;
+  return !_getSeenSet(key).has(String(id));
+}
+function _newBadge(isNew) {
+  return isNew ? ' <span class="new-badge">NEW</span>' : '';
+}
+
 // ── URL persistence ──────────────────────────────────
 let SCRIPT_URL = localStorage.getItem('ptts_script_url') || '';
 if (SCRIPT_URL) {
@@ -74,13 +106,16 @@ function renderTabBar() {
     <div class="sidebar-logo"><img src="${_getLogoSrc()}" alt="PTS" class="app-logo-img" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.parentNode.textContent='PT'"></div>
     <div><div class="sidebar-title">PTS</div><div class="sidebar-sub">Cost Breakdown</div></div>
   </div>`;
+  // เดสก์ท็อป (sidebar ≥1024px): แสดงทุกแท็บแบบเรียงเดี่ยว ไม่ต้อง group ใต้ "เพิ่มเติม"
+  const isDesktop = window.innerWidth >= 1024;
+
   let subItems = [];
   let moreInserted = false;
   const buttons = order.map(id => {
     if (hidden.includes(id)) return '';
     const def = TAB_DEFS.find(t=>t.id===id);
     if (!def) return '';
-    if (SUB_TAB_IDS.includes(id)) {
+    if (!isDesktop && SUB_TAB_IDS.includes(id)) {
       subItems.push(def);
       if (moreInserted) return '';
       moreInserted = true;
@@ -106,6 +141,16 @@ function renderTabBar() {
     }).join('');
   }
 }
+
+// re-render tab bar เมื่อข้าม breakpoint เดสก์ท็อป (1024px) เพื่อสลับโหมด group/ไม่ group "เพิ่มเติม"
+let _wasDesktopTabs = window.innerWidth >= 1024;
+window.addEventListener('resize', () => {
+  const nowDesktop = window.innerWidth >= 1024;
+  if (nowDesktop !== _wasDesktopTabs) {
+    _wasDesktopTabs = nowDesktop;
+    renderTabBar();
+  }
+});
 
 function _toggleMoreMenu(e) {
   const menu = $('moreMenu');
@@ -159,6 +204,8 @@ function switchTab(name) {
   if (tabEl)  tabEl.classList.add('active');
   if (tbtnEl) tbtnEl.classList.add('active');
   _activeTab = name;
+  // แท็บ Order: ซ่อน summary panel ฝั่งขวา ให้ตารางเต็มจอ (เดสก์ท็อป)
+  document.body.classList.toggle('no-summary-tab', name === 'order');
   if (name === 'calc')      refreshCalcTab();
   if (name === 'labor')     { renderProcTable(); updateLaborPreview(); }
   if (name === 'mold')      renderMoldTable();
@@ -963,13 +1010,21 @@ function renderPriceComparison() {
   const cLabor=num('f_cLabor'), cMachine=num('f_cMachine');
   const cOther1=num('f_cOther1'), cOther2=num('f_cOther2'), cOther3=num('f_cOther3');
   const cMold=num('f_cMold'), fixedCost=num('f_fixedCost');
-  const margin = (typeof _selectedMargin !== 'undefined' ? _selectedMargin : 40);
   const curUnit = num('f_unit') || 1;
   const cTransport = curUnit > 0 ? num('f_transport')/curUnit : num('f_transport');
 
   const perUnitVar = costTop+costBot+cTestWaste+cOutsource+cMeshOut+cMeshIn+
                      cLaser+cPlating+cLabor+cTransport+cMachine+cOther1+cOther2+cOther3;
   const perJobFixed = cMold + fixedCost;
+
+  // คำนวณ % กำไรจริงจากราคาที่กรอกในช่อง "ราคาเสนอขาย" (เทียบกับต้นทุน/ลูกที่จำนวนปัจจุบัน)
+  // แล้วใช้ % นี้แทนการ fix +40% — ทำให้ตารางและกราฟ interactive ตามราคาเสนอขายจริง
+  const sellPriceUnit = num('f_sellPrice');
+  const cpuCur = perUnitVar + (curUnit > 0 ? perJobFixed / curUnit : perJobFixed);
+  const margin = (sellPriceUnit > 0 && cpuCur > 0)
+    ? (sellPriceUnit / cpuCur - 1) * 100
+    : (typeof _selectedMargin !== 'undefined' ? _selectedMargin : 40);
+  const marginLbl = margin.toFixed(1).replace(/\.0$/, '');
 
   // generate tiers — from input if provided, else auto from current qty
   const qtyInput = $('pcQtyInput');
@@ -996,7 +1051,8 @@ function renderPriceComparison() {
 
   const rows = tiers.map(qty => {
     const cpu  = perUnitVar + (qty > 0 ? perJobFixed / qty : perJobFixed);
-    const spu  = cpu * (1 + margin / 100);
+    // จำนวนเดียวกับช่อง "จำนวน" ปัจจุบัน → ใช้ราคาเสนอขายตามที่กรอกจริง ไม่ปัดด้วย margin
+    const spu  = (qty === curUnit && sellPriceUnit > 0) ? sellPriceUnit : cpu * (1 + margin / 100);
     const job  = spu * qty;
     const profit = job - (perUnitVar * qty + perJobFixed);
     return { qty, cpu, spu, job, profit };
@@ -1034,7 +1090,7 @@ function renderPriceComparison() {
       datasets: [
         { label: 'ต้นทุน/ลูก', data: cpuData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.1)',
           tension: 0.35, pointRadius: 4, pointHoverRadius: 6, fill: true },
-        { label: `ราคาขาย/ลูก (+${margin}%)`, data: spuData, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,.07)',
+        { label: `ราคาขาย/ลูก (${margin>=0?'+':''}${marginLbl}%)`, data: spuData, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,.07)',
           tension: 0.35, pointRadius: 4, pointHoverRadius: 6, fill: true }
       ]
     },

@@ -70,6 +70,8 @@ async function dtRefresh(showMsg) {
     if (data.status !== 'ok') throw new Error(data.message || 'ข้อผิดพลาดจาก server');
     _dtCache = Array.isArray(data.rows) ? data.rows : [];
     _dtPage  = 0;
+    // ตั้ง baseline "เห็นแล้ว" ครั้งแรก — ไม่ให้ของเก่าทั้งหมดขึ้น NEW พร้อมกัน
+    _initSeenIfEmpty(SEEN_KEY_DATA, _dtCache.map(r => r[DT.noQuo]));
     computeNextNo();
     const odNow = ($('f_od') && $('f_od').value) ? $('f_od').value : '';
     // auto-fill search เฉพาะตอนโหลดปกติ (ไม่ใช่ "โหลดทั้งหมด") และ search ว่างอยู่
@@ -315,9 +317,10 @@ function dtRender() {
       ? 'background:rgba(250,204,21,.16);border-left:3px solid #facc15'
       : (ri % 2 === 0 ? '' : 'background:var(--pair-bg)');
     const hasAiSale = !!String(r[DT.aiSale]||'').trim();
+    const isNewRow = _isNewItem(SEEN_KEY_DATA, r[DT.noQuo]);
     return `<tr style="${rowBg};border-bottom:1px solid var(--bc-div)" class="dt-row">
       <td style="padding:8px 10px;white-space:nowrap">${statusBadge(r[DT.status])}<br>
-        <span style="font-size:.72rem;color:var(--c1);font-weight:600">${r[DT.noQuo]||'—'}</span>${hasAiSale ? ' <span title="มีผลวิเคราะห์ AI เคาะราคาแนบไว้" style="font-size:.75rem">🤖</span>' : ''}</td>
+        <span style="font-size:.72rem;color:var(--c1);font-weight:600">${r[DT.noQuo]||'—'}</span>${hasAiSale ? ' <span title="มีผลวิเคราะห์ AI เคาะราคาแนบไว้" style="font-size:.75rem">🤖</span>' : ''}${_newBadge(isNewRow)}</td>
       <td style="padding:8px 10px;font-size:.72rem;color:var(--t3);white-space:nowrap">${r[DT.date]||'—'}</td>
       <td style="padding:8px 10px;font-size:.78rem;color:var(--t1);font-weight:600;white-space:nowrap">${size} <span style="color:var(--t3);font-size:.65rem">มม.</span></td>
       <td style="padding:8px 10px;font-size:.72rem;white-space:nowrap">${r[DT.matTop]  ? `<span style="background:rgba(59,130,246,.18);color:#111;border-radius:5px;padding:1px 7px;font-weight:600">${r[DT.matTop]}</span>`  : '<span style="color:var(--t3)">—</span>'}</td>
@@ -545,6 +548,8 @@ function dtLoadIntoForm(idx) {
     confirmButtonColor:'#16a34a', cancelButtonColor:'#475569'
   }).then(res => {
     if (!res.isConfirmed) return;
+    _addSeen(SEEN_KEY_DATA, r[DT.noQuo]);
+    dtRender();
     const sv = (id, val) => { const el = $(id); if (el && val !== undefined && val !== null) el.value = val; };
     const sn = (id, val) => sv(id, parseFloat(val) || '');
     sv('f_status',    r[DT.status]);
@@ -637,7 +642,12 @@ function dtLoadIntoForm(idx) {
     // ตั้งราคาเสนอขายหลัง calcAll() เพราะ calcAll() จะทับด้วย margin อัตโนมัติ
     if (_savedSellPrice > 0 && $('f_sellPrice')) {
       $('f_sellPrice').value = _savedSellPrice.toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:0});
-      // อัปเดต summary panel อีกรอบหลังใส่ราคาเสนอขายที่บันทึกไว้
+      // ปิด auto margin ไว้ก่อน ไม่งั้น calcAll() รอบถัดไปจะทับราคาที่เพิ่งใส่กลับด้วย margin อัตโนมัติอีก
+      _selectedMargin = 0;
+      const lbl = $('marginLabel');
+      if (lbl) lbl.textContent = '●กำหนดเอง';
+      // คำนวณซ้ำอีกรอบด้วยราคาเสนอขายที่บันทึกไว้ — ให้ตาราง/กราฟเปรียบเทียบราคา + summary panel ใช้ราคานี้ตั้งแต่โหลดครั้งแรก
+      calcAll();
       if (typeof updateSummaryPanel === 'function') updateSummaryPanel();
     }
     switchTab('breakdown');

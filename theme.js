@@ -299,7 +299,7 @@ function buildShareCardHTML(row) {
     return row_('↔️', lbl, `${gapWeld} mm.`);
   })();
 
-  const imgSection = ((_lastSavedImage || _attachedImage)) ? (() => {
+  const imgSection = ((_lastSavedImage || _attachedImage) && !(_lastSavedImage || _attachedImage).legacy) ? (() => {
     const img = _lastSavedImage || _attachedImage;
     return `<div style="padding:10px 16px 0">
       <div style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;

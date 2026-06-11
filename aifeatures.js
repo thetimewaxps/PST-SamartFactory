@@ -280,7 +280,19 @@ function _syncAttachPreview() {
   const empty   = $('apEmpty');
   const overlay = $('apOverlay');
   if (!img) return;
-  if (_attachedImage) {
+  if (_attachedImage && _attachedImage.legacy) {
+    // ข้อมูลเก่าจากระบบเดิม มีแค่ชื่อไฟล์ ไม่มีรูปให้แสดง
+    img.src = '';
+    img.style.display = 'none';
+    if (empty) {
+      empty.style.display = 'flex';
+      empty.innerHTML = `<span class="ap-icon">⚠️</span>
+        <span class="ap-label" style="font-size:.72rem;line-height:1.4;text-align:center;padding:0 8px">
+          ไม่พบรูป (ข้อมูลเก่า)<br><span style="opacity:.7">${_attachedImage.name}</span><br>คลิกเพื่อแนบรูปใหม่
+        </span>`;
+    }
+    if (overlay) overlay.style.display = 'flex';
+  } else if (_attachedImage) {
     img.src = _attachedImage.dataUrl;
     img.style.display = 'block';
     if (empty)   empty.style.display   = 'none';
@@ -288,7 +300,10 @@ function _syncAttachPreview() {
   } else {
     img.src = '';
     img.style.display = 'none';
-    if (empty)   empty.style.display   = 'flex';
+    if (empty) {
+      empty.style.display = 'flex';
+      empty.innerHTML = `<span class="ap-icon">📎</span><span class="ap-label">คลิกเพื่อแนบรูปใบขอราคา</span>`;
+    }
     if (overlay) overlay.style.display = 'none';
   }
 }
@@ -304,11 +319,18 @@ function clearAttachedImage() {
 
 function _loadAttachFromUrl(url) {
   if (!url) return;
-  _attachedImage = { name: 'รูปใบขอราคา', dataUrl: url, base64: null, mimeType: 'image/*', driveUrl: url };
+  // ค่าเก่าจากระบบเดิมเป็นแค่ชื่อไฟล์/พาธ ไม่ใช่ URL ที่เปิดดูได้ (ไม่ขึ้นต้นด้วย http)
+  const isViewable = /^https?:\/\//i.test(url);
+  _attachedImage = {
+    name: isViewable ? 'รูปใบขอราคา' : url,
+    dataUrl: isViewable ? url : null,
+    base64: null, mimeType: 'image/*', driveUrl: url,
+    legacy: !isViewable
+  };
   const btn = $('btnAttach');
   if (btn) { btn.innerHTML = '📎 <span style="color:#34d399">●</span> เปลี่ยนรูป'; btn.style.borderColor = 'rgba(52,211,153,.6)'; }
   const viewBtn = $('btnViewAttach');
-  if (viewBtn) viewBtn.style.display = 'flex';
+  if (viewBtn) viewBtn.style.display = isViewable ? 'flex' : 'none';
   _syncAttachPreview();
 }
 

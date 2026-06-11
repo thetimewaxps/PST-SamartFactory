@@ -834,6 +834,16 @@ select option { background: var(--sel-bg); color: var(--t1); }
   text-align: center;
 }
 
+/* ── "NEW" badge (กระพริบ) สำหรับแถวที่เพิ่งเพิ่มใหม่ ────── */
+.new-badge {
+  display: inline-block; padding: 1px 5px; border-radius: 4px;
+  font-size: .6rem; font-weight: 800; letter-spacing: .5px;
+  color: #fff; background: #ef4444;
+  vertical-align: middle; line-height: 1.4;
+  animation: newBadgeBlink 1s ease-in-out infinite;
+}
+@keyframes newBadgeBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
 /* ── SUMMARY PANEL (hidden on mobile) ────────────────── */
 .summary-panel { display: none; }
 
@@ -891,6 +901,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
   #tab-mold      > div[style*="max-width"],
   #tab-api       > div[style*="max-width"],
   #tab-mat       > div[style*="max-width"],
+  #tab-order     > div[style*="max-width"],
   #tab-data      > div[style*="max-width"] { max-width: 100% !important; }
 }
 
@@ -1045,6 +1056,10 @@ select option { background: var(--sel-bg); color: var(--t1); }
     gap: 0;
   }
   .summary-panel::-webkit-scrollbar { display: none; }
+
+  /* แท็บ Order: ซ่อน summary panel + คืนพื้นที่ให้ตารางเต็มจอ */
+  body.no-summary-tab { padding-right: 0; }
+  body.no-summary-tab .summary-panel { display: none; }
 
   .sp-header {
     font-size: .72rem; font-weight: 700; color: var(--t3);

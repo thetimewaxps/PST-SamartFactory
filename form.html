@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=5.62">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v5.45</span>
+      <span class="ph-chip ver">v5.62</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1528,16 +1528,16 @@
       <table style="width:100%;border-collapse:collapse;min-width:760px;table-layout:fixed">
         <thead>
           <tr style="background:var(--bg-deep)">
-            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.Quo</th>
-            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.PO</th>
-            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่สั่งซื้อ</th>
-            <th style="width:11%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">ลูกค้า</th>
-            <th style="width:24%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">รายการสินค้า</th>
-            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">จำนวน</th>
-            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:right;border-bottom:1px solid var(--bc-div)">ราคาขาย</th>
-            <th style="width:11%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">Process</th>
-            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่ต้องการ</th>
-            <th style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">ปฏิบัติการ</th>
+            <th style="width:6%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.Quo</th>
+            <th style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.PO</th>
+            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่สั่งซื้อ</th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">ลูกค้า</th>
+            <th style="width:20%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">รายการสินค้า</th>
+            <th style="width:6%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">จำนวน</th>
+            <th style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:right;border-bottom:1px solid var(--bc-div)">ราคาขาย</th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">Process</th>
+            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่ต้องการ</th>
+            <th style="width:18%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">ปฏิบัติการ</th>
           </tr>
         </thead>
         <tbody id="ordBody">
@@ -1737,12 +1737,12 @@
   </div>
 </div>
 
-<script src="core.js"></script>
-<script src="data.js"></script>
-<script src="formcalc.js"></script>
-<script src="aifeatures.js"></script>
-<script src="theme.js"></script>
-<script src="order.js"></script>
+<script src="core.js?v=5.62"></script>
+<script src="data.js?v=5.62"></script>
+<script src="formcalc.js?v=5.62"></script>
+<script src="aifeatures.js?v=5.62"></script>
+<script src="theme.js?v=5.62"></script>
+<script src="order.js?v=5.62"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -1871,9 +1871,149 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260611-L',
+    ref: '#REV-20260611-AC',
     date: '2026-06-11',
     current: true,
+    items: [
+      'ปรับการ์ด "ดูรายละเอียด Order" ใหม่ทั้งหมด — เพิ่ม Timeline ความคืบหน้า 5 ขั้นตอน (รับออเดอร์→ตรวจสอบข้อมูล→กำลังผลิต→QC→ส่งสินค้า) ตามสถานะ Process',
+      'เพิ่มปุ่ม Action ในการ์ด: 🔄 เปลี่ยนสถานะ (Process), ✈️ ส่งงาน (ตั้งสถานะส่งงาน+บันทึกวันที่), 🖨️ พิมพ์, ✏️ แก้ไข, ⋯ เพิ่มเติม (ลบ Order)',
+      'เพิ่มปุ่มขยายรูปภาพ (🔍) ในรูป PO/รูปงาน',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AB',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'เพิ่มปุ่ม "👁️ ดู" ในตาราง Order — เปิดการ์ดดูรายละเอียดออเดอร์ทั้งหมด (No.Quo, No.PO, ลูกค้า, แม่พิมพ์, แบบงาน, รายการสินค้า, จำนวน, วัตถุดิบ, ราคาเสนอขาย, วันที่สั่งซื้อ/ต้องการ, รูปภาพ PO/งาน, หมายเหตุ, สถานะงาน/ส่งงาน)',
+      'ปรับสัดส่วนคอลัมน์ตาราง Order รองรับปุ่มที่เพิ่มขึ้น (ปฏิบัติการ 15% → 18%)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AA',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'เพิ่ม badge "NEW" กระพริบ กำกับแถวที่เพิ่งถูกเพิ่มใหม่ ในตาราง DATA และ Order',
+      'badge จะหายไปเมื่อกดเปิด/แก้ไขแถวนั้น (สถานะถูกจำไว้ใน localStorage)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-Z',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ตาราง Order: ปรับสัดส่วนความกว้างคอลัมน์ใหม่ทั้งหมด — เพิ่มคอลัมน์ "ปฏิบัติการ" จาก 8% เป็น 15% ให้ปุ่ม "แก้ไข/ลบ" แสดงครบไม่ถูกตัด',
+      'ลดขนาด padding ปุ่มแก้ไข/ลบในตาราง Order ให้กระชับขึ้น',
+    ],
+  },
+  {
+    ref: '#REV-20260611-Y',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แท็บ Order (เดสก์ท็อป ≥1100px): ซ่อน Summary Panel ฝั่งขวา ให้ตารางขยายเต็มความกว้างจอ — สลับแท็บอื่นจะกลับมาแสดงปกติ',
+    ],
+  },
+  {
+    ref: '#REV-20260611-X',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แท็บ Order (เดสก์ท็อป ≥1024px): ขยาย card ให้เต็มความกว้างจอเหมือนแท็บ DATA (ยกเลิก max-width:880px)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-W',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ยกเลิกการเปลี่ยนแปลงของ #REV-20260611-V (ซ่อน Summary Panel ในแท็บ DATA) ตามคำขอผู้ใช้ — ย้อนกลับ core.js และ style.css',
+    ],
+  },
+  {
+    ref: '#REV-20260611-U',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แก้ปุ่ม "ลบ" Order ไม่ขึ้น (เคสรีดีพลอยแล้วยังไม่เห็น) — สาเหตุ: เบราว์เซอร์ cache ไฟล์ .js/.css เก่า',
+      'เพิ่ม cache-busting (?v=5.59) ให้ core.js, data.js, formcalc.js, aifeatures.js, theme.js, order.js, style.css',
+    ],
+  },
+  {
+    ref: '#REV-20260611-T',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'เพิ่มปุ่ม "🗑️ ลบ" ในแต่ละแถวของตาราง Order',
+      'กดลบ → ขึ้นป๊อปอัปยืนยัน (แสดง No.Quo / No.PO) ก่อนลบจริง',
+      'เมื่อยืนยันลบ: ลบแถวออกจากชีต Order และตั้งคอลัมน์ "สถานะ" ของแถว DATA ที่ตรงกับ No.Quo เป็น "รอสรุป"',
+    ],
+  },
+  {
+    ref: '#REV-20260611-S',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'โหมดเดสก์ท็อป (เมนูซ้าย ≥1024px): แสดงทุกแท็บแยกเป็นปุ่มเดี่ยวในเมนูซ้าย ไม่ต้องรวมกลุ่มไว้ใต้ "⋯ เพิ่มเติม" อีกต่อไป',
+      'โหมดมือถือยังคงรวมแท็บ "แรงงาน, แม่พิมพ์, ตั้งค่า, MAT" ไว้ใต้ "เพิ่มเติม" เหมือนเดิม',
+      'เพิ่มการตรวจจับ resize เพื่อสลับโหมดอัตโนมัติเมื่อข้าม breakpoint 1024px',
+    ],
+  },
+  {
+    ref: '#REV-20260611-R',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'เพิ่มแจ้งเตือนตอนบันทึก: ถ้า "ราคาเสนอขาย" ต่ำกว่า "ต้นทุนรวม/ลูก" จะขึ้นป๊อปอัปสีแดง ⚠️ พร้อมตัวเลขเทียบ และต้องกดยืนยันซ้ำว่า "ยืนยันบันทึกทั้งที่ขาดทุน"',
+    ],
+  },
+  {
+    ref: '#REV-20260611-Q',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แก้บัค (ต่อจาก -P): การคำนวณซ้ำหลังใส่ราคาเสนอขายที่บันทึกไว้ ยังถูก calcAll() ทับกลับด้วย margin อัตโนมัติอีกรอบ เพราะ _selectedMargin ยังเป็นค่าเดิม (เช่น 40%)',
+      'แก้ให้ตั้ง _selectedMargin = 0 (โหมดกำหนดเอง) ก่อนคำนวณซ้ำ — ราคาเสนอขายที่โหลดมาจะไม่ถูกทับ และตาราง/กราฟเปรียบเทียบราคาจะตรงกับราคานี้ตั้งแต่โหลดครั้งแรก',
+    ],
+  },
+  {
+    ref: '#REV-20260611-P',
+    date: '2026-06-11',
+    items: [
+      'แก้บัค: ตอนโหลดงานเก่าเข้าฟอร์มครั้งแรก ตาราง/กราฟ "เปรียบเทียบราคา vs จำนวน" ยังคำนวณด้วย margin เดิม ไม่ได้ใช้ราคาเสนอขายที่บันทึกไว้ (เพราะ calcAll() รันก่อนใส่ราคาเสนอขายกลับเข้าช่อง)',
+      'แก้ให้คำนวณซ้ำอีกรอบหลังใส่ราคาเสนอขายที่โหลดมาแล้ว — ตาราง/กราฟ/summary panel จะตรงกับราคาเสนอขายตั้งแต่โหลดครั้งแรก',
+    ],
+  },
+  {
+    ref: '#REV-20260611-O',
+    date: '2026-06-11',
+    items: [
+      'แก้ตาราง/กราฟ "เปรียบเทียบราคา vs จำนวน" — เดิมคำนวณราคาขายด้วย margin คงที่ (+40%) ไม่สนใจค่าที่กรอกในช่อง "ราคาเสนอขาย"',
+      'ตอนนี้คำนวณ % กำไรจริงจากช่อง "ราคาเสนอขาย" เทียบกับต้นทุน/ลูกที่จำนวนปัจจุบัน แล้วใช้ % นั้นกับทุกแถว — แถวที่จำนวนตรงกับ "จำนวน" ปัจจุบัน จะใช้ราคาเสนอขายตรงๆ',
+      'พิมพ์ในช่อง "ราคาเสนอขาย" แล้วตาราง/กราฟอัปเดตทันที (interactive)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-N',
+    date: '2026-06-11',
+    items: [
+      'แบบร่าง (Drafts) เห็นเหมือนกันทุกเครื่องแล้ว — sync ขึ้น Google Sheet ใหม่ "Drafts" ผ่าน Apps Script (เดิมเก็บแค่ localStorage เห็นเฉพาะเครื่องที่บันทึก)',
+      'ตอนเปิดฟอร์ม/เปิดรายการแบบร่าง จะดึงรายการล่าสุดจากเซิร์ฟเวอร์มาแสดงอัตโนมัติ',
+      '⚠️ ต้อง Redeploy Apps Script (Code.gs) ใหม่ ไม่งั้นฟีเจอร์นี้จะไม่ทำงาน',
+    ],
+  },
+  {
+    ref: '#REV-20260611-M',
+    date: '2026-06-11',
+    items: [
+      'แก้บัค: โหลดงานเก่าที่ AY (รูปใบขอราคา) เป็นชื่อไฟล์/พาธจากระบบเดิม (เช่น "DATA_Images/xxxx.jpg") ไม่ใช่ URL ที่เปิดได้ — เดิมแสดงเป็นกล่องว่าง/ภาพแตก',
+      'ตอนนี้ถ้าตรวจพบว่าเป็นพาธเก่า จะแสดงข้อความ "ไม่พบรูป (ข้อมูลเก่า)" พร้อมชื่อไฟล์เดิม และให้แนบรูปใหม่แทนได้ (ไม่กระทบการแสดงผล Card สำหรับงานที่มีรูปจริง)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-L',
+    date: '2026-06-11',
     items: [
       'แก้บัค: ตอนกด "บันทึกทับแถวเดิม" ของ job เก่า ราคาเสนอขายถูกคำนวณทับเป็นราคาตาม margin อัตโนมัติ (เช่น 40%) — แก้ให้ดึงค่าจากช่อง "ราคาเสนอขาย" ตามที่กรอกไว้เสมอ ห้ามเปลี่ยน',
       'เพิ่มแสดง "ราคาเสนอขาย" ใน popup ยืนยันก่อนบันทึก เพื่อให้ตรวจสอบก่อนกดอัปเดต',
@@ -2324,205 +2464,4 @@ const DEV_LOGS = [
     ref: '#REV-20260610-S',
     date: '2026-06-10',
     items: [
-      'แก้: ช่อง Rev. ในฟอร์มจะไม่แสดงเลย ถ้างานนั้นยังไม่เคยถูกแก้ไข (Rev.=0) — แสดงเฉพาะตอนโหลดงานที่เคยแก้ไขแล้ว (Rev. ≥ 1)',
-    ],
-  },
-  {
-    ref: '#REV-20260610-R',
-    date: '2026-06-10',
-    items: [
-      'แก้บัค Rev. นับเลขผิด: งานใหม่จะเซฟ Rev.=0 (ยังไม่เคยแก้ไข) แทนที่จะเป็น 1 → แก้ครั้งแรกจะได้ Rev.1 (เดิมกระโดดเป็น Rev.2)',
-      'การแสดงผล "Rev.X" ในการ์ด/ใบเสนอราคา/ข้อความแชร์ จะซ่อนเมื่อ Rev.=0 และแสดงเมื่อมีการแก้ไขแล้ว (Rev. ≥ 1)',
-    ],
-  },
-  {
-    ref: '#REV-20260610-Q',
-    date: '2026-06-10',
-    items: [
-      'แก้: การแสดงเลขอ้างอิง (Ref) ในการ์ดผลลัพธ์/ใบเสนอราคา/ใบต้นทุน/ข้อความแชร์ จะไม่ต่อท้าย "Rev.X" สำหรับงานที่ยังไม่เคยแก้ไข (Rev.1) — จะแสดง "Rev.X" เฉพาะเมื่อมีการแก้ไขจริง (Rev. มากกว่า 1) เท่านั้น',
-    ],
-  },
-  {
-    ref: '#REV-20260610-P',
-    date: '2026-06-10',
-    items: [
-      'แก้: กล่องยืนยันก่อนบันทึก จะไม่แสดง "Rev." สำหรับงานใหม่ (ที่ยังไม่เคยถูกแก้ไข) อีกต่อไป — แสดงเฉพาะตอนบันทึกทับแถวเดิมเท่านั้น',
-    ],
-  },
-  {
-    ref: '#REV-20260610-O',
-    date: '2026-06-10',
-    items: [
-      'แก้บัค: งานเก่าที่ยังไม่เคยมีค่า Rev. (BH ว่าง) พอแก้ไข+บันทึกครั้งแรก ระบบเซฟเป็น Rev.1 (ของเดิมกระโดดไป Rev.2)',
-      'เลขอ้างอิง (Ref) ที่แสดงในการ์ดผลลัพธ์/ใบเสนอราคา/ใบต้นทุน/ข้อความแชร์ ต่อท้ายด้วย "Rev.X" ทุกที่',
-    ],
-  },
-  {
-    ref: '#REV-20260610-N',
-    date: '2026-06-10',
-    items: [
-      'เปลี่ยนช่อง "แบบงาน" จาก dropdown ยาวๆ เป็นช่องพิมพ์ค้นหา (พิมพ์คำที่ต้องการ ระบบจะกรองรายการให้เลือกทันที)',
-    ],
-  },
-  {
-    ref: '#REV-20260610-M',
-    date: '2026-06-10',
-    items: [
-      'ตาราง DATA: ไฮไลต์แถวที่วัตถุดิบ (AW) เป็นสแตนเลส/SUS304 ด้วยพื้นสีเหลืองอ่อน+เส้นขอบซ้าย เพื่อเตือนงานที่ราคาสูงพิเศษ',
-    ],
-  },
-  {
-    ref: '#REV-20260610-L',
-    date: '2026-06-10',
-    items: [
-      'เปลี่ยนช่อง "หมายเหตุ" จาก input บรรทัดเดียว เป็น textarea หลายบรรทัด อ่าน/เลื่อนง่ายขึ้นบนมือถือ',
-    ],
-  },
-  {
-    ref: '#REV-20260610-K',
-    date: '2026-06-10',
-    items: [
-      'ช่อง Rev. ในฟอร์ม จะแสดงเฉพาะตอนโหลดจ๊อบเก่าเข้ามาแก้ไขเท่านั้น (งานใหม่จะซ่อนไว้)',
-    ],
-  },
-  {
-    ref: '#REV-20260610-J',
-    date: '2026-06-10',
-    items: [
-      'เพิ่มระบบ Rev. (เลขแก้ไข) เก็บในคอลัมน์ใหม่ BH ของ DATA gsheet — งานใหม่ = Rev.1',
-      'ทุกครั้งที่บันทึกทับแถวเดิม (อัปเดตงาน) เลข Rev. จะ +1 อัตโนมัติ',
-      'แสดงเลข Rev. ปัจจุบันในฟอร์ม และเลข Rev. ที่จะบันทึกในกล่องยืนยันก่อนกด Save',
-    ],
-  },
-  {
-    ref: '#REV-20260610-I',
-    date: '2026-06-10',
-    items: [
-      'แก้บัค: โหลดแบบร่างมาแล้ว Save ไม่ได้เพราะเลขที่ใบเสนอราคา (No.Quo) ซ้ำกับของเดิมที่บันทึกไปแล้ว',
-      'โหลดแบบร่าง → คำนวณเลขที่ใบเสนอราคาและเลขอ้างอิงใหม่ตามปัจจุบันให้อัตโนมัติ ไม่ใช้เลขเดิมในแบบร่าง',
-    ],
-  },
-  {
-    ref: '#REV-20260610-H',
-    date: '2026-06-10',
-    items: [
-      'โหลดแบบร่างมาทำต่อ แล้วกด Save สำเร็จ → ระบบลบแบบร่างนั้นออกจากรายการให้อัตโนมัติ',
-    ],
-  },
-  {
-    ref: '#REV-20260610-G',
-    date: '2026-06-10',
-    items: [
-      'บันทึกผลวิเคราะห์ "AI เคาะราคา" ล่าสุดแนบไปกับงานตอนกด Save ลงคอลัมน์ BG "AI Sale" ใน DATA gsheet',
-      'โหลดงานเดิม จะดึงผลวิเคราะห์ AI ที่เคยบันทึกไว้กลับมาด้วย พร้อมแสดงป้ายแจ้งเตือน 🤖',
-    ],
-  },
-  {
-    ref: '#REV-20260610-F',
-    date: '2026-06-10',
-    items: [
-      'เพิ่มระบบจำผลวิเคราะห์ "AI เคาะราคา" ไว้ใน localStorage (สูงสุด 20 รายการล่าสุด)',
-      'เพิ่มไอคอน 🕐 ดูผลวิเคราะห์ล่าสุดซ้ำได้โดยไม่ต้องเรียก AI ใหม่ (ไม่เสียเวลา/โควต้า)',
-      'เพิ่มปุ่ม "📜 ประวัติทั้งหมด" ในกล่องผลวิเคราะห์ ดูย้อนหลังและกดดูซ้ำแต่ละรายการได้',
-    ],
-  },
-  {
-    ref: '#REV-20260610-E',
-    date: '2026-06-10',
-    items: [
-      'เพิ่มระบบ "แบบร่าง" สำหรับงานที่ยังไม่พร้อมบันทึก เช่น รองานรอราคาจากร้านภายนอก',
-      'เพิ่มปุ่ม "📂 แบบร่าง (รองาน/รอราคา)" ทั้งมือถือและเดสก์ท็อป เปิดดู/บันทึก/โหลด/ลบแบบร่าง',
-      'แบบร่างเก็บค่าทุกช่องในฟอร์มไว้ใน localStorage เครื่องนี้ พร้อมตั้งชื่อ/หมายเหตุได้',
-    ],
-  },
-  {
-    ref: '#REV-20260610-D',
-    date: '2026-06-10',
-    items: [
-      'เพิ่มไอคอน ⓘ อธิบายเกณฑ์การจัดกลุ่ม A/B/C ในส่วนวิเคราะห์ราคา (ทั้งเดสก์ท็อปและมือถือ)',
-    ],
-  },
-  {
-    ref: '#REV-20260610-C',
-    date: '2026-06-10',
-    items: [
-      'เพิ่มปุ่ม "🤖 AI เคาะราคา" ใต้ช่องราคาเสนอขาย เพื่อให้ใช้งานได้ในโหมดมือถือ',
-      'เพิ่มกล่อง "Dev Logs" มุมล่างขวา สำหรับแสดงประวัติการแก้ไขงานบนหน้าเว็บ',
-    ],
-  },
-  {
-    ref: '#REV-20260609-B',
-    date: '2026-06-09',
-    items: [
-      'แก้ไขการแสดง OD ฝา2 ในการ์ดแชร์ ข้อความเทเลแกรม และตาราง DATA (ลบคำว่า "OD ฝา2:" ออก รูปแบบใหม่ 350/300×200×500 mm)',
-      'แก้ไขกล่องยืนยันก่อนบันทึก ให้แสดง OD ฝา2 ด้วย',
-      'แก้ไขรูปแบบราคาในข้อความเทเลแกรม จาก @1,340.00. เป็น @ 1,340.-',
-      'เปลี่ยนปุ่ม "วิเคราะห์ละเอียด (AI)" เป็น "🤖 AI เคาะราคา" — คำตอบสั้นกระชับ 3 บรรทัด เร็วขึ้น',
-      'แก้บั๊ก AI: ฟังก์ชัน callAiText ชนกัน 2 ตัว ทำให้วิเคราะห์ราคาพัง',
-      'เพิ่มระบบสลับ Gemini model อัตโนมัติเมื่อ Quota เต็ม พร้อมแจ้งเตือน',
-      'AI อ่านแบบ/อ่านข้อความ: ถ้าไม่ระบุ MAT ฝาบน/ฝาล่าง ใส่ค่าเริ่มต้น SPCC-0.6 ให้อัตโนมัติ',
-      'แก้บั๊กช่อง "หมายเหตุ" จาก AI ที่ใส่ผิดช่อง (f_note → f_remark)',
-      'แก้ไข syncRemarkChips ให้ต่อข้อความใหม่ ไม่ลบข้อความที่พิมพ์ไว้เดิม',
-    ],
-  },
-];
-
-function renderDevLogs() {
-  const body = $('devLogsBody');
-  if (!body) return;
-  body.innerHTML = DEV_LOGS.map((log, idx) => `
-    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
-      border-radius:10px;padding:10px 12px">
-      <div style="font-size:.8rem;font-weight:700;color:#e2e8f0;margin-bottom:6px;display:flex;
-        align-items:center;gap:6px;flex-wrap:wrap">
-        <span>📋 ENTRY ${DEV_LOGS.length - idx}:</span>
-        <span style="color:#94a3b8;font-weight:500">📅 ${log.date}</span>
-        <span style="color:#a5b4fc">${log.ref}</span>
-        ${log.current ? '<span style="color:#34d399;font-weight:700">(Current)</span>' : ''}
-      </div>
-      <ul style="margin:0;padding-left:18px;font-size:.78rem;color:#cbd5e1;line-height:1.6">
-        ${log.items.map(it => `<li>${it}</li>`).join('')}
-      </ul>
-    </div>
-  `).join('');
-}
-
-function openDevLogs() {
-  renderDevLogs();
-  $('devLogsModal').style.display = 'flex';
-}
-function closeDevLogs() {
-  $('devLogsModal').style.display = 'none';
-}
-
-// ===== PWA: ลงทะเบียน Service Worker (ติดตั้งแอปบนมือถือ/แท็บเล็ต) =====
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').then((reg) => {
-      // เช็ก sw.js ใหม่ทุกครั้งที่เปิดแอป (เผื่อมีการอัปเดต)
-      reg.update().catch(() => {});
-
-      // ถ้าเจอ SW เวอร์ชันใหม่ ให้ skipWaiting แล้วรีโหลดหน้าอัตโนมัติ
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
-          }
-        });
-      });
-    }).catch(() => {});
-
-    // เมื่อ SW ใหม่เข้าควบคุมหน้าแล้ว ให้รีโหลดหนึ่งครั้งเพื่อใช้ไฟล์ล่าสุด
-    let _swRefreshed = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (_swRefreshed) return;
-      _swRefreshed = true;
-      window.location.reload();
-    });
-  });
-}
-</script>
-</body>
-</html>
+      'แก้: ช่อง Rev. ในฟอร์มจ
