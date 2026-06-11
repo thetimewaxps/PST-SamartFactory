@@ -347,12 +347,12 @@ let _partFormulas = _DEFAULT_PART_FORMULAS.map(f=>({...f}));
   } catch(e){ localStorage.removeItem('ptts_part_formulas'); }
 })();
 
-function runCalc() {
-  const od   = num('f_od');
-  const id_  = num('f_id');
-  const h    = num('f_h');
-  const unit = num('f_unit') || 1;
+// ── เครื่องมือคำนวณขนาดตัด/เลย์เอาต์ (ใช้ร่วมกันโดย runCalc และการพิมพ์ Report จาก Order) ──
+// แยกออกมาเพื่อให้สามารถคำนวณจากข้อมูลที่บันทึกไว้ (DATA/Order) ได้ โดยไม่ต้องพึ่งค่าจากฟอร์มที่เปิดอยู่
+function _computeCutParts(od, id_, h, unit, matCodes, custgap, flips) {
   if (!od || !h) return null;
+  custgap = custgap || 0;
+  flips = flips || [false, false, false, false];
 
   const DEF = specMatData['4 X 8 ฟุต(ปรกติ)'] || {w:1219, l:2438};
 
@@ -381,16 +381,25 @@ function runCalc() {
     return {partName, matCode, price, sh, cw, cl, ...r, ppc, totalJob: ppc * unit};
   }
 
-  const custgap = num('f_custGap') || 0;
   const _ef = expr => { try { return new Function('od','id','h','unit','pi','sqrt','pow','custgap',
     '"use strict";return('+expr+')')(od,id_,h,unit,Math.PI,Math.sqrt,Math.pow,custgap)||0; } catch(e){return 0;} };
   const pf = _partFormulas;
   return [
-    makeCard('ฝาบน',        $('f_matTop').value,  () => DEF,      _ef(pf[0].cw), _ef(pf[0].cl), _flipStates[0]),
-    makeCard('ฝาล่าง',      $('f_matBot').value,  () => DEF,      _ef(pf[1].cw), _ef(pf[1].cl), _flipStates[1]),
-    makeCard('ตะแกรงนอก',   $('f_meshOut').value, getSheet,       _ef(pf[2].cw), _ef(pf[2].cl), _flipStates[2]),
-    makeCard('ตะแกรงใน',    $('f_meshIn').value,  getSheet,       _ef(pf[3].cw), _ef(pf[3].cl), _flipStates[3]),
+    makeCard('ฝาบน',        matCodes[0], () => DEF,      _ef(pf[0].cw), _ef(pf[0].cl), flips[0]),
+    makeCard('ฝาล่าง',      matCodes[1], () => DEF,      _ef(pf[1].cw), _ef(pf[1].cl), flips[1]),
+    makeCard('ตะแกรงนอก',   matCodes[2], getSheet,       _ef(pf[2].cw), _ef(pf[2].cl), flips[2]),
+    makeCard('ตะแกรงใน',    matCodes[3], getSheet,       _ef(pf[3].cw), _ef(pf[3].cl), flips[3]),
   ];
+}
+
+function runCalc() {
+  const od   = num('f_od');
+  const id_  = num('f_id');
+  const h    = num('f_h');
+  const unit = num('f_unit') || 1;
+  const custgap = num('f_custGap') || 0;
+  const matCodes = [$('f_matTop').value, $('f_matBot').value, $('f_meshOut').value, $('f_meshIn').value];
+  return _computeCutParts(od, id_, h, unit, matCodes, custgap, _flipStates);
 }
 
 // ── AUTO CALC + FILL (reactive) ──────────────────────
@@ -661,25 +670,17 @@ function toggleFlip(i) {
 }
 
 // ── PRINT: Report ขนาดตัด ─────────────────────────────
-function printCuttingReport() {
-  const res = runCalc();
-  if (!res) {
-    Swal.fire({icon:'warning', title:'ยังไม่มีข้อมูล', text:'กรุณากรอก OD, H ก่อนพิมพ์รายงาน',
-      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
-    return;
-  }
-  const od   = num('f_od');
-  const id_  = num('f_id');
-  const h    = num('f_h');
-  const unit = num('f_unit') || 1;
-  const noQuo = ($('f_noQuo') && $('f_noQuo').value) || '-';
+// meta = {od, id_, h, unit, noQuo, noPO}
+function _renderCuttingReportHtml(res, meta) {
+  const { od, id_, h, unit, noQuo, noPO } = meta;
   const now = new Date();
   const dateStr = now.toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
 
   const cards = res.map(r => {
+    const isNone = String(r.matCode||'').trim() === 'ไม่มี';
     const sw = r.flipped ? r.sh.l : r.sh.w;
     const sl = r.flipped ? r.sh.w : r.sh.l;
-    const hasLayout = r.pieces > 0;
+    const hasLayout = !isNone && r.pieces > 0;
     const sheetsNeeded = hasLayout ? Math.ceil(unit / r.pieces) : '-';
     const util = hasLayout ? ((r.cw*r.cl*r.pieces)/(sw*sl)*100).toFixed(1) : '0.0';
     const grid = hasLayout ? buildGridViz(sw, sl, r.cols, r.rows) : '';
@@ -689,7 +690,12 @@ function printCuttingReport() {
           <span class="rpt-name">${r.partName}</span>
           ${r.matCode ? `<span class="rpt-badge">${r.matCode}</span>` : ''}
         </div>
-        ${hasLayout ? `
+        ${isNone ? `
+        <div class="rpt-none">
+          <div class="rpt-none-icon">✕</div>
+          <div class="rpt-none-lbl">ไม่ใช้ชิ้นส่วนนี้</div>
+        </div>
+        ` : hasLayout ? `
         <div class="rpt-cutsize">
           <div class="rpt-cutsize-lbl">✂️ ขนาดตัด (มม.)</div>
           <div class="rpt-cutsize-val">${r.cw.toFixed(0)} <span class="rpt-x">×</span> ${r.cl.toFixed(0)}</div>
@@ -709,7 +715,7 @@ function printCuttingReport() {
 
   const html = `<!DOCTYPE html>
 <html lang="th"><head><meta charset="UTF-8">
-<title>Report ขนาดตัด - ${noQuo}</title>
+<title>Report ขนาดตัด - ${noPO || noQuo}</title>
 <style>
   * { box-sizing:border-box; }
   body { font-family:'Sarabun',sans-serif; margin:0; padding:16px; color:#111; }
@@ -734,6 +740,15 @@ function printCuttingReport() {
   .rpt-grid svg text { fill:#555 !important; }
   .rpt-grid svg rect[fill*="rgba(74,222,128"] { fill:rgba(0,0,0,.06) !important; stroke:#666 !important; }
   .rpt-empty { color:#888; font-size:.85rem; padding:8px 0; }
+  /* ชิ้นส่วนที่วัตถุดิบ = "ไม่มี" — แสดงวงกลมกากบาทแดงแทนขนาดตัด */
+  .rpt-none { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px 0; }
+  .rpt-none-icon {
+    width:64px; height:64px; border-radius:50%;
+    background:#fff; border:4px solid #dc2626; color:#dc2626;
+    display:flex; align-items:center; justify-content:center;
+    font-size:2.4rem; font-weight:900; line-height:1; margin-bottom:8px;
+  }
+  .rpt-none-lbl { font-size:1rem; font-weight:700; color:#dc2626; }
   @media print { body { padding:6px; } }
 </style>
 </head><body>
@@ -751,6 +766,11 @@ function printCuttingReport() {
   <div class="rpt-grid-wrap">${cards}</div>
 </body></html>`;
 
+  return html;
+}
+
+// เปิดหน้าต่างพิมพ์ด้วย HTML ของรายงานที่สร้างไว้แล้ว
+function _openCuttingReport(html) {
   const w = window.open('', '_blank');
   if (!w) {
     Swal.fire({icon:'error', title:'เปิดหน้าต่างไม่ได้', text:'กรุณาอนุญาต popup สำหรับเว็บไซต์นี้',
@@ -760,6 +780,43 @@ function printCuttingReport() {
   w.document.write(html);
   w.document.close();
   w.onload = () => { w.focus(); w.print(); };
+}
+
+// พิมพ์ Report ขนาดตัด จากข้อมูลในฟอร์มที่เปิดอยู่ (แท็บคำนวณตัดเหล็ก)
+function printCuttingReport() {
+  const res = runCalc();
+  if (!res) {
+    Swal.fire({icon:'warning', title:'ยังไม่มีข้อมูล', text:'กรุณากรอก OD, H ก่อนพิมพ์รายงาน',
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
+    return;
+  }
+  const od   = num('f_od');
+  const id_  = num('f_id');
+  const h    = num('f_h');
+  const unit = num('f_unit') || 1;
+  const noQuo = ($('f_noQuo') && $('f_noQuo').value) || '-';
+  const html = _renderCuttingReportHtml(res, {od, id_, h, unit, noQuo, noPO:''});
+  _openCuttingReport(html);
+}
+
+// พิมพ์ Report ขนาดตัด จากแถวข้อมูล DATA ที่บันทึกไว้ (ใช้สำหรับปุ่ม "ตัดเหล็ก" ในตาราง Order)
+// dtRow = แถวข้อมูลจาก _dtCache (คอลัมน์ตาม DT.*)
+function printCuttingReportFromDataRow(dtRow, noPO) {
+  const od   = parseFloat(dtRow[DT.od]) || 0;
+  const id_  = parseFloat(dtRow[DT.id]) || 0;
+  const h    = parseFloat(dtRow[DT.h]) || 0;
+  const unit = parseFloat(dtRow[DT.unit]) || 1;
+  const custgap = 0; // ค่าเริ่มต้นเหมือนตอนโหลดจ๊อบเข้าฟอร์ม
+  const matCodes = [dtRow[DT.matTop]||'', dtRow[DT.matBot]||'', dtRow[DT.meshOut]||'', dtRow[DT.meshIn]||''];
+  const res = _computeCutParts(od, id_, h, unit, matCodes, custgap, [false,false,false,false]);
+  if (!res) {
+    Swal.fire({icon:'warning', title:'ข้อมูลไม่ครบ', text:'Order นี้ไม่มีข้อมูล OD/H สำหรับคำนวณขนาดตัด',
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
+    return;
+  }
+  const noQuo = dtRow[DT.noQuo] || '-';
+  const html = _renderCuttingReportHtml(res, {od, id_, h, unit, noQuo, noPO: noPO || ''});
+  _openCuttingReport(html);
 }
 
 // ── CLEAR ────────────────────────────────────────────

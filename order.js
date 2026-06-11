@@ -350,6 +350,21 @@ async function createOrder() {
     _ordResetCard();
     if (statusEl) statusEl.textContent = '';
     setTimeout(fetchOrders, 1200);
+
+    // ถามว่าต้องการออกใบงานตัดเหล็กเลยหรือไม่
+    setTimeout(async () => {
+      const r2 = await Swal.fire({
+        icon:'question', title:'ออกใบงานตัดเหล็กเลยหรือไม่?',
+        html:`No.PO: <b>${noPO}</b>`,
+        showCancelButton:true,
+        confirmButtonText:'✂️ ออกใบงานตัดเหล็ก', cancelButtonText:'ไว้ทีหลัง',
+        background:'#0a1c2e', color:'#f1f5f9',
+        confirmButtonColor:'#f59e0b', cancelButtonColor:'#475569'
+      });
+      if (r2.isConfirmed && _ordSourceRow) {
+        printCuttingReportFromDataRow(_ordSourceRow, noPO);
+      }
+    }, 2400);
   } catch (err) {
     Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:'ส่งข้อมูลไม่สำเร็จ',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
     if (statusEl) statusEl.textContent = '';
@@ -568,6 +583,11 @@ function renderOrderTable() {
           style="padding:5px 10px;border-radius:7px;border:none;background:#2563eb;color:#fff;
                  font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
           👁️ ดู
+        </button>
+        <button onclick="_ordPrintCutting('${noPO.replace(/'/g,"\\'")}')"
+          style="padding:5px 10px;border-radius:7px;border:none;background:#f59e0b;color:#fff;
+                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
+          ✂️ ตัดเหล็ก
         </button>
       </td>
     </tr>`;
@@ -895,6 +915,27 @@ async function _ordMarkDelivered(noPO) {
   } catch (err) {
     toast.fire({icon:'error', title:'บันทึกไม่สำเร็จ', timer:2200});
   }
+}
+
+// ── พิมพ์ Report ขนาดตัดเหล็ก ของ Order (ดึงข้อมูลคำนวณจาก DATA ด้วย No.Quo) ──
+async function _ordPrintCutting(noPO) {
+  const ord = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(noPO));
+  if (!ord) return;
+  const noQuo = String(ord[ORDER_COLS.noQuo] || '').trim();
+  // ถ้ายังไม่เคยโหลดข้อมูล DATA (ผู้ใช้ยังไม่เคยเข้าแท็บ DATA) ให้โหลดก่อน
+  if (!_dtCache || !_dtCache.length) {
+    Swal.fire({title:'⏳ กำลังโหลดข้อมูล DATA...', allowOutsideClick:false, background:'#0d1b2a', color:'#cce4ff', didOpen:()=>Swal.showLoading()});
+    await dtRefresh(false);
+    Swal.close();
+  }
+  const dtRow = (_dtCache || []).find(row => String(row[DT.noQuo] || '').trim() === noQuo);
+  if (!dtRow) {
+    Swal.fire({icon:'warning', title:'ไม่พบข้อมูลคำนวณ',
+      html:`ไม่พบข้อมูล No.Quo: <b>${noQuo || '-'}</b> ในแท็บ DATA<br><span style="font-size:.8rem;color:#8b8aaa">ไม่สามารถคำนวณขนาดตัดเหล็กได้</span>`,
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
+    return;
+  }
+  printCuttingReportFromDataRow(dtRow, noPO);
 }
 
 // ── พิมพ์การ์ดรายละเอียด Order ──
