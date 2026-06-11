@@ -619,6 +619,7 @@ function renderCalcTab(res) {
       </div>
       <div class="cp-grid-summary">
         <span>ตารางกริดปกติ: กว้างฟิต <strong>${r.rows} แถว</strong> × ยาวฟิต <strong>${r.cols} แถว</strong> = <strong style="color:#4ade80">${r.pieces} ตัว/แผ่น</strong></span>
+        <span>ใช้แผ่นทั้งหมด: <strong style="color:#facc15">${r.pieces>0 ? Math.ceil(unit/r.pieces) : '-'} แผ่น</strong></span>
         <span style="margin-left:auto">Utilization: <strong style="color:#4ade80">${((r.cw*r.cl*r.pieces)/(sw*sl)*100).toFixed(1)}%</strong></span>
       </div>
       ${r.rows>0 && r.cols>0 ? buildGridViz(sw, sl, r.cols, r.rows) : ''}
@@ -657,6 +658,108 @@ function toggleFlip(i) {
   _flipStates[i] = !_flipStates[i];
   autoCalcFill();
   refreshCalcTab();
+}
+
+// ── PRINT: Report ขนาดตัด ─────────────────────────────
+function printCuttingReport() {
+  const res = runCalc();
+  if (!res) {
+    Swal.fire({icon:'warning', title:'ยังไม่มีข้อมูล', text:'กรุณากรอก OD, H ก่อนพิมพ์รายงาน',
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
+    return;
+  }
+  const od   = num('f_od');
+  const id_  = num('f_id');
+  const h    = num('f_h');
+  const unit = num('f_unit') || 1;
+  const noQuo = ($('f_noQuo') && $('f_noQuo').value) || '-';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
+
+  const cards = res.map(r => {
+    const sw = r.flipped ? r.sh.l : r.sh.w;
+    const sl = r.flipped ? r.sh.w : r.sh.l;
+    const hasLayout = r.pieces > 0;
+    const sheetsNeeded = hasLayout ? Math.ceil(unit / r.pieces) : '-';
+    const util = hasLayout ? ((r.cw*r.cl*r.pieces)/(sw*sl)*100).toFixed(1) : '0.0';
+    const grid = hasLayout ? buildGridViz(sw, sl, r.cols, r.rows) : '';
+    return `
+      <div class="rpt-card">
+        <div class="rpt-head">
+          <span class="rpt-name">${r.partName}</span>
+          ${r.matCode ? `<span class="rpt-badge">${r.matCode}</span>` : ''}
+        </div>
+        ${hasLayout ? `
+        <div class="rpt-cutsize">
+          <div class="rpt-cutsize-lbl">✂️ ขนาดตัด (มม.)</div>
+          <div class="rpt-cutsize-val">${r.cw.toFixed(0)} <span class="rpt-x">×</span> ${r.cl.toFixed(0)}</div>
+        </div>
+        <table class="rpt-table">
+          <tr><td>ขนาดแผ่น (มม.)</td><td><strong>${sw} × ${sl}</strong></td></tr>
+          <tr><td>เลย์เอาต์ (แถว×แถว)</td><td><strong>${r.rows} × ${r.cols}</strong></td></tr>
+          <tr><td>ชิ้น/แผ่น</td><td><strong>${r.pieces} ชิ้น</strong></td></tr>
+          <tr><td>จำนวนที่ต้องการ</td><td><strong>${unit} ชิ้น</strong></td></tr>
+          <tr><td>ใช้แผ่นทั้งหมด</td><td><strong>${sheetsNeeded} แผ่น</strong></td></tr>
+          <tr><td>Utilization</td><td><strong>${util}%</strong></td></tr>
+        </table>
+        <div class="rpt-grid">${grid}</div>
+        ` : `<div class="rpt-empty">— ไม่มีข้อมูลขนาดตัด —</div>`}
+      </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8">
+<title>Report ขนาดตัด - ${noQuo}</title>
+<style>
+  * { box-sizing:border-box; }
+  body { font-family:'Sarabun',sans-serif; margin:0; padding:16px; color:#111; }
+  .rpt-header { border-bottom:2px solid #333; padding-bottom:8px; margin-bottom:14px; }
+  .rpt-header h1 { margin:0 0 6px; font-size:1.25rem; }
+  .rpt-meta { display:flex; flex-wrap:wrap; gap:14px; font-size:.9rem; color:#333; }
+  .rpt-meta b { color:#000; }
+  .rpt-grid-wrap { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .rpt-card { border:1px solid #999; border-radius:8px; padding:10px; break-inside:avoid; }
+  .rpt-head { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #ccc; padding-bottom:6px; margin-bottom:6px; }
+  .rpt-name { font-weight:700; font-size:1.05rem; }
+  .rpt-badge { background:#eee; border:1px solid #999; border-radius:6px; padding:2px 8px; font-size:.8rem; }
+  .rpt-cutsize { background:#fffbe6; border:3px solid #f59e0b; border-radius:10px; padding:8px 10px; margin-bottom:8px; text-align:center; }
+  .rpt-cutsize-lbl { font-size:.95rem; font-weight:700; color:#92400e; margin-bottom:2px; }
+  .rpt-cutsize-val { font-size:2.6rem; font-weight:900; color:#000; line-height:1.1; letter-spacing:1px; }
+  .rpt-cutsize-val .rpt-x { color:#f59e0b; }
+  .rpt-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  .rpt-table td { padding:3px 4px; border-bottom:1px dashed #ddd; }
+  .rpt-table td:first-child { color:#555; }
+  .rpt-table td:last-child { text-align:right; }
+  .rpt-grid { margin-top:8px; text-align:center; }
+  .rpt-grid svg text { fill:#555 !important; }
+  .rpt-grid svg rect[fill*="rgba(74,222,128"] { fill:rgba(0,0,0,.06) !important; stroke:#666 !important; }
+  .rpt-empty { color:#888; font-size:.85rem; padding:8px 0; }
+  @media print { body { padding:6px; } }
+</style>
+</head><body>
+  <div class="rpt-header">
+    <h1>Report ขนาดตัด — รายชิ้นส่วน</h1>
+    <div class="rpt-meta">
+      <span>เลขที่ใบเสนอราคา: <b>${noQuo}</b></span>
+      <span>OD: <b>${od||'-'}</b></span>
+      <span>ID: <b>${id_||'-'}</b></span>
+      <span>H: <b>${h||'-'}</b></span>
+      <span>จำนวน: <b>${unit}</b> ชุด</span>
+      <span style="margin-left:auto">วันที่พิมพ์: <b>${dateStr}</b></span>
+    </div>
+  </div>
+  <div class="rpt-grid-wrap">${cards}</div>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) {
+    Swal.fire({icon:'error', title:'เปิดหน้าต่างไม่ได้', text:'กรุณาอนุญาต popup สำหรับเว็บไซต์นี้',
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
+    return;
+  }
+  w.document.write(html);
+  w.document.close();
+  w.onload = () => { w.focus(); w.print(); };
 }
 
 // ── CLEAR ────────────────────────────────────────────

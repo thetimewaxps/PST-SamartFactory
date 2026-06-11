@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=5.91">
+<link rel="stylesheet" href="style.css?v=5.99">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v5.91</span>
+      <span class="ph-chip ver">v5.99</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -717,9 +717,10 @@
 
   <div class="tab-title" style="padding-top:16px">
     <div class="ticon ic-blue">🔢</div>
-    <div>คำนวณตัดเหล็ก
+    <div style="flex:1">คำนวณตัดเหล็ก
       <div style="font-size:.72rem;color:#94a3b8;font-weight:400">เลือกวัสดุ → คำนวณ → ใส่ราคาอัตโนมัติ</div>
     </div>
+    <button class="cf-add-btn btn-fx" onclick="printCuttingReport()">🖨️ พิมพ์ Report ขนาดตัด</button>
   </div>
 
   <!-- Dimension summary -->
@@ -1615,7 +1616,29 @@
   <div class="card">
     <div class="card-header">
       <div class="icon ic-ext">🚀</div>
-      <h2>ติดตามสถานะงาน</h2>
+      <h2 style="flex:1">ติดตามสถานะงาน</h2>
+      <button class="cf-add-btn btn-fx" id="trkFullBtn" onclick="toggleTrackFullscreen()">⛶ เปิดเต็มจอ</button>
+    </div>
+    <div class="trk-fs-toolbar" id="trkFsToolbar">
+      <label>📐 คอลัมน์:
+        <select id="trkColsSel" onchange="_trkSetCols(this.value)">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+      <label>🔄 รีเฟรชทุก:
+        <select id="trkRefreshSel" onchange="_trkSetRefresh(this.value)">
+          <option value="1">1 นาที</option>
+          <option value="2">2 นาที</option>
+          <option value="5">5 นาที</option>
+          <option value="10">10 นาที</option>
+          <option value="15">15 นาที</option>
+          <option value="30">30 นาที</option>
+        </select>
+      </label>
+      <span class="trk-fs-clock" id="trkFsClock"></span>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
       <input type="text" id="trkSearch" placeholder="🔍 ค้นหา No.PO / No.Quo / ลูกค้า / สินค้า" oninput="_trkResetPage()"
@@ -1907,13 +1930,13 @@
   </div>
 </div>
 
-<script src="core.js?v=5.91"></script>
-<script src="data.js?v=5.91"></script>
-<script src="formcalc.js?v=5.91"></script>
-<script src="aifeatures.js?v=5.91"></script>
-<script src="theme.js?v=5.91"></script>
-<script src="order.js?v=5.91"></script>
-<script src="purchase.js?v=5.91"></script>
+<script src="core.js?v=5.99"></script>
+<script src="data.js?v=5.99"></script>
+<script src="formcalc.js?v=5.99"></script>
+<script src="aifeatures.js?v=5.99"></script>
+<script src="theme.js?v=5.99"></script>
+<script src="order.js?v=5.99"></script>
+<script src="purchase.js?v=5.99"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2042,9 +2065,81 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
+    ref: '#REV-20260612-A',
+    date: '2026-06-12',
+    current: true,
+    items: [
+      'วงกลม Lead Time ในแท็บติดตามงาน: เหลือ 1 วัน = วงสีเหลือง + ไอคอน ⚠️ กระพริบ',
+      'ถึงกำหนดวันนี้ (0 วัน) = วงสีแดง + ไอคอน 🚨 กระพริบ',
+      'เลยกำหนด/BackOrder = วงสีแดงเข้ม + ไอคอน 💀 กระพริบ พร้อมข้อความ "BackOrder"',
+      'เพิ่มเอฟเฟกต์การ์ดเรืองแสงกระพริบ (pulse) รอบการ์ดที่ถึงกำหนด/เลยกำหนด ให้สังเกตเห็นง่ายจากระยะไกล',
+    ],
+  },
+  {
+    ref: '#REV-20260611-BN',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'บังคับขั้นต่ำอัตรารีเฟรชอัตโนมัติของโหมดเต็มจอไว้ที่ 1 นาที (กันยิง request ถี่เกินไปจน Apps Script โดน rate-limit)',
+      'เพิ่มคอมเมนต์อธิบายเหตุผลเรื่อง quota การเรียก Apps Script ในโค้ด',
+    ],
+  },
+  {
+    ref: '#REV-20260611-BM',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'โหมดเต็มจอติดตามงาน — เพิ่มแถบตั้งค่า: เลือกจำนวนคอลัมน์ (1-4) และอัตรารีเฟรชอัตโนมัติ (1/2/5/10/15/30 นาที)',
+      'แสดงเวลาที่อัปเดตข้อมูลล่าสุดในแถบตั้งค่า',
+    ],
+  },
+  {
+    ref: '#REV-20260611-BL',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ปุ่ม "เปิดเต็มจอ" ในแท็บติดตามงาน — เปลี่ยนเป็นเปิดแท็บโครมใหม่แบบเต็มจอ ไม่บัง/รบกวนหน้าที่ทำงานอยู่',
+    ],
+  },
+  {
+    ref: '#REV-20260611-BK',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แท็บ "ติดตามงาน" — เพิ่มปุ่ม "เปิดเต็มจอ" ซ่อน sidebar/header เพื่อแสดงผลแบบจอแสดงสถานะ',
+      'แท็บ "ติดตามงาน" — รีเฟรชข้อมูลอัตโนมัติทุก 10 นาทีขณะเปิดแท็บนี้ค้างไว้',
+    ],
+  },
+  {
+    ref: '#REV-20260611-BJ',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'Report ขนาดตัด: เน้น "ขนาดตัด" เป็นกล่องตัวเลขใหญ่สีเหลือง อ่านง่ายสำหรับหน้างาน',
+    ],
+  },
+  {
+    ref: '#REV-20260611-BI',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ย้ายปุ่ม "พิมพ์ Report ขนาดตัด" ไปไว้ข้างหัวข้อ "คำนวณตัดเหล็ก"',
+    ],
+  },
+  {
+    ref: '#REV-20260611-BH',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'เพิ่มปุ่ม "พิมพ์ Report ขนาดตัด" ในแทบคำนวณตัดเหล็ก สำหรับพิมพ์ขนาดตัดทั้ง 4 ชิ้นส่วนให้ฝ่ายผลิต',
+      'รายงานแสดงขนาดแผ่น/ขนาดตัด/เลย์เอาต์/จำนวนชิ้น/ใช้แผ่นทั้งหมด/Utilization พร้อมไดอะแกรมตาราง (ไม่มีราคา)',
+      'เพิ่มข้อมูล "ใช้แผ่นทั้งหมด" ในบรรทัดสรุปกริดของแต่ละการ์ดคำนวณตัด',
+    ],
+  },
+  {
     ref: '#REV-20260611-BG',
     date: '2026-06-11',
-    current: true,
+    current: false,
     items: [
       'เพิ่มคอลัมน์ G (กว้าง) และ H (ยาว) ใน Sheet MAT-ฝา / MAT-ตะแกรง สำหรับเก็บขนาดแผ่น',
       'getMAT/updateMat (Code.gs) อ่าน-เขียนค่าขนาดแผ่นจากชีต ทำให้ข้อมูลตรงกันทุกเครื่อง',
@@ -2532,67 +2627,4 @@ const DEV_LOGS = [
     ref: '#REV-20260611-B',
     date: '2026-06-11',
     items: [
-      'เมื่อสร้าง Order สำเร็จ ระบบจะอัปเดตคอลัมน์ "สถานะ" ของรายการต้นทางใน DATA (ตาม No.Quo) เป็น "ผ่าน" อัตโนมัติ — แถวเดียวเท่านั้น (ฝั่ง Apps Script ตรวจสอบไม่ให้แก้ผิดแถวหรือแก้ซ้ำ)',
-      'เพิ่ม action "updateDataStatus" ใน Code.gs',
-      'แจ้งเตือนผลลัพธ์การอัปเดตสถานะ DATA ใน popup สำเร็จของ Order',
-    ],
-  },
-  {
-    ref: '#REV-20260611-A',
-    date: '2026-06-11',
-    items: [
-      'แก้ฟอร์แมทวันที่ที่ส่งไปชีต Order (วันที่สั่งซื้อ/วันที่ต้องการ) จาก ค.ศ. แบบ DD/MM/YYYY (เช่น 11/06/2026) เป็น พ.ศ. แบบ D/M/YYYY (เช่น 10/6/2569) ให้ AppSheet อ่านค่าได้ถูกต้อง',
-    ],
-  },
-  {
-    ref: '#REV-20260610-BM',
-    date: '2026-06-10',
-    items: [
-      'เพิ่มการตรวจสอบข้อมูลให้ครบถ้วนก่อนสร้าง Order: วันที่สั่งซื้อ, วันที่ต้องการ, แม่พิมพ์, หมายเหตุ, แนบไฟล์ PO ถ้ายังไม่ครบจะแจ้งเตือนรายการที่ขาดและไม่ให้บันทึก',
-    ],
-  },
-  {
-    ref: '#REV-20260610-BL',
-    date: '2026-06-10',
-    items: [
-      'แก้กรณีพบ No.Quo + No.PO ซ้ำ: ไม่รีโหลดหน้าใหม่แล้ว เปลี่ยนเป็นแค่เคลียร์ข้อมูลในการ์ด "สร้าง Order" กลับเป็นค่าว่าง',
-      'เพิ่ม helper _ordResetCard() ใช้ร่วมกันทั้งตอนสร้าง Order สำเร็จ และตอนพบ No.Quo+No.PO ซ้ำ',
-    ],
-  },
-  {
-    ref: '#REV-20260610-BK',
-    date: '2026-06-10',
-    items: [
-      'เพิ่มปุ่ม "📦 AddOrder" ในตารางคลังใบเสนอราคา (แท็บ DATA) — แสดงเฉพาะแถวที่สถานะ = "รอสรุป"',
-      'กดปุ่มแล้วแจ้งเตือนยืนยันก่อน จากนั้นดึงข้อมูลจากแถวนั้นเข้าการ์ด "สร้าง Order จากใบเสนอราคา" โดยตรง แล้วสลับไปแท็บ Order ทันที',
-      'ยกเลิกระบบเดิมที่ดึงข้อมูลจากใบเสนอราคาที่เปิดอยู่ในฟอร์ม (live preview จาก f_noQuo/f_contact/...) — เปลี่ยนเป็นใช้ข้อมูลจากแถวที่เลือกผ่าน AddOrder เท่านั้น',
-    ],
-  },
-  {
-    ref: '#REV-20260610-BJ',
-    date: '2026-06-10',
-    items: [
-      'แก้ไขการตรวจสอบ No.Quo + No.PO ซ้ำ: ถ้าซ้ำ ห้ามสร้าง Order เด็ดขาด ขึ้น popup แจ้งเตือนแล้วรีโหลดหน้าใหม่ทันที (ตัดตัวเลือก "สร้างต่อ" ออก)',
-    ],
-  },
-  {
-    ref: '#REV-20260610-BI',
-    date: '2026-06-10',
-    items: [
-      'ตอนสร้าง Order (createOrder): ตรวจสอบ No.Quo + No.PO ซ้ำกับรายการที่มีอยู่ในชีต Order ถ้าซ้ำจะแจ้งเตือนและให้เลือกยืนยัน/ยกเลิก',
-    ],
-  },
-  {
-    ref: '#REV-20260610-BH',
-    date: '2026-06-10',
-    items: [
-      'แม่พิมพ์ในการ์ด "สร้าง Order": เปลี่ยนเป็นตรวจสอบ OD ของรายการที่เปิดอยู่กับตารางแม่พิมพ์อัตโนมัติ — ถ้าตรงใส่ค่า OD, ถ้าไม่ตรง/ยังไม่มีแม่พิมพ์ใส่ "ไม่มี" (ยังแก้ไขเพิ่มเติมเองได้)',
-      'ช่อง "วัตถุดิบ" ในการ์ด "สร้าง Order": เปลี่ยนจากช่องกรอกเป็น label แสดงค่าจาก DATA (วัตถุดิบ/AW) อัตโนมัติ',
-    ],
-  },
-  {
-    ref: '#REV-20260610-BG',
-    date: '2026-06-10',
-    items: [
-      'จัดเลย์เอาต์การ์ด "สร้าง Order" ใหม่อีกครั้ง: รวมข้อมูลฝั่งซ้ายเป็นกล่องเดียว (ข้อมูลอ้างอิง + แม่พิมพ์ + สถานะงาน + วัตถุดิบ + หมายเหตุ) เรียงต่อกันในกล่องเดียว',
-      'ฝั่งขวาเหลือเฉพาะรูปตัวอย่าง�
+      'เมื่อสร้าง Order สำเร็จ ระบบจะอัปเดตคอลัมน์ "สถานะ" ของรายการต้นทางใน DATA (ตาม No.Quo) เป็น "ผ่าน" อัตโนมัติ — 

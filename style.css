@@ -85,6 +85,11 @@ body {
 .tab-content { display: none; padding: 0 12px 16px; }
 .tab-content.active { display: block; }
 
+/* แท็บ ติดตามงาน: โหมดเต็มจอ — ซ่อน header/แถบเมนู ทุกขนาดจอ */
+body.trk-fullscreen-mode .page-header,
+body.trk-fullscreen-mode .tab-bar { display: none !important; }
+body.trk-fullscreen-mode #tab-track > div { max-width: 100% !important; }
+
 /* ── "เพิ่มเติม" floating menu (รวมแท็บย่อย) ────────── */
 .more-menu {
   position: fixed; z-index: 200; display: none;
@@ -1066,6 +1071,10 @@ select option { background: var(--sel-bg); color: var(--t1); }
   body.no-summary-tab { padding-right: 0; }
   body.no-summary-tab .summary-panel { display: none; }
 
+  /* แท็บ ติดตามงาน: โหมดเต็มจอ — ซ่อน sidebar/header/summary */
+  body.trk-fullscreen-mode { padding-left: 0; padding-right: 0; }
+  body.trk-fullscreen-mode .summary-panel { display: none; }
+
   .sp-header {
     font-size: .72rem; font-weight: 700; color: var(--t3);
     letter-spacing: .8px; text-transform: uppercase;
@@ -1150,12 +1159,27 @@ select option { background: var(--sel-bg); color: var(--t1); }
 /* ══ แท็บ "ติดตามงาน" — Production Tracker Dashboard ══ */
 .track-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(var(--trk-cols, 2), 1fr);
   gap: 14px;
 }
 @media (max-width: 720px) {
   .track-grid { grid-template-columns: 1fr; }
 }
+
+/* แถบตั้งค่าโหมดเต็มจอ (คอลัมน์ / รีเฟรช) — แสดงเฉพาะในแท็บโครมเต็มจอ */
+.trk-fs-toolbar { display: none; }
+body.trk-fullscreen-mode .trk-fs-toolbar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  font-size: .8rem; color: var(--t2);
+  background: var(--pair-bg); border: 1px solid var(--pair-bc);
+  border-radius: 8px; padding: 8px 12px; margin-bottom: 12px;
+}
+.trk-fs-toolbar select {
+  font-family: 'Sarabun', sans-serif; font-size: .8rem;
+  padding: 4px 8px; border-radius: 6px;
+  border: 1px solid var(--bc-div); background: var(--bg1, #fff); color: var(--t1);
+}
+.trk-fs-toolbar .trk-fs-clock { margin-left: auto; font-weight: 700; color: var(--t1); }
 
 /* การ์ดสรุปจำนวนงานแยกตามสถานะ */
 .trk-summary {
@@ -1257,9 +1281,25 @@ select option { background: var(--sel-bg); color: var(--t1); }
 .trk-circle-warn {
   position: absolute; top: -4px; right: -4px;
   width: 20px; height: 20px; border-radius: 50%;
-  background: #991b1b; color: #fff;
+  background: var(--ring, #991b1b); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: .68rem; box-shadow: 0 0 0 2px var(--bg-card, #fff);
+}
+
+/* ไอคอนแจ้งเตือนกระพริบ — เร่งความสนใจของผู้ใช้สำหรับงานใกล้/เกินกำหนด */
+@keyframes trk-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.85); }
+}
+.trk-blink { animation: trk-blink 1s ease-in-out infinite; }
+
+/* การ์ดงานวิกฤต (ถึงกำหนดวันนี้ / เลยกำหนด) — ขอบกระพริบเตือนให้เด่นกว่าการ์ดอื่น */
+@keyframes trk-pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ring, #ef4444) 55%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--ring, #ef4444) 0%, transparent); }
+}
+.track-grid > .track-card:has(.trk-circle-danger) {
+  animation: trk-pulse-ring 1.6s ease-in-out infinite;
 }
 
 /* แถบขั้นตอนแนวนอน */

@@ -779,6 +779,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ครั้งต่อๆ ไป (กดรีเฟรช/เปิดใหม่) → กลับไปหน้า/แท็บเดิมที่ใช้งานอยู่
   const savedTab = localStorage.getItem('ptts_active_tab');
   switchTab(savedTab || 'track');
+
+  // เปิดจากปุ่ม "เปิดเต็มจอ" (?track=full) → แท็บใหม่นี้แสดงเฉพาะติดตามงานแบบเต็มจอ
+  if (new URLSearchParams(location.search).get('track') === 'full') {
+    switchTab('track');
+    document.body.classList.add('trk-fullscreen-mode');
+  }
   _updateDraftBadge(); // แสดงจำนวนแบบร่างที่บันทึกไว้
 
   // Init labor fingerprint (baseline = ค่าที่โหลดมาตอนเปิดฟอร์ม)

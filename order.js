@@ -1076,12 +1076,27 @@ function _trkLeadTimeCircle(r) {
   const daysLeft = Math.round((wantD - today) / msPerDay);
   const totalDays = orderD ? Math.max(1, Math.round((wantD - orderD) / msPerDay)) : Math.max(1, Math.abs(daysLeft) || 1);
   let pct = Math.max(0, Math.min(1, daysLeft / totalDays));
-  let ring = '#22c55e', numTxt = `${daysLeft}`, lbl = 'วันคงเหลือ', warnIcon = '';
-  if (daysLeft < 0) { ring = '#991b1b'; numTxt = `+${Math.abs(daysLeft)}`; lbl = 'วันเลยกำหนด'; pct = 1; warnIcon = '<div class="trk-circle-warn">⚠️</div>'; }
-  else if (daysLeft <= 2) { ring = '#f59e0b'; }
+  let ring = '#22c55e', numTxt = `${daysLeft}`, lbl = 'วันคงเหลือ', warnIcon = '', extraClass = '';
+  if (daysLeft < 0) {
+    // BackOrder: เลยกำหนดส่งแล้ว — เน้นสุด ไอคอนหัวกะโหลกกระพริบ
+    ring = '#dc2626'; numTxt = `+${Math.abs(daysLeft)}`; lbl = 'BackOrder'; pct = 1;
+    warnIcon = '<div class="trk-circle-warn trk-blink">💀</div>';
+    extraClass = ' trk-circle-danger';
+  } else if (daysLeft === 0) {
+    // ถึงกำหนดส่งวันนี้ — เส้นแดง ไอคอนอันตรายกระพริบ
+    ring = '#ef4444'; lbl = 'ถึงกำหนดวันนี้';
+    warnIcon = '<div class="trk-circle-warn trk-blink">🚨</div>';
+    extraClass = ' trk-circle-danger';
+  } else if (daysLeft === 1) {
+    // เหลือ 1 วัน — สีเหลือง ไอคอนเตือนกระพริบ
+    ring = '#f59e0b';
+    warnIcon = '<div class="trk-circle-warn trk-blink">⚠️</div>';
+  } else if (daysLeft <= 2) {
+    ring = '#f59e0b';
+  }
   const offset = C * (1 - pct);
   return `
-    <div class="trk-circle" style="--ring:${ring}">
+    <div class="trk-circle${extraClass}" style="--ring:${ring}">
       <svg viewBox="0 0 76 76"><circle class="trk-ring-bg" cx="38" cy="38" r="${R}"/>
         <circle class="trk-ring" cx="38" cy="38" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${offset}"/></svg>
       <div class="trk-circle-txt"><div class="trk-circle-num">${numTxt}</div><div class="trk-circle-lbl">${lbl}</div></div>
@@ -1152,6 +1167,73 @@ function _trkSetFilter(val) {
   _trkPage = 1;
   localStorage.setItem('ptts_trk_page', 1);
   renderTrackDashboard();
+}
+
+// ── โหมดเต็มจอ + รีเฟรชอัตโนมัติ (สำหรับเปิดจอแสดงผลค้างไว้) ──
+// หมายเหตุ: ข้อมูลดึงจาก Google Sheet ผ่าน Apps Script ซึ่งมี quota จำนวนครั้งเรียกต่อวัน/ต่อผู้ใช้
+// ถ้ารีเฟรชถี่เกินไปอาจโดน rate-limit หรือกระทบผู้ใช้คนอื่นที่ใช้ Sheet เดียวกัน
+// กำหนดขั้นต่ำบังคับไว้ที่ 1 นาที (TRK_REFRESH_MIN_MIN) — ห้ามตั้งต่ำกว่านี้
+// ค่าเริ่มต้นแนะนำ 10 นาที ซึ่งเพียงพอสำหรับจอแสดงผลสถานะงานที่เปลี่ยนแปลงไม่บ่อย
+let _trkAutoRefreshTimer = null;
+let _trkClockTimer = null;
+const TRK_REFRESH_MIN_MIN   = 1;  // ขั้นต่ำที่บังคับใช้ (นาที) — ห้ามต่ำกว่านี้
+const TRK_REFRESH_DEFAULT_MIN = 10; // ค่าเริ่มต้นแนะนำ (นาที)
+
+// เปิดแท็บติดตามงานในแท็บโครมใหม่ แบบเต็มจอ (ไม่กระทบหน้าที่กำลังทำงานอยู่)
+function toggleTrackFullscreen() {
+  const url = location.pathname + location.search.replace(/[?&]track=full/, '')
+    + (location.search ? '&' : '?') + 'track=full';
+  window.open(url, '_blank');
+}
+
+// จำนวนคอลัมน์ของการ์ดติดตามงาน (1-4) — ปรับได้จากแถบตั้งค่าโหมดเต็มจอ
+function _trkGetCols() {
+  return parseInt(localStorage.getItem('ptts_trk_cols')) || 2;
+}
+function _trkSetCols(n) {
+  n = Math.max(1, Math.min(4, parseInt(n) || 2));
+  localStorage.setItem('ptts_trk_cols', n);
+  document.documentElement.style.setProperty('--trk-cols', n);
+}
+function _trkApplyColsUI() {
+  const n = _trkGetCols();
+  document.documentElement.style.setProperty('--trk-cols', n);
+  const sel = $('trkColsSel');
+  if (sel) sel.value = String(n);
+}
+
+// อัตรารีเฟรชอัตโนมัติ (นาที) — ปรับได้จากแถบตั้งค่าโหมดเต็มจอ
+function _trkGetRefreshMin() {
+  const v = parseInt(localStorage.getItem('ptts_trk_refresh_min')) || TRK_REFRESH_DEFAULT_MIN;
+  return Math.max(TRK_REFRESH_MIN_MIN, v); // บังคับขั้นต่ำเสมอ แม้ค่าเก่าใน localStorage จะต่ำกว่า
+}
+function _trkSetRefresh(min) {
+  min = Math.max(TRK_REFRESH_MIN_MIN, parseInt(min) || TRK_REFRESH_DEFAULT_MIN);
+  localStorage.setItem('ptts_trk_refresh_min', min);
+  if (_trkAutoRefreshTimer) _startTrkAutoRefresh(); // restart ด้วยค่าใหม่
+}
+function _trkApplyRefreshUI() {
+  const sel = $('trkRefreshSel');
+  if (sel) sel.value = String(_trkGetRefreshMin());
+}
+
+// เริ่ม/หยุด auto-refresh — เรียกจาก switchTab() ตอนเข้า/ออกแท็บติดตามงาน
+function _startTrkAutoRefresh() {
+  _stopTrkAutoRefresh();
+  const ms = _trkGetRefreshMin() * 60 * 1000;
+  _trkAutoRefreshTimer = setInterval(() => { fetchOrders(); _trkUpdateClock(); }, ms);
+  _trkUpdateClock();
+  _trkClockTimer = setInterval(_trkUpdateClock, 1000);
+}
+function _stopTrkAutoRefresh() {
+  if (_trkAutoRefreshTimer) { clearInterval(_trkAutoRefreshTimer); _trkAutoRefreshTimer = null; }
+  if (_trkClockTimer) { clearInterval(_trkClockTimer); _trkClockTimer = null; }
+}
+function _trkUpdateClock() {
+  const el = $('trkFsClock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = '🕐 อัปเดตล่าสุด ' + now.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 }
 
 // รีเซ็ตกลับหน้า 1 (เมื่อเปลี่ยนคำค้นหา/ตัวกรอง) โดยไม่เลื่อนจอ

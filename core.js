@@ -218,6 +218,20 @@ function switchTab(name) {
   if (name === 'mat')       { renderMatTable('flap'); renderMatTable('mesh'); }
   if (name === 'order')     { updateOrderPreview(); fetchOrders(); }
   if (name === 'track')     { fetchOrders(); renderTrackDashboard(); }
+  // รีเฟรชอัตโนมัติเฉพาะตอนอยู่แท็บติดตามงาน (อัตราตั้งค่าได้ในโหมดเต็มจอ)
+  if (name === 'track') {
+    if (typeof _trkApplyColsUI==='function') _trkApplyColsUI();
+    if (typeof _trkApplyRefreshUI==='function') _trkApplyRefreshUI();
+    if (typeof _startTrkAutoRefresh==='function') _startTrkAutoRefresh();
+  }
+  else { if (typeof _stopTrkAutoRefresh==='function') _stopTrkAutoRefresh(); }
+  // ออกจากโหมดเต็มจอถ้าสลับแท็บอื่น
+  if (name !== 'track' && document.body.classList.contains('trk-fullscreen-mode')) {
+    document.body.classList.remove('trk-fullscreen-mode');
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+    const btn = $('trkFullBtn');
+    if (btn) btn.textContent = '⛶ เปิดเต็มจอ';
+  }
   if (name === 'po')        { fetchSuppliers(); fetchPurchaseOrders(); if (!_poEditingNo && !_poItems.length) _poNewForm(); }
 }
 
