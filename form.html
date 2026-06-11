@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=5.62">
+<link rel="stylesheet" href="style.css?v=5.75">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v5.62</span>
+      <span class="ph-chip ver">v5.75</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1485,7 +1485,7 @@
           style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;
                  border:1px solid var(--bc-input);background:var(--bg-input);
                  color:var(--t1);font-size:.78rem;font-family:Sarabun,sans-serif;outline:none">
-          <option value="_not_done" selected>ทั้งหมด (ซ่อนที่เรียบร้อยแล้ว)</option>
+          <option value="_not_done" selected>ซ่อนเรียบร้อยทั้งหมด (ยกเว้นเดือนนี้-เดือนที่แล้ว)</option>
           <option value="_all">ทั้งหมด (รวมเรียบร้อยแล้ว)</option>
           <option value="กำลังผลิต">กำลังผลิต</option>
           <option value="ส่งซุป">ส่งซุป</option>
@@ -1525,23 +1525,25 @@
       </button>
     </div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--bc-card)">
-      <table style="width:100%;border-collapse:collapse;min-width:760px;table-layout:fixed">
+      <table style="width:100%;border-collapse:collapse;min-width:980px">
         <thead>
           <tr style="background:var(--bg-deep)">
-            <th style="width:6%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.Quo</th>
-            <th style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">No.PO</th>
-            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่สั่งซื้อ</th>
-            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">ลูกค้า</th>
-            <th style="width:20%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">รายการสินค้า</th>
-            <th style="width:6%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">จำนวน</th>
-            <th style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:right;border-bottom:1px solid var(--bc-div)">ราคาขาย</th>
-            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">Process</th>
-            <th style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">วันที่ต้องการ</th>
-            <th style="width:18%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">ปฏิบัติการ</th>
+            <th onclick="_ordSortBy('noQuo')" style="width:5%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">No.Quo<span id="ordSortIcon_noQuo"></span></th>
+            <th onclick="_ordSortBy('noPO')" style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">No.PO<span id="ordSortIcon_noPO"></span></th>
+            <th onclick="_ordSortBy('customer')" style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">ลูกค้า<span id="ordSortIcon_customer"></span></th>
+            <th onclick="_ordSortBy('orderDate')" style="width:6%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">วันที่สั่งซื้อ<span id="ordSortIcon_orderDate"></span></th>
+            <th onclick="_ordSortBy('wantDate')" style="width:6%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">วันที่ต้องการ<span id="ordSortIcon_wantDate"></span></th>
+            <th style="width:15%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">รายการสินค้า</th>
+            <th onclick="_ordSortBy('qty')" style="width:5%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">จำนวน<span id="ordSortIcon_qty"></span></th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">หมายเหตุ</th>
+            <th style="width:9%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div)">Note</th>
+            <th onclick="_ordSortBy('price')" style="width:7%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:right;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">ราคาขาย<span id="ordSortIcon_price"></span></th>
+            <th onclick="_ordSortBy('process')" style="width:8%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:left;border-bottom:1px solid var(--bc-div);cursor:pointer;user-select:none">Process<span id="ordSortIcon_process"></span></th>
+            <th style="width:15%;padding:9px 8px;font-size:.7rem;color:var(--t2);font-weight:600;text-align:center;border-bottom:1px solid var(--bc-div)">ปฏิบัติการ</th>
           </tr>
         </thead>
         <tbody id="ordBody">
-          <tr><td colspan="10" style="padding:40px;text-align:center;color:var(--t3);font-size:.8rem">
+          <tr><td colspan="12" style="padding:40px;text-align:center;color:var(--t3);font-size:.8rem">
             กำลังโหลดข้อมูล…
           </td></tr>
         </tbody>
@@ -1737,12 +1739,12 @@
   </div>
 </div>
 
-<script src="core.js?v=5.62"></script>
-<script src="data.js?v=5.62"></script>
-<script src="formcalc.js?v=5.62"></script>
-<script src="aifeatures.js?v=5.62"></script>
-<script src="theme.js?v=5.62"></script>
-<script src="order.js?v=5.62"></script>
+<script src="core.js?v=5.75"></script>
+<script src="data.js?v=5.75"></script>
+<script src="formcalc.js?v=5.75"></script>
+<script src="aifeatures.js?v=5.75"></script>
+<script src="theme.js?v=5.75"></script>
+<script src="order.js?v=5.75"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -1871,9 +1873,122 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260611-AC',
+    ref: '#REV-20260611-AP',
     date: '2026-06-11',
     current: true,
+    items: [
+      'ตาราง Order: ปรับสไตล์ให้เหมือนตาราง DATA — ไม่ตัดข้อความ (ไม่มี ... ), แถบสีสลับ, ปุ่มสีสด',
+      'คอลัมน์ No.Quo ของตาราง Order เพิ่ม badge แสดงสถานะ Process กำกับไว้ด้านบน (เหมือน DATA)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AO',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ตาราง Order: เปลี่ยนค่าเริ่มต้นตัวกรอง Process — ซ่อนรายการ "เรียบร้อย" ทั้งหมด ยกเว้นรายการของเดือนนี้และเดือนที่แล้ว (อิงวันที่สั่งซื้อ)',
+      'ตาราง Order: คลิกหัวคอลัมน์เพื่อเรียงลำดับได้ (No.Quo, No.PO, ลูกค้า, วันที่สั่งซื้อ, วันที่ต้องการ, จำนวน, ราคาขาย, Process) — คลิกซ้ำสลับ ↑/↓',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AN',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ตาราง Order: ย้ายคอลัมน์ "วันที่ต้องการ" ไปหลัง "วันที่สั่งซื้อ" และ "ลูกค้า" ไปหลัง "No.PO"',
+      'เพิ่มคอลัมน์ "หมายเหตุ" (L) หลังคอลัมน์จำนวน และ "Note" (R) ต่อจากหมายเหตุ',
+      'เพิ่มไฮไลต์แถวสีเหลือง (เหมือนตาราง DATA) เมื่อวัตถุดิบ (คอลัมน์ H) เป็นสแตนเลส/SUS',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AM',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ปุ่ม "ส่งงาน": นอกจากตั้งสถานะส่งงาน = "ส่งแล้ว" แล้ว จะตั้ง Process = "เรียบร้อย" ด้วย',
+      'ปุ่ม "ส่งงาน" จะไม่แสดง ถ้า Process = "เรียบร้อย" อยู่แล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AL',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ปุ่ม "เปลี่ยนสถานะ" และ "ส่งงาน" ในการ์ดรายละเอียด Order: ไม่ปิดการ์ดระหว่างบันทึกแล้ว — แสดงผลแจ้งเตือนแบบ toast มุมจอแทน และรีเฟรชข้อมูลในการ์ดเดิมทันที',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AK',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'การ์ดรายละเอียด Order: ปุ่มเปลี่ยนสถานะ/ส่งงาน/พิมพ์/แก้ไข เมื่อทำเสร็จจะกลับมาที่การ์ดเดิม',
+      'เปลี่ยนปุ่ม "⋯" เป็น "🗑️ ลบ Order" (action เดียวกับปุ่มลบในตาราง)',
+      'ตารางแถว Order: เอาปุ่มแก้ไขและลบออก เหลือแค่ปุ่มดู (ไปทำต่อในการ์ดรายละเอียดแทน)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AJ',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'ปรับลำดับ Timeline ความคืบหน้า Order เป็น: รับออเดอร์ → กำลังผลิต → กำลังส่งซุป → เตรียมส่ง (กำหนดการ=วันที่ต้องการ) → เรียบร้อย (ส่งสินค้าแล้ว)',
+      'ค่าเริ่มต้นของระบบ (process ว่าง) = กำลังผลิต (รับออเดอร์แล้ว)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AI',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'การ์ดรายละเอียด Order: เปลี่ยนพื้นหลังเป็นสีขาว',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AH',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แก้บัค: badge "NEW" ไม่แสดง — แยก badge ออกจากช่องที่ตัดข้อความ (overflow:hidden/ellipsis) ในตาราง DATA และ Order ไม่ให้ถูกซ่อน',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AG',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แก้บัค: เนื้อหาดิบของ DEV_LOGS (entry -U/-T/-S เก่า) หลุดไปแสดงเป็นข้อความท้ายหน้านอก &lt;script&gt; — ย้ายกลับเข้า array และปิดแท็ก HTML ให้ถูกต้อง',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AF',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แก้ไฟล์ form.html ที่เสียหาย (array DEV_LOGS ถูกตัดท้ายขาด ทำให้ฟังก์ชัน openDevLogs/closeDevLogs/renderDevLogs และโค้ดลงทะเบียน Service Worker หายไปทั้งหมด) — กู้คืนครบถ้วน แก้ปัญหา "Dev Log เปิดไม่ขึ้น" และ "icon NEW หาย"',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AE',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'การ์ด "ดูรายละเอียด Order" เปลี่ยนพื้นหลังเป็นสีทึบ (var(--bg-deep)) ไม่โปร่งแสง',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AD',
+    date: '2026-06-11',
+    current: false,
+    items: [
+      'แก้ไฟล์ order.js ที่เสียหาย (ถูกตัดท้ายขาด) — กู้คืนฟังก์ชัน openEditOrder/closeOrderEdit/saveOrderEdit และฟังก์ชันการ์ดดูรายละเอียด Order ทั้งหมด',
+      'ปรับสีการ์ด "ดูรายละเอียด Order" ให้ใช้ตัวแปรสีตามธีมเว็บ (รองรับโหมดสว่าง/มืด)',
+    ],
+  },
+  {
+    ref: '#REV-20260611-AC',
+    date: '2026-06-11',
+    current: false,
     items: [
       'ปรับการ์ด "ดูรายละเอียด Order" ใหม่ทั้งหมด — เพิ่ม Timeline ความคืบหน้า 5 ขั้นตอน (รับออเดอร์→ตรวจสอบข้อมูล→กำลังผลิต→QC→ส่งสินค้า) ตามสถานะ Process',
       'เพิ่มปุ่ม Action ในการ์ด: 🔄 เปลี่ยนสถานะ (Process), ✈️ ส่งงาน (ตั้งสถานะส่งงาน+บันทึกวันที่), 🖨️ พิมพ์, ✏️ แก้ไข, ⋯ เพิ่มเติม (ลบ Order)',
@@ -2441,6 +2556,7 @@ const DEV_LOGS = [
   {
     ref: '#REV-20260610-V',
     date: '2026-06-10',
+    current: false,
     items: [
       'แท็บ AI สำหรับอ่านแบบ: เพิ่มปุ่ม "📋 คัดลอก" สำหรับคัดลอก API Key แต่ละ provider',
       'ซ่อนช่องกรอก API Key / สถานะของ provider ที่ไม่ได้เลือกไว้ (แสดงเฉพาะตัวที่เลือกอยู่ ลดความรก)',
@@ -2449,6 +2565,7 @@ const DEV_LOGS = [
   {
     ref: '#REV-20260610-U',
     date: '2026-06-10',
+    current: false,
     items: [
       'เพิ่มปุ่ม "📋 วาง" ในกล่อง "วางข้อความลูกค้า" (AI อ่านข้อความ) สำหรับวางข้อความจากคลิปบอร์ดอัตโนมัติ',
     ],
@@ -2456,6 +2573,7 @@ const DEV_LOGS = [
   {
     ref: '#REV-20260610-T',
     date: '2026-06-10',
+    current: false,
     items: [
       'เพิ่มปุ่ม "📋 คัดลอก" ในแท็บ Config (Google Apps Script) สำหรับคัดลอก Script URL',
     ],
@@ -2463,5 +2581,69 @@ const DEV_LOGS = [
   {
     ref: '#REV-20260610-S',
     date: '2026-06-10',
+    current: false,
     items: [
-      'แก้: ช่อง Rev. ในฟอร์มจ
+      'แก้: ช่อง Rev. ในฟอร์มจะไม่แสดงเลย ถ้างานนั้นยังไม่เคยถูกแก้ไข (Rev.=0) — แสดงเฉพาะตอนโหลดงานที่เคยแก้ไขแล้ว (Rev. ≥ 1)',
+    ],
+  },
+];
+
+function renderDevLogs() {
+  const body = $('devLogsBody');
+  if (!body) return;
+  body.innerHTML = DEV_LOGS.map((log, idx) => `
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;padding:10px 12px">
+      <div style="font-size:.8rem;font-weight:700;color:#e2e8f0;margin-bottom:6px;display:flex;
+        align-items:center;gap:6px;flex-wrap:wrap">
+        <span>📋 ENTRY ${DEV_LOGS.length - idx}:</span>
+        <span style="color:#94a3b8;font-weight:500">📅 ${log.date}</span>
+        <span style="color:#a5b4fc">${log.ref}</span>
+        ${log.current ? '<span style="color:#34d399;font-weight:700">(Current)</span>' : ''}
+      </div>
+      <ul style="margin:0;padding-left:18px;font-size:.78rem;color:#cbd5e1;line-height:1.6">
+        ${log.items.map(it => `<li>${it}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+
+function openDevLogs() {
+  renderDevLogs();
+  $('devLogsModal').style.display = 'flex';
+}
+function closeDevLogs() {
+  $('devLogsModal').style.display = 'none';
+}
+
+// ===== PWA: ลงทะเบียน Service Worker (ติดตั้งแอปบนมือถือ/แท็บเล็ต) =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // เช็ก sw.js ใหม่ทุกครั้งที่เปิดแอป (เผื่อมีการอัปเดต)
+      reg.update().catch(() => {});
+
+      // ถ้าเจอ SW เวอร์ชันใหม่ ให้ skipWaiting แล้วรีโหลดหน้าอัตโนมัติ
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(() => {});
+
+    // เมื่อ SW ใหม่เข้าควบคุมหน้าแล้ว ให้รีโหลดหนึ่งครั้งเพื่อใช้ไฟล์ล่าสุด
+    let _swRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swRefreshed) return;
+      _swRefreshed = true;
+      window.location.reload();
+    });
+  });
+}
+</script>
+</body>
+</html>

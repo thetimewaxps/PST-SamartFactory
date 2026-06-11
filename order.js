@@ -10,6 +10,7 @@ const ORDER_COLS = {
   poFile: 12,       // M = รูปภาพPO. (ไฟล์แนบ PO)
   statusDeliver: 15,// P = สถานะส่งงาน (แสดงในตาราง, อ่านอย่างเดียว)
   process: 16,      // Q = Process (สถานะงานที่แก้ไขได้ — กำลังผลิต/ส่งซุป/.../เรียบร้อย)
+  note2: 17,        // R = Note (แสดงในตาราง, อ่านอย่างเดียว)
   update: 20, linkImages: 21, status: 22, totalTax: 23, add: 24, my: 25,
   wantDate: 26, customer: 27
 };
@@ -33,6 +34,20 @@ function _ordDateToSheet(s) {
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) return `${parseInt(m[3])}/${parseInt(m[2])}/${parseInt(m[1])+543}`;
   return s;
+}
+// ตรวจสอบว่าวันที่ dd/MM/yyyy(พ.ศ.) อยู่ในเดือนนี้หรือเดือนที่แล้วหรือไม่
+function _ordIsRecentMonth(s) {
+  s = String(s||'').trim();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return false;
+  const mm = parseInt(m[2]);
+  let yyyy = parseInt(m[3]);
+  if (yyyy > 2400) yyyy -= 543; // พ.ศ. -> ค.ศ.
+  const now = new Date();
+  const curKey = now.getFullYear()*12 + now.getMonth();
+  const rowKey = yyyy*12 + (mm-1);
+  const diff = curKey - rowKey;
+  return diff >= 0 && diff <= 1;
 }
 
 // อัปเดตพรีวิวข้อมูลจากใบเสนอราคาที่เปิดอยู่
@@ -422,9 +437,41 @@ function _ordResetFilters() {
   renderOrderTable();
 }
 
+// ── เรียงลำดับตาราง Order ──
+let _ordSortCol = null;
+let _ordSortDir = 1; // 1 = น้อย→มาก, -1 = มาก→น้อย
+const _ORD_SORT_COLS = ['noQuo','noPO','customer','orderDate','wantDate','qty','price','process'];
+function _ordSortBy(col) {
+  if (_ordSortCol === col) {
+    _ordSortDir = -_ordSortDir;
+  } else {
+    _ordSortCol = col;
+    _ordSortDir = 1;
+  }
+  _ordPage = 1;
+  renderOrderTable();
+}
+function _ordSortValue(r, col) {
+  switch (col) {
+    case 'orderDate':
+    case 'wantDate':
+      return _ordDateToInput(r[ORDER_COLS[col]]) || '';
+    case 'qty':
+    case 'price':
+      return parseFloat(r[ORDER_COLS[col]]) || 0;
+    default:
+      return String(r[ORDER_COLS[col]]||'').toLowerCase();
+  }
+}
+
 function renderOrderTable() {
   const tbody = $('ordBody');
   if (!tbody) return;
+  // อัปเดตไอคอนหัวคอลัมน์ตามสถานะการเรียงลำดับ
+  _ORD_SORT_COLS.forEach(col => {
+    const el = $('ordSortIcon_' + col);
+    if (el) el.textContent = (_ordSortCol === col) ? (_ordSortDir === 1 ? ' ▲' : ' ▼') : '';
+  });
   const q = ($('ordSearch')?.value || '').trim().toLowerCase();
   let rows = _orderCache;
   if (q) {
@@ -432,10 +479,10 @@ function renderOrderTable() {
       .some(v => String(v||'').toLowerCase().includes(q)));
   }
 
-  // ── ตัวกรอง: สถานะงาน (ค่าเริ่มต้น = ซ่อนรายการที่ "เรียบร้อย") ──
+  // ── ตัวกรอง: สถานะงาน (ค่าเริ่มต้น = ซ่อนรายการ "เรียบร้อย" ยกเว้นเดือนนี้/เดือนที่แล้ว) ──
   const statusFilter = $('ordFilterStatus')?.value ?? '_not_done';
   if (statusFilter === '_not_done') {
-    rows = rows.filter(r => String(r[ORDER_COLS.process]||'').trim() !== 'เรียบร้อย');
+    rows = rows.filter(r => String(r[ORDER_COLS.process]||'').trim() !== 'เรียบร้อย' || _ordIsRecentMonth(r[ORDER_COLS.orderDate]));
   } else if (statusFilter !== '_all') {
     rows = rows.filter(r => String(r[ORDER_COLS.process]||'').trim() === statusFilter);
   }
@@ -459,9 +506,20 @@ function renderOrderTable() {
     });
   }
   if (rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">ไม่มีข้อมูล Order</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">ไม่มีข้อมูล Order</td></tr>`;
     $('ordPager').innerHTML = '';
     return;
+  }
+
+  // ── เรียงลำดับ ──
+  if (_ordSortCol) {
+    rows = rows.slice().sort((a, b) => {
+      const va = _ordSortValue(a, _ordSortCol);
+      const vb = _ordSortValue(b, _ordSortCol);
+      if (va < vb) return -1 * _ordSortDir;
+      if (va > vb) return 1 * _ordSortDir;
+      return 0;
+    });
   }
 
   const totalPages = Math.max(1, Math.ceil(rows.length / ORD_PAGE_SIZE));
@@ -470,34 +528,39 @@ function renderOrderTable() {
   const startIdx = (_ordPage - 1) * ORD_PAGE_SIZE;
   const pageRows = rows.slice(startIdx, startIdx + ORD_PAGE_SIZE);
 
-  tbody.innerHTML = pageRows.map(r => {
+  tbody.innerHTML = pageRows.map((r, ri) => {
     const noPO  = String(r[ORDER_COLS.noPO]||'');
     const price = parseFloat(r[ORDER_COLS.price]) || 0;
     const productList = String(r[ORDER_COLS.productList]||'');
     const customer    = String(r[ORDER_COLS.customer]||'');
+    const note  = String(r[ORDER_COLS.note]||'');
+    const note2 = String(r[ORDER_COLS.note2]||'');
+    const process = String(r[ORDER_COLS.process]||'');
+    const matStr = String(r[ORDER_COLS.material]||'');
+    const isStainless = matStr.includes('สแตนเลส') || matStr.includes('SUS');
+    const rowBg = isStainless
+      ? 'background:rgba(250,204,21,.16);border-left:3px solid #facc15'
+      : (ri % 2 === 0 ? '' : 'background:var(--pair-bg)');
     const isNewRow = _isNewItem(SEEN_KEY_ORDER, noPO);
-    return `<tr style="border-bottom:1px solid var(--bc-div)">
-      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[ORDER_COLS.noQuo]||'—'}</td>
-      <td style="padding:8px 8px;font-size:.78rem;font-weight:600;color:var(--c1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${noPO||'—'}${_newBadge(isNewRow)}</td>
-      <td style="padding:8px 8px;font-size:.78rem;white-space:nowrap">${r[ORDER_COLS.orderDate]||'—'}</td>
-      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${customer.replace(/"/g,'&quot;')}">${_ordTruncate(customer,12)||'—'}</td>
-      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${productList.replace(/"/g,'&quot;')}">${_ordTruncate(productList,28)||'—'}</td>
-      <td style="padding:8px 8px;font-size:.78rem;text-align:center">${r[ORDER_COLS.qty]||'—'}</td>
-      <td style="padding:8px 8px;font-size:.78rem;text-align:right;white-space:nowrap">${price ? price.toLocaleString('th-TH',{minimumFractionDigits:2}) : '—'}</td>
-      <td style="padding:8px 8px;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[ORDER_COLS.process]||'—'}</td>
-      <td style="padding:8px 8px;font-size:.78rem;white-space:nowrap">${r[ORDER_COLS.wantDate]||'—'}</td>
-      <td style="padding:8px 6px;text-align:center">
-        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">
-          <button onclick="showOrderDetail('${noPO.replace(/'/g,"\\'")}')"
-            style="padding:5px 8px;border-radius:7px;border:1px solid rgba(34,197,94,.35);
-            background:rgba(34,197,94,.1);color:#4ade80;font-size:.72rem;cursor:pointer;white-space:nowrap">👁️ ดู</button>
-          <button onclick="openEditOrder('${noPO.replace(/'/g,"\\'")}')"
-            style="padding:5px 8px;border-radius:7px;border:1px solid rgba(99,102,241,.35);
-            background:rgba(99,102,241,.1);color:#9b8fff;font-size:.72rem;cursor:pointer;white-space:nowrap">✏️ แก้ไข</button>
-          <button onclick="deleteOrderRow('${noPO.replace(/'/g,"\\'")}','${String(r[ORDER_COLS.noQuo]||'').replace(/'/g,"\\'")}')"
-            style="padding:5px 8px;border-radius:7px;border:1px solid rgba(248,113,113,.35);
-            background:rgba(248,113,113,.1);color:#f87171;font-size:.72rem;cursor:pointer;white-space:nowrap">🗑️ ลบ</button>
-        </div>
+    return `<tr style="${rowBg};border-bottom:1px solid var(--bc-div)">
+      <td style="padding:8px 10px;white-space:nowrap">${_ordStatusBadge(process)}<br>
+        <span style="display:inline-flex;align-items:center;gap:4px"><span style="font-size:.72rem;color:var(--c1);font-weight:600">${r[ORDER_COLS.noQuo]||'—'}</span>${_newBadge(isNewRow)}</span></td>
+      <td style="padding:8px 10px;font-size:.78rem;font-weight:600;color:var(--t1);white-space:nowrap">${noPO||'—'}</td>
+      <td style="padding:8px 10px;font-size:.78rem;color:var(--t1)">${customer||'—'}</td>
+      <td style="padding:8px 10px;font-size:.72rem;color:var(--t3);white-space:nowrap">${r[ORDER_COLS.orderDate]||'—'}</td>
+      <td style="padding:8px 10px;font-size:.72rem;color:var(--t3);white-space:nowrap">${r[ORDER_COLS.wantDate]||'—'}</td>
+      <td style="padding:8px 10px;font-size:.78rem;color:var(--t1)">${productList||'—'}</td>
+      <td style="padding:8px 10px;text-align:center;font-size:.8rem;color:var(--t1)">${r[ORDER_COLS.qty]||'—'}</td>
+      <td style="padding:8px 10px;font-size:.72rem;color:var(--t2)">${note||'—'}</td>
+      <td style="padding:8px 10px;font-size:.72rem;color:var(--t2)">${note2||'—'}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:.78rem;font-weight:600;color:var(--c1);white-space:nowrap">${price ? price.toLocaleString('th-TH',{minimumFractionDigits:2}) : '—'} <span style="font-size:.65rem">฿</span></td>
+      <td style="padding:8px 10px;white-space:nowrap">${_ordStatusBadge(process)}</td>
+      <td style="padding:8px 10px;text-align:center;white-space:nowrap">
+        <button onclick="showOrderDetail('${noPO.replace(/'/g,"\\'")}')"
+          style="padding:5px 10px;border-radius:7px;border:none;background:#2563eb;color:#fff;
+                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
+          👁️ ดู
+        </button>
       </td>
     </tr>`;
   }).join('');
@@ -519,6 +582,12 @@ function renderOrderTable() {
   }
 }
 
+// ── badge แสดงสถานะ Process (สไตล์เดียวกับตาราง DATA) ──
+function _ordStatusBadge(process) {
+  const c = _ordProcessColor(process);
+  return `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:600;
+    background:${c.bg};color:${c.fg};border:1px solid ${c.bd}">${process||'—'}</span>`;
+}
 // ── สีของ badge ตาม Process ──
 function _ordProcessColor(process) {
   const p = String(process||'').trim();
@@ -543,21 +612,21 @@ function _ordSplitImages(s) {
 // ── ลำดับขั้นตอนงาน สำหรับ Timeline (ความคืบหน้า) ──
 const ORDER_FLOW_STEPS = [
   {label:'รับออเดอร์',          icon:'📋'},
-  {label:'ตรวจสอบข้อมูล',       icon:'✅'},
   {label:'กำลังผลิต',           icon:'⚙️'},
-  {label:'QC ตรวจสอบคุณภาพ',    icon:'🔍'},
-  {label:'ส่งสินค้า',            icon:'🚚'},
+  {label:'กำลังส่งซุป',          icon:'🧪'},
+  {label:'เตรียมส่ง',            icon:'📦'},
+  {label:'เรียบร้อย (ส่งสินค้าแล้ว)', icon:'🚚'},
 ];
 // คืนค่า index ของขั้นตอนปัจจุบัน (0-4) หรือ 5 = เสร็จสิ้นทั้งหมด
 function _ordCurrentStepIdx(r) {
   const p = String(r[ORDER_COLS.process]||'').trim();
   const delivered = String(r[ORDER_COLS.statusDeliver]||'').includes('ส่งแล้ว');
   if (delivered || p === 'เรียบร้อย') return 5;
-  if (p === 'รอConfirm') return 1;
-  if (p === 'กำลังผลิต') return 2;
-  if (['ส่งซุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ'].includes(p)) return 3;
-  if (p === 'FG รอเรียก' || p === 'Stock') return 4;
-  return 2; // ค่าเริ่มต้น
+  if (p === 'รอConfirm') return 0;
+  if (p === 'กำลังผลิต') return 1;
+  if (['ส่งซุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ'].includes(p)) return 2;
+  if (p === 'FG รอเรียก' || p === 'Stock') return 3;
+  return 1; // ค่าเริ่มต้น = กำลังผลิต (รับออเดอร์แล้ว)
 }
 // สร้าง HTML ของ Timeline แนวตั้ง
 function _ordTimelineHtml(r) {
@@ -715,25 +784,25 @@ function showOrderDetail(noPO) {
         <button onclick="_ordQuickChangeProcess('${escPO}')"
           style="padding:7px 12px;border-radius:8px;border:1px solid rgba(245,158,11,.35);
           background:rgba(245,158,11,.1);color:#d97706;font-size:.78rem;font-weight:700;cursor:pointer">🔄 เปลี่ยนสถานะ</button>
-        <button onclick="_ordMarkDelivered('${escPO}')"
+        ${g('process') === 'เรียบร้อย' ? '' : `<button onclick="_ordMarkDelivered('${escPO}')"
           style="padding:7px 12px;border-radius:8px;border:1px solid rgba(34,197,94,.35);
-          background:rgba(34,197,94,.1);color:#16a34a;font-size:.78rem;font-weight:700;cursor:pointer">✈️ ส่งงาน</button>
+          background:rgba(34,197,94,.1);color:#16a34a;font-size:.78rem;font-weight:700;cursor:pointer">✈️ ส่งงาน</button>`}
         <button onclick="_ordPrintDetail('${escPO}')"
           style="padding:7px 12px;border-radius:8px;border:1px solid var(--bc-card);
           background:var(--bc-div);color:var(--t1);font-size:.78rem;font-weight:700;cursor:pointer">🖨️ พิมพ์</button>
         <button onclick="Swal.close(); openEditOrder('${escPO}')"
           style="padding:7px 12px;border-radius:8px;border:1px solid rgba(99,102,241,.35);
           background:rgba(99,102,241,.1);color:#6366f1;font-size:.78rem;font-weight:700;cursor:pointer">✏️ แก้ไข</button>
-        <button onclick="_ordMoreMenu('${escPO}','${escQuo}')"
-          style="padding:7px 10px;border-radius:8px;border:1px solid var(--bc-card);
-          background:var(--bc-div);color:var(--t1);font-size:.78rem;font-weight:700;cursor:pointer">⋯</button>
+        <button onclick="deleteOrderRow('${escPO}','${escQuo}')"
+          style="padding:7px 12px;border-radius:8px;border:1px solid rgba(248,113,113,.35);
+          background:rgba(248,113,113,.1);color:#f87171;font-size:.78rem;font-weight:700;cursor:pointer">🗑️ ลบ Order</button>
       </div>
     </div>`;
 
   Swal.fire({
     title: '📋 รายละเอียด Order',
     html, width: 880,
-    background: 'var(--bg-card)', color: 'var(--t1)',
+    background: '#ffffff', color: '#1e293b',
     showConfirmButton: true,
     confirmButtonText: '✕ ปิด', confirmButtonColor: '#475569'
   });
@@ -744,7 +813,7 @@ function _ordZoomImage(url, label) {
   Swal.fire({
     title: label, imageUrl: url, imageAlt: label,
     width: 'min(92vw, 720px)',
-    background: 'var(--bg-card)', color: 'var(--t1)',
+    background: 'var(--bg-deep)', color: 'var(--t1)',
     confirmButtonText: 'ปิด', confirmButtonColor: '#6366f1'
   });
 }
@@ -764,7 +833,7 @@ async function _ordQuickChangeProcess(noPO) {
     inputValue: r[ORDER_COLS.process] || '',
     showCancelButton: true,
     confirmButtonText: '✅ บันทึก', cancelButtonText: 'ยกเลิก',
-    background: 'var(--bg-card)', color: 'var(--t1)',
+    background: 'var(--bg-deep)', color: 'var(--t1)',
     confirmButtonColor: '#6366f1', cancelButtonColor: '#475569'
   });
   if (!newProcess) return;
@@ -773,17 +842,17 @@ async function _ordQuickChangeProcess(noPO) {
   while (row.length < ORDER_NUM_COLS) row.push('');
   row[ORDER_COLS.process] = newProcess;
 
-  Swal.fire({title:'กำลังบันทึก…', background:'var(--bg-card)', color:'var(--t1)', allowOutsideClick:false, showConfirmButton:false, didOpen:()=>Swal.showLoading()});
+  showOrderDetail(noPO);
+  const toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500, timerProgressBar:true });
   try {
     await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'updateOrder', noPO, row }) });
     await fetchOrders();
-    Swal.fire({icon:'success', title:'บันทึกแล้ว ✅', background:'var(--bg-card)', color:'var(--t1)',
-      confirmButtonColor:'#6366f1', timer:1100, showConfirmButton:false});
-    setTimeout(() => showOrderDetail(noPO), 900);
+    showOrderDetail(noPO);
+    toast.fire({icon:'success', title:'บันทึกแล้ว ✅'});
   } catch (err) {
-    Swal.fire({icon:'error', title:'เกิดข้อผิดพลาด', text:'บันทึกไม่สำเร็จ', background:'var(--bg-card)', color:'var(--t1)', confirmButtonColor:'#6366f1'});
+    toast.fire({icon:'error', title:'บันทึกไม่สำเร็จ', timer:2200});
   }
 }
 
@@ -793,9 +862,9 @@ async function _ordMarkDelivered(noPO) {
   if (!r) return;
   const res = await Swal.fire({
     icon:'question', title:'ยืนยันส่งงาน?',
-    html:`No.PO: <b>${noPO}</b><br><span style="font-size:.8rem;color:var(--t3)">จะตั้งสถานะส่งงาน = "ส่งแล้ว" และบันทึกวันที่ส่งงานวันนี้</span>`,
+    html:`No.PO: <b>${noPO}</b><br><span style="font-size:.8rem;color:var(--t3)">จะตั้งสถานะส่งงาน = "ส่งแล้ว", สถานะงาน (Process) = "เรียบร้อย" และบันทึกวันที่ส่งงานวันนี้</span>`,
     showCancelButton:true, confirmButtonText:'✅ ยืนยัน', cancelButtonText:'ยกเลิก',
-    background:'var(--bg-card)', color:'var(--t1)',
+    background:'var(--bg-deep)', color:'var(--t1)',
     confirmButtonColor:'#22c55e', cancelButtonColor:'#475569'
   });
   if (!res.isConfirmed) return;
@@ -803,19 +872,20 @@ async function _ordMarkDelivered(noPO) {
   const row = r.slice();
   while (row.length < ORDER_NUM_COLS) row.push('');
   row[ORDER_COLS.statusDeliver] = 'ส่งแล้ว';
+  row[ORDER_COLS.process] = 'เรียบร้อย';
   row[ORDER_COLS.update] = _ordDateToSheet(_todayStr());
 
-  Swal.fire({title:'กำลังบันทึก…', background:'var(--bg-card)', color:'var(--t1)', allowOutsideClick:false, showConfirmButton:false, didOpen:()=>Swal.showLoading()});
+  showOrderDetail(noPO);
+  const toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500, timerProgressBar:true });
   try {
     await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'updateOrder', noPO, row }) });
     await fetchOrders();
-    Swal.fire({icon:'success', title:'ส่งงานแล้ว ✅', background:'var(--bg-card)', color:'var(--t1)',
-      confirmButtonColor:'#6366f1', timer:1100, showConfirmButton:false});
-    setTimeout(() => showOrderDetail(noPO), 900);
+    showOrderDetail(noPO);
+    toast.fire({icon:'success', title:'ส่งงานแล้ว ✅'});
   } catch (err) {
-    Swal.fire({icon:'error', title:'เกิดข้อผิดพลาด', text:'บันทึกไม่สำเร็จ', background:'var(--bg-card)', color:'var(--t1)', confirmButtonColor:'#6366f1'});
+    toast.fire({icon:'error', title:'บันทึกไม่สำเร็จ', timer:2200});
   }
 }
 
@@ -869,7 +939,7 @@ function _ordMoreMenu(noPO, noQuo) {
         background:rgba(248,113,113,.1);color:#f87171;font-size:.82rem;font-weight:700;cursor:pointer;text-align:left">🗑️ ลบ Order นี้</button>
     </div>`,
     showConfirmButton:false, showCloseButton:true,
-    background:'var(--bg-card)', color:'var(--t1)'
+    background:'var(--bg-deep)', color:'var(--t1)'
   });
 }
 
@@ -904,6 +974,7 @@ function closeOrderEdit() {
 }
 async function saveOrderEdit() {
   if (!_ordEditNoPO) return;
+  const editingNoPO = _ordEditNoPO;
   const r = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(_ordEditNoPO));
   if (!r) return;
   const row = r.slice();
@@ -938,7 +1009,8 @@ async function saveOrderEdit() {
       confirmButtonColor:'#6366f1', timer:1300, showConfirmButton:false});
     if (statusEl) statusEl.textContent = '';
     closeOrderEdit();
-    setTimeout(fetchOrders, 1000);
+    await fetchOrders();
+    setTimeout(() => showOrderDetail(editingNoPO), 900);
   } catch (err) {
     Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:'บันทึกไม่สำเร็จ',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
     if (statusEl) statusEl.textContent = '';

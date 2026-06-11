@@ -320,7 +320,7 @@ function dtRender() {
     const isNewRow = _isNewItem(SEEN_KEY_DATA, r[DT.noQuo]);
     return `<tr style="${rowBg};border-bottom:1px solid var(--bc-div)" class="dt-row">
       <td style="padding:8px 10px;white-space:nowrap">${statusBadge(r[DT.status])}<br>
-        <span style="font-size:.72rem;color:var(--c1);font-weight:600">${r[DT.noQuo]||'—'}</span>${hasAiSale ? ' <span title="มีผลวิเคราะห์ AI เคาะราคาแนบไว้" style="font-size:.75rem">🤖</span>' : ''}${_newBadge(isNewRow)}</td>
+        <span style="display:inline-flex;align-items:center;gap:4px"><span style="font-size:.72rem;color:var(--c1);font-weight:600">${r[DT.noQuo]||'—'}</span>${hasAiSale ? ' <span title="มีผลวิเคราะห์ AI เคาะราคาแนบไว้" style="font-size:.75rem">🤖</span>' : ''}${_newBadge(isNewRow)}</span></td>
       <td style="padding:8px 10px;font-size:.72rem;color:var(--t3);white-space:nowrap">${r[DT.date]||'—'}</td>
       <td style="padding:8px 10px;font-size:.78rem;color:var(--t1);font-weight:600;white-space:nowrap">${size} <span style="color:var(--t3);font-size:.65rem">มม.</span></td>
       <td style="padding:8px 10px;font-size:.72rem;white-space:nowrap">${r[DT.matTop]  ? `<span style="background:rgba(59,130,246,.18);color:#111;border-radius:5px;padding:1px 7px;font-weight:600">${r[DT.matTop]}</span>`  : '<span style="color:var(--t3)">—</span>'}</td>
