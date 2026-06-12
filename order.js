@@ -431,7 +431,7 @@ async function fetchOrders() {
     tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">⚠️ ยังไม่ได้ตั้งค่า Script URL</td></tr>`;
     return;
   }
-  tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">↻ กำลังโหลด…</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem"><span class="spin-ico">↻</span> กำลังโหลด…</td></tr>`;
   try {
     const res = await fetch(SCRIPT_URL + '?action=getOrders', {mode:'cors'});
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -442,6 +442,7 @@ async function fetchOrders() {
     _ordPage = 1;
     renderOrderTable();
     if (typeof renderTrackDashboard === 'function') renderTrackDashboard();
+    if (typeof _invRefreshCustomerSelect === 'function') _invRefreshCustomerSelect(); // อัปเดตจำนวน PO ที่รอเปิดใบกำกับ
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:#f87171;font-size:.8rem">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
   }

@@ -303,6 +303,23 @@ body.trk-fullscreen-mode #tab-track > div { max-width: 100% !important; }
 .pair-row:last-child { margin-bottom: 0; }
 .divider { height: 1px; background: var(--bc-div); margin: 6px 0 10px; }
 
+/* ── ดรอปดาวน์เลือกลูกค้า (ออกใบกำกับภาษี): ขยายให้กว้างขึ้นบนเดสทอป เพื่ออ่านข้อความ "รอเปิด N PO" ได้สุด ── */
+#inv_customer { width: 100%; }
+@media (min-width: 768px) {
+  .inv-cust-field { grid-column: span 2; }
+  #inv_customer { min-width: 420px; }
+}
+/* แสดงตัวเลือกที่มี PO รอเปิด เป็นตัวหนาสีแดง (เด่นชัด) */
+#inv_customer option.has-pending { color: #ef4444; font-weight: 700; }
+
+/* ── ไอคอนหมุนตอนกำลังโหลด ── */
+@keyframes spin360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.spin-ico { display:inline-block; animation: spin360 1s linear infinite; }
+
+/* ── สีสลับแถว (zebra striping) สำหรับรายการสินค้าในตัวแก้ไขใบกำกับ ── */
+#invEdit_itemsWrap .inv-item-row:nth-child(odd)  { background: rgba(255,255,255,.03); }
+#invEdit_itemsWrap .inv-item-row:nth-child(even) { background: rgba(56,189,248,.06); }
+
 /* ── FORM ELEMENTS ──────────────────────────────── */
 .field { display: flex; flex-direction: column; gap: 4px; }
 label { font-size: .75rem; font-weight: 600; color: var(--t2); letter-spacing: .02em; }

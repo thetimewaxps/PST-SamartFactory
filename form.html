@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=6.28">
+<link rel="stylesheet" href="style.css?v=6.37">
 </head>
 <body>
 
@@ -29,14 +29,14 @@
 <!-- HEADER -->
 <div class="page-header">
   <div class="ph-inner">
-    <div class="ph-logo"><img src="PTS.png" alt="PTS" class="app-logo-img" onerror="this.style.display='none';this.parentNode.textContent='PT'"></div>
+    <div class="ph-logo"><img src="PTS.png" alt="PTS" class="app-logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="ph-logo-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-weight:700">PT</span></div>
     <div class="ph-divider"></div>
     <div class="ph-text">
       <div class="ph-title">PTS Cost Breakdown</div>
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v6.28</span>
+      <span class="ph-chip ver">v6.37</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1821,6 +1821,10 @@
     <div class="card-header">
       <div class="icon ic-ext">📑</div>
       <h2>รายการใบสั่งซื้อ</h2>
+      <button onclick="fetchPurchaseOrders()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        🔄 รีเฟรช
+      </button>
     </div>
     <div style="margin-bottom:10px">
       <input type="text" id="poSearch" placeholder="ค้นหา เลขที่ PO / Supplier / อ้างอิง Order..."
@@ -1858,6 +1862,10 @@
     <div class="card-header">
       <div class="icon ic-ext">👥</div>
       <h2>ลูกค้า</h2>
+      <button onclick="fetchCustomers()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        🔄 รีเฟรช
+      </button>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
       <button onclick="custAddRow()"
@@ -1881,7 +1889,7 @@
       <h2>ออกใบกำกับภาษี</h2>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;margin-bottom:14px">
-      <div class="field"><label>ลูกค้า</label>
+      <div class="field inv-cust-field"><label>ลูกค้า</label>
         <select id="inv_customer" onchange="invOnCustomerChange()">
           <option value="">— เลือกลูกค้า —</option>
         </select>
@@ -1912,6 +1920,10 @@
     <div class="card-header">
       <div class="icon ic-ext">🧾</div>
       <h2>ใบกำกับที่ออกแล้ว</h2>
+      <button onclick="fetchIssuedInvoices()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        🔄 รีเฟรช
+      </button>
     </div>
     <div id="invIssuedListWrap" style="overflow-x:auto"></div>
   </div>
@@ -1964,12 +1976,12 @@
       <div class="field" style="grid-column:1/-1"><label>ลูกค้า</label>
         <select id="invEdit_customer"></select>
       </div>
-      <div class="field" style="grid-column:1/-1"><label>รายการ PO (คั่นด้วยจุลภาค)</label>
-        <input type="text" id="invEdit_poList"></div>
-      <div class="field"><label>มูลค่าก่อน VAT</label>
-        <input type="number" id="invEdit_subtotal" step="0.01" onchange="_invEditRecalc()"></div>
-      <div class="field"><label>VAT</label><input type="number" id="invEdit_vat" step="0.01"></div>
-      <div class="field"><label>ยอดรวม</label><input type="number" id="invEdit_total" step="0.01"></div>
+      <div class="field" style="grid-column:1/-1"><label>รายการ PO (คำนวณอัตโนมัติจากรายการสินค้า)</label>
+        <input type="text" id="invEdit_poList" readonly style="background:rgba(255,255,255,.04);cursor:not-allowed"></div>
+      <div class="field"><label>มูลค่าก่อน VAT (คำนวณอัตโนมัติ)</label>
+        <input type="number" id="invEdit_subtotal" step="0.01" readonly style="background:rgba(255,255,255,.04);cursor:not-allowed"></div>
+      <div class="field"><label>VAT (คำนวณอัตโนมัติ)</label><input type="number" id="invEdit_vat" step="0.01" readonly style="background:rgba(255,255,255,.04);cursor:not-allowed"></div>
+      <div class="field"><label>ยอดรวม (คำนวณอัตโนมัติ)</label><input type="number" id="invEdit_total" step="0.01" readonly style="background:rgba(255,255,255,.04);cursor:not-allowed"></div>
       <div class="field"><label>สถานะ</label>
         <select id="invEdit_status">
           <option value="ออกแล้ว">ออกแล้ว</option>
@@ -2098,14 +2110,14 @@
   </div>
 </div>
 
-<script src="core.js?v=6.28"></script>
-<script src="data.js?v=6.28"></script>
-<script src="formcalc.js?v=6.28"></script>
-<script src="aifeatures.js?v=6.28"></script>
-<script src="theme.js?v=6.28"></script>
-<script src="order.js?v=6.28"></script>
-<script src="purchase.js?v=6.28"></script>
-<script src="invoice.js?v=6.28"></script>
+<script src="core.js?v=6.37"></script>
+<script src="data.js?v=6.37"></script>
+<script src="formcalc.js?v=6.37"></script>
+<script src="aifeatures.js?v=6.37"></script>
+<script src="theme.js?v=6.37"></script>
+<script src="order.js?v=6.37"></script>
+<script src="purchase.js?v=6.37"></script>
+<script src="invoice.js?v=6.37"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2234,9 +2246,88 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260612-AD',
+    ref: '#REV-20260612-AM',
     date: '2026-06-12',
     current: true,
+    items: [
+      'แก้บั๊ก: อัปโหลดโลโก้แล้วรูปไม่ขึ้น — Code.gs เปลี่ยน URL โลโก้จาก drive.google.com/uc เป็น lh3.googleusercontent.com (กันหน้า "ยืนยันสแกนไวรัส" ของ Drive)',
+      'แก้ onerror ของโลโก้ใน header ไม่ให้ทำลาย element รูปถาวร — ใช้ span สำรองแสดง "PT" แทน เพื่อให้รูปกลับมาแสดงได้เมื่ออัปโหลดใหม่สำเร็จ',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AL',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'ตัวเลือกลูกค้าที่มี PO รอเปิดใบกำกับ แสดงข้อความ "รอเปิด N PO" เป็นตัวหนาสีแดง',
+      'ดรอปดาวน์เลือกลูกค้า ขยายความกว้างบนเดสทอป ให้อ่านข้อความได้สุด',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AK',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'ดรอปดาวน์ "เลือกลูกค้า" ในหน้าออกใบกำกับภาษี ต่อท้ายด้วยจำนวน PO ที่ยังไม่ออกใบกำกับ และเรียงลูกค้าจากมากไปน้อย',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AJ',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'เพิ่มสถานะ "↻ กำลังโหลด..." (ไอคอนหมุน) + แจ้งเตือนเมื่อโหลดไม่สำเร็จ ให้ตาราง: รายการใบสั่งซื้อ, ลูกค้า, ใบกำกับที่ออกแล้ว',
+      'เพิ่มปุ่ม "🔄 รีเฟรช" คู่กับตาราง: รายการใบสั่งซื้อ, ลูกค้า, ใบกำกับที่ออกแล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AI',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'ลบรายการสินค้าในหน้าแก้ไขใบกำกับ ต้องยืนยันก่อนลบทุกครั้ง',
+      'ปุ่ม "บันทึก" / "บันทึก + พิมพ์ใหม่" แสดงสถานะกำลังโหลดขณะรอผลจากเซิร์ฟเวอร์ ป้องกันเข้าใจว่าเครื่องค้าง',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AH',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'รายการสินค้าในหน้าแก้ไขใบกำกับ ทำสีสลับแถว (zebra striping) ให้แยกแต่ละรายการง่ายขึ้น',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AG',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'หน้าแก้ไขใบกำกับ: ช่อง "รายการ PO", "มูลค่าก่อน VAT", "VAT", "ยอดรวม" เปลี่ยนเป็นคำนวณอัตโนมัติจากรายการสินค้า (แก้ไขเองไม่ได้แล้ว)',
+      'ลบ/เพิ่ม/เลือก PO ในแต่ละรายการ → คำนวณยอดรวมและรายการ PO ใหม่ทันที',
+      'กันลบรายการสุดท้าย (ต้องมีอย่างน้อย 1 รายการ)',
+      'ทุกปุ่ม (เพิ่มรายการ, ลบรายการ, เลือก PO) แสดง toast ยืนยันการทำงานทุกครั้ง',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AF',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'แก้บั๊ก: ตัวเลือก PO ในหน้าแก้ไขใบกำกับ ขึ้น "ไม่พบ PO" เพราะเทียบชื่อลูกค้าผิด (Order เก็บชื่อผู้ติดต่อ ไม่ใช่ชื่อบริษัท) — แก้ให้เทียบด้วย cust.contact และ cust.name เหมือนหน้าออกใบกำกับใหม่',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AE',
+    date: '2026-06-12',
+    current: false,
+    items: [
+      'หน้าแก้ไขใบกำกับ: ตัวเลือก PO กรองให้แสดงเฉพาะ PO ของลูกค้าในใบกำกับนี้ และไม่แสดง PO ที่ถูกเลือกไปแล้วในแถวอื่นของใบกำกับเดียวกัน (กันเลือกซ้ำ)',
+    ],
+  },
+  {
+    ref: '#REV-20260612-AD',
+    date: '2026-06-12',
+    current: false,
     items: [
       'Code.gs: ลบใบกำกับ (deleteInvoiceRecord) ตอนนี้จะเคลียร์คอลัมน์ AC (เลขที่ใบกำกับ) และ AD (วันที่ออกใบกำกับ) ในชีต Order ของ PO ที่เกี่ยวข้องด้วย',
     ],
@@ -2624,75 +2715,4 @@ const DEV_LOGS = [
     current: false,
     items: [
       'แก้คอลัมน์รูปภาพในการ์ด/รายละเอียด Order ให้ตรงกับชีตจริง — รูปงาน1 = คอลัมน์ N, รูปงาน2 = คอลัมน์ O (เดิมอ้างคอลัมน์ V ผิด)',
-      'แท็บ "ติดตามงาน" ใช้รูปจากคอลัมน์ N (รูปงาน1) เป็นรูปหลักของการ์ด',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AY',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'ตัวกรองสถานะในแท็บ "ติดตามงาน" ตั้งค่าเริ่มต้นเป็น "กำลังดำเนินการ"',
-      'เพิ่มตัวเลือกกรองตาม Process แต่ละสถานะ (กำลังผลิต/ส่งซุป/ส่งตัวอย่างเทส+รอสรุป/ส่งยังไม่ครบ/รอConfirm/FG รอเรียก/Stock/เรียบร้อย)',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AX',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'แก้ป้าย "false" ในการ์ดติดตามงานที่ยังขึ้นอยู่ — ตอนนี้รองรับค่า TRUE/FALSE จาก Sheet (ไม่ใช่แค่ boolean)',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AW',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'แท็บ "ติดตามงาน" ปรับเป็น 2 คอลัมน์ (จอเล็กแสดง 1 คอลัมน์)',
-      'แก้ป้ายสถานะส่งงานที่ขึ้นเป็น "false" ให้แสดงผลถูกต้อง',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AV',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'แก้แท็บ "ติดตามงาน" ไม่โหลดข้อมูล — เรียก renderTrackDashboard() อีกครั้งหลัง fetchOrders() โหลดเสร็จ',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AU',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'เพิ่มแท็บใหม่ "🚀 ติดตามงาน" — แดชบอร์ดติดตามสถานะการผลิตเป็นการ์ดต่อ Order',
-      'แต่ละการ์ดแสดง: เลข PO/Quo/ลูกค้า, รูปสินค้า+รายละเอียด, วงกลมนับถอยหลังวันคงเหลือถึงวันที่ต้องการ',
-      'แถบขั้นตอนแนวนอน 5 ขั้น (รับออเดอร์→กำลังผลิต→กำลังส่งซุป→เตรียมส่ง→เรียบร้อย) พร้อมวันที่สั่งซื้อ/ต้องการ/ส่งงาน',
-      'มีช่องค้นหา + ตัวกรองสถานะ และปุ่มแสดง/ซ่อนรายละเอียด (หมายเหตุ + ปุ่มเปลี่ยนสถานะ/ส่งงาน/ดูรายละเอียดเต็ม)',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AT',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'แก้ป้าย NEW ในตาราง DATA ค้างไม่หาย — กดปุ่ม "📋 สเปค" เพื่อดูแล้วถือว่าเห็นแล้ว ป้าย NEW จะหายไป',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AS',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'ออกแบบใบสั่งซื้อ (PO) สำหรับพิมพ์ A4 ใหม่ทั้งหมด — ใส่โลโก้และข้อมูลบริษัท ปิ่นทองเทรดดิ้งแอนด์ซัพพลาย',
-      'เลย์เอาต์แบบมีไซด์บาร์สีน้ำเงินเข้มแสดงข้อมูล PO No./วันที่/การจัดส่ง/การชำระเงิน/สกุลเงิน/อ้างอิง/ผู้ติดต่อ',
-      'ตารางรายการหัวสีน้ำเงิน, กล่องสรุปยอดรวม, ช่องหมายเหตุ, ลายเซ็นผู้จัดทำ/ผู้อนุมัติ และข้อความขอบคุณท้ายเอกสาร',
-    ],
-  },
-  {
-    ref: '#REV-20260611-AR',
-    date: '2026-06-11',
-    current: false,
-    items: [
-      'หน้า PO: เพิ่ม feedback ตอน�
+      'แท็บ "ติดตามงาน" ใช้รูปจากคอลัมน์

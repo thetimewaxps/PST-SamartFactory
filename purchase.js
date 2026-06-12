@@ -54,7 +54,7 @@ async function fetchPurchaseOrders() {
     tbody.innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">⚠️ ยังไม่ได้ตั้งค่า Script URL</td></tr>`;
     return;
   }
-  tbody.innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">↻ กำลังโหลด…</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem"><span class="spin-ico">↻</span> กำลังโหลด…</td></tr>`;
   try {
     const res = await fetch(SCRIPT_URL + '?action=getPurchaseOrders', {mode:'cors'});
     if (!res.ok) throw new Error('HTTP ' + res.status);

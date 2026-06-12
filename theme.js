@@ -1376,7 +1376,13 @@ function _getLogoSrc() {
 }
 function _applyLogoAll() {
   const src = _getLogoSrc();
-  document.querySelectorAll('.app-logo-img').forEach(el => { el.src = src; });
+  document.querySelectorAll('.app-logo-img').forEach(el => {
+    el.style.display = '';
+    if (el.nextElementSibling && el.nextElementSibling.classList.contains('ph-logo-fallback')) {
+      el.nextElementSibling.style.display = 'none';
+    }
+    el.src = src;
+  });
 }
 async function handleLogoUpload(input) {
   const file = input.files[0];

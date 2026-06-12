@@ -6,11 +6,16 @@ let _custEditIdx = -1; // index ใน _custCache ที่กำลังแก
 
 async function fetchCustomers() {
   if (!SCRIPT_URL) { renderCustomerTable(); return; }
+  const wrap = $('custTableWrap');
+  if (wrap) wrap.innerHTML = `<div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem"><span class="spin-ico">↻</span> กำลังโหลด…</div>`;
   try {
     const res  = await fetch(SCRIPT_URL + '?action=getCustomers', {mode:'cors'});
     const data = await res.json();
     if (data.status === 'ok') _custCache = data.customers || [];
-  } catch (e) { /* เงียบไว้ */ }
+    else throw new Error(data.message || 'unknown');
+  } catch (e) {
+    if (wrap) { wrap.innerHTML = `<div style="text-align:center;padding:16px;color:#f87171;font-size:.82rem">โหลดข้อมูลไม่สำเร็จ: ${e.message}</div>`; return; }
+  }
   renderCustomerTable();
   _invRefreshCustomerSelect();
 }
@@ -194,12 +199,25 @@ function renderCustomerTable() {
 // ══════════════════════════════════════════════════════
 let _invSelectedPOs = new Set();
 
+// นับจำนวน PO ที่ยังไม่ออกใบกำกับของลูกค้ารายนี้ (จับคู่ด้วย contact/name เหมือน renderInvOrderList)
+function _invCountPendingPOs(cust) {
+  const matchKeys = [cust.contact, cust.name].map(s => (s||'').trim()).filter(Boolean);
+  if (!matchKeys.length) return 0;
+  return (_orderCache || []).filter(r =>
+    matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim()) &&
+    !String(r[ORDER_COLS.invoiceNo]||'').trim()
+  ).length;
+}
+
 function _invRefreshCustomerSelect() {
   const sel = $('inv_customer');
   if (!sel) return;
   const curCode = sel.value ? (_custCache[parseInt(sel.value,10)]||{}).code : '';
+  // เรียงลูกค้าตามจำนวน PO ที่รอเปิดใบกำกับ มากไปน้อย (value ยังอ้าง index เดิมใน _custCache)
+  const ordered = _custCache.map((c,i) => ({ i, c, n: _invCountPendingPOs(c) }))
+    .sort((a,b) => b.n - a.n);
   sel.innerHTML = '<option value="">— เลือกลูกค้า —</option>' +
-    _custCache.map((c,i) => `<option value="${i}">${c.name}${c.branch?' ('+c.branch+')':''}</option>`).join('');
+    ordered.map(({i,c,n}) => `<option value="${i}"${n ? ' class="has-pending"' : ''}>${c.name}${c.branch?' ('+c.branch+')':''}${n ? ` — รอเปิด ${n} PO` : ''}</option>`).join('');
   if (curCode) {
     const idx = _custCache.findIndex(c=>c.code===curCode);
     if (idx >= 0) sel.value = String(idx);
@@ -642,11 +660,16 @@ let _invIssuedCache = [];
 
 async function fetchIssuedInvoices() {
   if (!SCRIPT_URL) { renderIssuedInvoiceList(); return; }
+  const wrap = $('invIssuedListWrap');
+  if (wrap) wrap.innerHTML = `<div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem"><span class="spin-ico">↻</span> กำลังโหลด…</div>`;
   try {
     const res  = await fetch(SCRIPT_URL + '?action=getInvoices', {mode:'cors'});
     const data = await res.json();
     if (data.status === 'ok') _invIssuedCache = (data.invoices || []).slice().reverse(); // ล่าสุดอยู่บน
-  } catch (e) { /* เงียบไว้ */ }
+    else throw new Error(data.message || 'unknown');
+  } catch (e) {
+    if (wrap) { wrap.innerHTML = `<div style="text-align:center;padding:16px;color:#f87171;font-size:.82rem">โหลดข้อมูลไม่สำเร็จ: ${e.message}</div>`; return; }
+  }
   renderIssuedInvoiceList();
 }
 
@@ -757,7 +780,7 @@ function _invItemRowHtml(it) {
     <div class="field"><label>จำนวน</label><input type="number" class="ii-qty" step="any" value="${it.qty??''}"></div>
     <div class="field" style="grid-column:span 2"><label>ราคา/หน่วย (ก่อน VAT)</label><input type="number" class="ii-price" step="0.01" value="${it.priceExVat??''}"></div>
     <div style="display:flex;align-items:flex-end">
-      <button type="button" class="btn" onclick="this.closest('.inv-item-row').remove()" style="padding:7px 10px;font-size:.74rem;width:100%">🗑️ ลบรายการ</button>
+      <button type="button" class="btn" onclick="_invRemoveItemRow(this)" style="padding:7px 10px;font-size:.74rem;width:100%">🗑️ ลบรายการ</button>
     </div>
   </div>`;
 }
@@ -766,12 +789,45 @@ function _invRenderItemsEditor(items) {
   const wrap = $('invEdit_itemsWrap');
   if (!wrap) return;
   wrap.innerHTML = (items || []).map(_invItemRowHtml).join('');
+  // คำนวณยอด/รายการ PO อัตโนมัติทุกครั้งที่มีการพิมพ์แก้ไขในแถวรายการ
+  wrap.oninput = _invEditRecalcAll;
+  _invEditRecalcAll();
 }
 
 function invEditAddItem() {
   const wrap = $('invEdit_itemsWrap');
   if (!wrap) return;
   wrap.insertAdjacentHTML('beforeend', _invItemRowHtml({}));
+  _invEditRecalcAll();
+  Swal.fire({icon:'success',title:'เพิ่มรายการแล้ว',background:'#0d1b2a',color:'#cce4ff',
+    timer:1000,showConfirmButton:false,toast:true,position:'top-end'});
+}
+
+async function _invRemoveItemRow(btn) {
+  const row = btn.closest('.inv-item-row');
+  if (!row) return;
+  const wrap = $('invEdit_itemsWrap');
+  if (wrap && wrap.querySelectorAll('.inv-item-row').length <= 1) {
+    Swal.fire({icon:'warning',title:'ต้องมีรายการสินค้าอย่างน้อย 1 รายการ',background:'#0d1b2a',color:'#cce4ff',
+      timer:1500,showConfirmButton:false,toast:true,position:'top-end'});
+    return;
+  }
+  const po = row.querySelector('.ii-po')?.value.trim();
+  const result = await Swal.fire({
+    icon: 'warning',
+    title: 'ลบรายการนี้?',
+    text: po ? `รายการ PO ${po} จะถูกลบออกจากใบกำกับนี้` : 'รายการนี้จะถูกลบออกจากใบกำกับนี้',
+    showCancelButton: true,
+    confirmButtonText: 'ลบ',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#dc2626',
+    background: '#0d1b2a', color: '#cce4ff'
+  });
+  if (!result.isConfirmed) return;
+  row.remove();
+  _invEditRecalcAll();
+  Swal.fire({icon:'success',title:'ลบรายการแล้ว',background:'#0d1b2a',color:'#cce4ff',
+    timer:1000,showConfirmButton:false,toast:true,position:'top-end'});
 }
 
 function _invCollectEditItems() {
@@ -812,13 +868,37 @@ function _invClosePOPicker() {
   _invPOPickerTargetRow = null;
 }
 
+// PO ที่ถูกใช้ไปแล้วในแถวอื่นๆ ของใบกำกับนี้ (ไม่รวมแถวเป้าหมายเอง) — ห้ามเลือกซ้ำ
+function _invUsedPOsInEditor() {
+  const wrap = $('invEdit_itemsWrap');
+  if (!wrap) return new Set();
+  const used = new Set();
+  [...wrap.querySelectorAll('.inv-item-row')].forEach(row => {
+    if (row === _invPOPickerTargetRow) return;
+    const po = row.querySelector('.ii-po')?.value.trim();
+    if (po) used.add(po);
+  });
+  return used;
+}
+
 function _invRenderPOPickerList(filter) {
   const list = $('invPOPicker_list');
   if (!list) return;
   const f = String(filter||'').trim().toLowerCase();
+
+  // กรองตามลูกค้าของใบกำกับที่กำลังแก้ไข
+  const custSel = $('invEdit_customer');
+  const cust = custSel ? _custCache.find(c => c.code === custSel.value) : null;
+  // คอลัมน์ "ลูกค้า" ใน Order เก็บค่า "ชื่อผู้ติดต่อ" เป็นหลัก (เผื่อกรอกชื่อบริษัทไว้ จึงเทียบ cust.name ด้วย)
+  const matchKeys = cust ? [cust.contact, cust.name].map(s => (s||'').trim()).filter(Boolean) : [];
+
+  const usedPOs = _invUsedPOsInEditor();
+
   const rows = (_orderCache || []).filter(r => {
     const noPO = String(r[ORDER_COLS.noPO]||'').trim();
     if (!noPO) return false;
+    if (usedPOs.has(noPO)) return false; // ห้ามเลือก PO ที่ใช้ไปแล้วในแถวอื่น
+    if (matchKeys.length && !matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim())) return false; // เฉพาะลูกค้าเดียวกัน
     if (!f) return true;
     const hay = [noPO, r[ORDER_COLS.customer], r[ORDER_COLS.productList], r[ORDER_COLS.workType]].join(' ').toLowerCase();
     return hay.includes(f);
@@ -853,6 +933,9 @@ function _invPickPO(noPO) {
   tr.querySelector('.ii-qty').value      = item.qty;
   tr.querySelector('.ii-price').value    = item.priceExVat;
   _invClosePOPicker();
+  _invEditRecalcAll();
+  Swal.fire({icon:'success',title:`เลือก PO ${item.poNo} แล้ว`,background:'#0d1b2a',color:'#cce4ff',
+    timer:1200,showConfirmButton:false,toast:true,position:'top-end'});
 }
 
 function openEditInvoice(invoiceNo) {
@@ -882,10 +965,15 @@ function closeInvoiceEdit() {
   $('invEditModal').style.display = 'none';
 }
 
-// ── คำนวณ VAT/รวม อัตโนมัติเมื่อแก้ "มูลค่าก่อน VAT" ──
-function _invEditRecalc() {
-  const sub = parseFloat($('invEdit_subtotal').value) || 0;
+// ── คำนวณรายการ PO / มูลค่าก่อน VAT / VAT / ยอดรวม อัตโนมัติจากรายการสินค้าในตัวแก้ไข ──
+function _invEditRecalcAll() {
+  const items = _invCollectEditItems();
+  const poList = [...new Set(items.map(it => it.poNo).filter(Boolean))];
+  const sub = items.reduce((s, it) => s + (it.qty * it.priceExVat), 0);
   const vat = sub * 0.07;
+  const poEl = $('invEdit_poList');
+  if (poEl) poEl.value = poList.join(', ');
+  $('invEdit_subtotal').value = sub.toFixed(2);
   $('invEdit_vat').value = vat.toFixed(2);
   $('invEdit_total').value = (sub + vat).toFixed(2);
 }
@@ -931,6 +1019,13 @@ async function saveInvoiceEdit(thenReprint) {
     issuedBy: orig.issuedBy || '',
     items,
   };
+  Swal.fire({
+    title: thenReprint ? 'กำลังบันทึกและเตรียมพิมพ์...' : 'กำลังบันทึก...',
+    text: 'กรุณารอสักครู่ อาจใช้เวลาสักครู่',
+    background:'#0d1b2a', color:'#cce4ff',
+    allowOutsideClick: false, allowEscapeKey: false,
+    didOpen: () => Swal.showLoading()
+  });
   try {
     const res = await fetch(SCRIPT_URL, {
       method:'POST', mode:'cors',
@@ -940,6 +1035,7 @@ async function saveInvoiceEdit(thenReprint) {
     const out = await res.json();
     if (!out || out.status !== 'ok') throw new Error((out && out.message) || 'save failed');
     await fetchIssuedInvoices();
+    Swal.close();
     if (thenReprint) {
       const updated = _invIssuedCache.find(x => x.invoiceNo === invoiceNo) || Object.assign({}, data);
       closeInvoiceEdit();
@@ -951,6 +1047,7 @@ async function saveInvoiceEdit(thenReprint) {
     }
     return true;
   } catch (e) {
+    Swal.close();
     Swal.fire({icon:'error',title:'แก้ไขไม่สำเร็จ',text:e.message,background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#dc2626'});
     return false;
   }
