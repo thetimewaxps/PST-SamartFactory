@@ -161,17 +161,30 @@ function _ordResetCard() {
   _ordClearPoFile('ord');
 }
 
-// ปุ่ม "📦 AddOrder" จากตาราง DATA (เฉพาะแถวที่สถานะ = "รอสรุป")
+// ปุ่ม "📦 Order" จากตาราง DATA — ใช้ได้ทุกสถานะ (อาจดึงใบเสนอราคาเดิมมาเปิด Order เลขที่ PO ใหม่)
 function dtAddOrder(idx) {
   const tbody = $('dtBody');
   const rows = tbody && tbody._filteredRows;
   if (!rows || !rows[idx]) return;
   const r = rows[idx];
+  const noQuo = String(r[DT.noQuo]||'').trim();
+
+  // ตรวจสอบว่า No.Quo นี้ถูกใช้อ้างอิงใน Order เดิมแล้วหรือไม่ (อาจมีหลาย PO)
+  const usedIn = (_orderCache || []).filter(o =>
+    String(o[ORDER_COLS.noQuo]||'').trim() === noQuo
+  ).map(o => String(o[ORDER_COLS.noPO]||'').trim()).filter(Boolean);
+
+  const warnHtml = usedIn.length
+    ? `<div style="margin-top:8px;padding:8px;border-radius:8px;background:rgba(245,158,11,.12);color:#fbbf24;font-size:.8rem">
+         ⚠️ No.Quo นี้ถูกใช้อ้างอิงกับ PO อยู่แล้ว: <b>${usedIn.join(', ')}</b><br>
+         หากดำเนินการต่อ จะเป็นการเปิด Order ใหม่ (เลขที่ PO ใหม่) จากใบเสนอราคาเดิมนี้
+       </div>`
+    : '';
 
   Swal.fire({
     title: 'สร้าง Order จากใบเสนอราคานี้?',
-    html: `<small>No.Quo: <b>${r[DT.noQuo]}</b> — ข้อมูลในการ์ด "สร้าง Order" จะถูกแทนที่ด้วยข้อมูลจากรายการนี้</small>`,
-    icon: 'question', showCancelButton: true,
+    html: `<small>No.Quo: <b>${noQuo}</b> — ข้อมูลในการ์ด "สร้าง Order" จะถูกแทนที่ด้วยข้อมูลจากรายการนี้</small>${warnHtml}`,
+    icon: usedIn.length ? 'warning' : 'question', showCancelButton: true,
     confirmButtonText: '✅ ดึงข้อมูล', cancelButtonText: 'ยกเลิก',
     background: '#0a1c2e', color: '#f1f5f9',
     confirmButtonColor: '#f59e0b', cancelButtonColor: '#475569'
@@ -274,19 +287,24 @@ async function createOrder() {
     return;
   }
 
-  // ตรวจสอบ No.Quo ซ้ำ (คอลัมน์ A ห้ามซ้ำ)
-  const dupQuo = (_orderCache || []).some(r =>
+  // ตรวจสอบ No.Quo ซ้ำ — แจ้งเตือน PO ที่เคยอ้างอิงไว้ แต่ยังสร้าง Order ใหม่ได้ (เผื่อเปิด Order เลขที่ PO ใหม่จากใบเสนอราคาเดิม)
+  const dupQuoPOs = (_orderCache || []).filter(r =>
     String(r[ORDER_COLS.noQuo] || '').trim() === String(noQuo).trim()
-  );
-  if (dupQuo) {
-    await Swal.fire({
-      icon: 'error', title: 'พบ No.Quo ซ้ำ',
-      html: `มี Order ที่ใช้ <b>No.Quo: ${noQuo}</b> อยู่แล้ว<br><span style="font-size:.8rem;color:#8b8aaa">No.Quo ห้ามซ้ำ ไม่สามารถสร้าง Order นี้ได้</span>`,
+  ).map(r => String(r[ORDER_COLS.noPO]||'').trim()).filter(Boolean);
+  if (dupQuoPOs.length) {
+    const confirmRes = await Swal.fire({
+      icon: 'warning', title: 'พบ No.Quo ซ้ำ',
+      html: `<b>No.Quo: ${noQuo}</b> ถูกใช้อ้างอิงกับ PO อยู่แล้ว: <b>${dupQuoPOs.join(', ')}</b><br>
+             <span style="font-size:.8rem;color:#8b8aaa">ต้องการสร้าง Order ใหม่ (No.PO: ${noPO}) จากใบเสนอราคาเดิมนี้ต่อหรือไม่?</span>`,
+      showCancelButton: true,
       background:'#0d1b2a', color:'#cce4ff',
-      confirmButtonText: 'ตกลง', confirmButtonColor:'#dc2626'
+      confirmButtonText: '✅ สร้างต่อ', cancelButtonText: 'ยกเลิก',
+      confirmButtonColor:'#f59e0b', cancelButtonColor:'#475569'
     });
-    if ($('ord_noPO')) { $('ord_noPO').value = ''; $('ord_noPO').focus(); }
-    return;
+    if (!confirmRes.isConfirmed) {
+      if ($('ord_noPO')) { $('ord_noPO').value = ''; $('ord_noPO').focus(); }
+      return;
+    }
   }
 
   // ตรวจสอบ No.PO ซ้ำ (คอลัมน์ B ห้ามซ้ำ)
@@ -761,7 +779,7 @@ function renderItemMasterTable() {
         <td style="padding:6px 8px">${_imInput('im_unit_'+i, it.unit || 'ชิ้น', 'หน่วย')}</td>
         <td style="padding:6px 8px">${_imInput('im_price_'+i, it.price, 'ราคา/หน่วย', 'number')}</td>
         <td style="padding:6px 8px;white-space:nowrap">
-          <button onclick="imSaveRow(${i})"
+          <button onclick="guardClick(this, () => imSaveRow(${i}))"
             style="padding:5px 10px;border-radius:6px;border:none;background:#34d399;color:#0a2e1a;
             font-family:Sarabun,sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;margin-right:4px">💾</button>
           <button onclick="imCancelEdit(${i})"
@@ -1483,6 +1501,24 @@ function _ordMoreMenu(noPO, noQuo) {
   });
 }
 
+// เติม dropdown "ลูกค้า" ในป๊อปอัพแก้ไข Order จาก _custCache (ค่า = ผู้ติดต่อ/ชื่อลูกค้า ตามที่บันทึกในชีต Order)
+function _ordEditFillCustomerSelect(currentVal) {
+  const sel = $('ordEdit_customer');
+  if (!sel) return;
+  const opts = (_custCache || []).map(c => {
+    const val = c.contact || c.name;
+    const label = `${c.name}${c.branch ? ' (' + c.branch + ')' : ''}`;
+    return { val, label };
+  });
+  currentVal = (currentVal || '').trim();
+  if (currentVal && !opts.some(o => o.val === currentVal)) {
+    opts.unshift({ val: currentVal, label: currentVal });
+  }
+  sel.innerHTML = opts.map(o =>
+    `<option value="${String(o.val).replace(/"/g,'&quot;')}">${o.label}</option>`).join('');
+  sel.value = currentVal;
+}
+
 function openEditOrder(noPO) {
   const r = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(noPO));
   if (!r) return;
@@ -1490,6 +1526,7 @@ function openEditOrder(noPO) {
   renderOrderTable();
   _ordEditNoPO = noPO;
   $('ordEdit_noPO').textContent  = noPO;
+  _ordEditFillCustomerSelect(r[ORDER_COLS.customer] || '');
   $('ordEdit_orderDate').value   = _ordDateToInput(r[ORDER_COLS.orderDate]);
   $('ordEdit_wantDate').value    = _ordDateToInput(r[ORDER_COLS.wantDate]);
   $('ordEdit_status').value      = r[ORDER_COLS.process] || '';
@@ -1521,6 +1558,7 @@ async function saveOrderEdit() {
   if (!r) return;
   const row = r.slice();
   while (row.length < ORDER_NUM_COLS) row.push('');
+  row[ORDER_COLS.customer]    = $('ordEdit_customer').value;
   row[ORDER_COLS.orderDate]   = _ordDateToSheet($('ordEdit_orderDate').value);
   row[ORDER_COLS.wantDate]    = _ordDateToSheet($('ordEdit_wantDate').value);
   row[ORDER_COLS.process]     = $('ordEdit_status').value;

@@ -1,5 +1,34 @@
 const $ = id => document.getElementById(id);
 
+// ── ป้องกันกดปุ่ม Save/ปุ่มสำคัญซ้ำระหว่างรอข้อมูลจาก cloud (กันกดซ้ำ/ทำซ้ำ) ──
+// ใช้: onclick="guardClick(this, () => saveXxx())"  หรือ onclick="guardClick(this, saveXxx)"
+async function guardClick(btn, fn, busyText) {
+  if (!btn) { return fn(); }
+  if (btn.dataset.busy === '1' || btn.disabled) return; // กำลังทำงานอยู่ -> ไม่ทำซ้ำ
+  btn.dataset.busy = '1';
+  btn.dataset.oldHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.style.opacity = '.6';
+  btn.style.cursor = 'wait';
+  if (busyText) btn.innerHTML = busyText;
+  // กันค้าง: ถ้า 60 วินาทีแล้วยังไม่คืนสถานะ ให้ปลดล็อกอัตโนมัติ
+  const safety = setTimeout(() => _guardRelease(btn), 60000);
+  try {
+    await fn();
+  } finally {
+    clearTimeout(safety);
+    _guardRelease(btn);
+  }
+}
+function _guardRelease(btn) {
+  if (!btn) return;
+  btn.dataset.busy = '0';
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.style.cursor = '';
+  if (btn.dataset.oldHtml !== undefined) { btn.innerHTML = btn.dataset.oldHtml; delete btn.dataset.oldHtml; }
+}
+
 // ── ซ่อน/แสดงเนื้อหาการ์ด (การ์ดที่พับเก็บไว้ เรียกดูเมื่อต้องการ) ──
 function _toggleCardBody(id, btn) {
   const el = $(id);
@@ -17,14 +46,18 @@ function _ordSubTabSwitch(which) {
     if (btn)   btn.classList.toggle('active', n === which);
   });
 }
-// ── สลับ sub-tab ในแท็บ ใบกำกับภาษี ── ('1' = ออกใบกำกับ, '2' = เพิ่มลูกค้า, '3' = รายงานภาษีขาย)
+// ── สลับ sub-tab ในแท็บ ใบกำกับภาษี ── ('1' = ออกใบกำกับ, '2' = เพิ่มลูกค้า, '3' = รายงานภาษีขาย, '4' = ใบวางบิล)
 function _invSubTabSwitch(which) {
-  ['1','2','3'].forEach(n => {
+  ['1','2','3','4'].forEach(n => {
     const panel = $('invSubPanel' + n);
     const btn   = $('invSubBtn' + n);
     if (panel) panel.classList.toggle('active', n === which);
     if (btn)   btn.classList.toggle('active', n === which);
   });
+  // การ์ด "ใบกำกับที่ออกแล้ว" ไม่แสดงใน sub-tab ใบวางบิล (4) — แทนด้วย "ประวัติใบวางบิล"
+  const issuedCard = $('invIssuedCard');
+  if (issuedCard) issuedCard.style.display = (which === '4') ? 'none' : '';
+  if (which === '4' && typeof fetchBillingNotes === 'function') fetchBillingNotes();
 }
 const num = id => parseFloat(String($(id).value).replace(/,/g,'')) || 0;
 const fmt = n => '฿' + n.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -541,7 +574,7 @@ function renderSpecMatTable() {
           <td><input class="smt-inp" id="smt_l_${i}" type="number" value="${r.l}"></td>
           <td><input class="smt-inp" id="smt_u_${i}" value="${_escH(r.unit)}"></td>
           <td style="text-align:center">
-            <button class="smt-act-btn" onclick="smtSaveRow(${i})" title="บันทึก">✅</button>
+            <button class="smt-act-btn" onclick="guardClick(this, () => smtSaveRow(${i}))" title="บันทึก">✅</button>
             <button class="smt-act-btn" onclick="smtCancelEdit()" title="ยกเลิก">✖</button>
           </td>
         </tr>` : `
@@ -707,7 +740,7 @@ function renderMatTable(type) {
             background:rgba(20,20,32,.9);color:#d4cfe8;font-family:Sarabun,sans-serif;font-size:.8rem">
         </td>
         <td style="padding:6px 8px;white-space:nowrap">
-          <button onclick="matSaveRow('${type}',${i})"
+          <button onclick="guardClick(this, () => matSaveRow('${type}',${i}))"
             style="padding:4px 12px;border-radius:6px;border:none;background:#34d399;color:#0a2e1a;
             font-family:Sarabun,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;margin-right:4px">💾</button>
           <button onclick="matCancelEdit('${type}')"

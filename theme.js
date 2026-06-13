@@ -970,9 +970,11 @@ function closeDocExport() {
     if ($('dtabCost')) $('dtabCost').style.display = '';
     if ($('docInv'))   $('docInv').classList.add('dp-hidden');
     if ($('docInvRep')) $('docInvRep').classList.add('dp-hidden');
+    if ($('docBill'))  $('docBill').classList.add('dp-hidden');
     const swapBtn = document.querySelector('.doc-bottombar .doc-tab-btn[onclick*="_docActiveTab"]');
     if (swapBtn) swapBtn.style.display = '';
     if ($('invConfirmBtn')) $('invConfirmBtn').style.display = 'none';
+    if ($('billConfirmBtn')) $('billConfirmBtn').style.display = 'none';
   }
   if (typeof _gquoPreviewMode !== 'undefined' && _gquoPreviewMode) {
     _gquoPreviewMode = false;

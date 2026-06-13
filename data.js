@@ -342,12 +342,11 @@ function dtRender() {
                  font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
           📋 สเปค
         </button>
-        ${(r[DT.status]||'') === 'รอสรุป' ? `
         <button onclick="dtAddOrder(${globalIdx})"
           style="padding:5px 10px;border-radius:7px;border:none;background:#f59e0b;color:#1a1200;
                  font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px;font-weight:700">
           📦 Order
-        </button>` : ''}
+        </button>
         <button onclick="dtDelete('${String(r[DT.noQuo]||'').replace(/'/g,"\\'")}',this)"
           style="padding:5px 8px;border-radius:7px;border:1px solid rgba(248,113,113,.35);
                  background:rgba(248,113,113,.1);color:#f87171;font-size:.7rem;cursor:pointer;margin:1px">

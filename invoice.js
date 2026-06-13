@@ -18,6 +18,7 @@ async function fetchCustomers() {
   }
   renderCustomerTable();
   _invRefreshCustomerSelect();
+  _billRefreshCustomerSelect();
 }
 
 function custAddRow() {
@@ -151,7 +152,7 @@ function renderCustomerTable() {
           </div>
           <div style="margin-top:6px">${_custInput('cust_addr_'+i, c.address, 'ที่อยู่')}</div>
           <div style="margin-top:8px;text-align:right">
-            <button onclick="custSaveRow(${i})"
+            <button onclick="guardClick(this, () => custSaveRow(${i}))"
               style="padding:5px 14px;border-radius:6px;border:none;background:#34d399;color:#0a2e1a;
               font-family:Sarabun,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;margin-right:6px">💾 บันทึก</button>
             <button onclick="custCancelEdit(${i})"
@@ -245,6 +246,8 @@ function invInit() {
     if ($('invRep_year'))  $('invRep_year').value  = String(now.getFullYear() + 543);
   }
   fetchIssuedInvoices();
+  _billRefreshCustomerSelect();
+  if ($('billDate') && !$('billDate').value) $('billDate').value = _todayStr();
 }
 
 function invOnCustomerChange() {
@@ -717,6 +720,51 @@ async function fetchIssuedInvoices() {
   renderIssuedInvoiceList();
 }
 
+// ล้างตัวกรอง "ใบกำกับที่ออกแล้ว"
+function _invClearIssuedFilter() {
+  if ($('invIssuedFilterSearch')) $('invIssuedFilterSearch').value = '';
+  if ($('invIssuedFilterType'))   $('invIssuedFilterType').value   = '';
+  if ($('invIssuedFilterFrom'))   $('invIssuedFilterFrom').value   = '';
+  if ($('invIssuedFilterTo'))     $('invIssuedFilterTo').value     = '';
+  renderIssuedInvoiceList();
+}
+
+// "13/06/2569" -> "2026-06-13" (BE -> ISO) สำหรับเทียบกับ <input type=date>
+function _invIssuedDateToIso(d) {
+  const p = String(d||'').split('/');
+  if (p.length !== 3) return '';
+  let y = parseInt(p[2],10);
+  if (y > 2400) y -= 543;
+  return `${y}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+}
+
+// ── แบ่งหน้ารายการ "ใบกำกับที่ออกแล้ว" เป็นรายเดือน (เรียงปัจจุบัน -> เก่า) ──
+let _invIssuedPageYM = null; // {y, m} ปี ค.ศ./เดือน (1-12) ของหน้าที่กำลังแสดง
+const _INV_MONTH_NAMES = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function _invIssuedAllYMs() {
+  const set = new Set();
+  _invIssuedCache.forEach(inv => {
+    const iso = _invIssuedDateToIso(inv.date);
+    if (iso) set.add(iso.slice(0,7)); // "yyyy-MM"
+  });
+  return Array.from(set).sort(); // เก่า -> ใหม่
+}
+
+function _invIssuedChangeMonth(delta) {
+  const yms = _invIssuedAllYMs();
+  if (!yms.length || !_invIssuedPageYM) return;
+  const cur = `${_invIssuedPageYM.y}-${String(_invIssuedPageYM.m).padStart(2,'0')}`;
+  let idx = yms.indexOf(cur);
+  if (idx === -1) idx = yms.length - 1;
+  idx += delta;
+  if (idx < 0 || idx >= yms.length) return;
+  const [y,m] = yms[idx].split('-').map(Number);
+  _invIssuedPageYM = { y, m };
+  renderIssuedInvoiceList();
+}
+
 function renderIssuedInvoiceList() {
   const wrap = $('invIssuedListWrap');
   if (!wrap) return;
@@ -725,7 +773,78 @@ function renderIssuedInvoiceList() {
       ยังไม่มีใบกำกับที่ออก</div>`;
     return;
   }
-  const rows = _invIssuedCache.map(inv => {
+
+  // ── ตัวกรอง ──
+  const qTerms = ($('invIssuedFilterSearch')?.value || '').toLowerCase()
+    .split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+  const typeFilter = $('invIssuedFilterType')?.value || '';
+  const dateFrom = $('invIssuedFilterFrom')?.value || '';
+  const dateTo   = $('invIssuedFilterTo')?.value || '';
+
+  let list = _invIssuedCache;
+
+  if (qTerms.length) {
+    list = list.filter(inv => {
+      const cust = _custCache.find(c => c.code === inv.customerCode) || {};
+      const poList = (inv.items || []).map(it => it.poNo).filter(Boolean);
+      const poArr  = poList.length ? poList : (inv.poList ? (Array.isArray(inv.poList) ? inv.poList : String(inv.poList).split(',').map(s=>s.trim()).filter(Boolean)) : []);
+      const fields = [inv.invoiceNo, cust.name||inv.customerCode||'', cust.branch||'', ...poArr]
+        .map(v => String(v||'').toLowerCase());
+      return qTerms.some(term => fields.some(v => v.includes(term)));
+    });
+  }
+
+  if (typeFilter) {
+    list = list.filter(inv => {
+      const isFull = !(inv.type === 'short' || inv.type === 'อย่างย่อ');
+      return typeFilter === 'full' ? isFull : !isFull;
+    });
+  }
+
+  if (dateFrom || dateTo) {
+    list = list.filter(inv => {
+      const iso = _invIssuedDateToIso(inv.date);
+      if (!iso) return false;
+      if (dateFrom && iso < dateFrom) return false;
+      if (dateTo   && iso > dateTo)   return false;
+      return true;
+    });
+  }
+
+  // ── แบ่งหน้ารายเดือน (เฉพาะตอนไม่ได้กำหนดช่วงวันที่เอง) ──
+  let pageBar = '';
+  if (!dateFrom && !dateTo) {
+    const yms = _invIssuedAllYMs();
+    if (yms.length) {
+      if (!_invIssuedPageYM) {
+        const [y,m] = yms[yms.length-1].split('-').map(Number); // เดือนล่าสุด
+        _invIssuedPageYM = { y, m };
+      }
+      const curYM = `${_invIssuedPageYM.y}-${String(_invIssuedPageYM.m).padStart(2,'0')}`;
+      const idx = yms.indexOf(curYM);
+      list = list.filter(inv => _invIssuedDateToIso(inv.date).slice(0,7) === curYM);
+      const beYear = _invIssuedPageYM.y + 543;
+      pageBar = `
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;padding:8px 12px;
+          border:1px solid var(--bc-card);border-radius:10px;background:var(--bg-input2)">
+          <button type="button" onclick="_invIssuedChangeMonth(-1)" ${idx<=0?'disabled':''}
+            style="padding:5px 14px;border-radius:7px;border:1px solid var(--bc-card);background:var(--bg-input);
+            color:var(--t1);font-size:.78rem;cursor:${idx<=0?'default':'pointer'};opacity:${idx<=0?'.35':'1'};font-family:Sarabun,sans-serif">‹ เดือนก่อนหน้า</button>
+          <div style="flex:1;text-align:center;font-weight:700;font-size:.9rem;color:var(--t1)">${_INV_MONTH_NAMES[_invIssuedPageYM.m]} ${beYear}</div>
+          <button type="button" onclick="_invIssuedChangeMonth(1)" ${idx>=yms.length-1?'disabled':''}
+            style="padding:5px 14px;border-radius:7px;border:1px solid var(--bc-card);background:var(--bg-input);
+            color:var(--t1);font-size:.78rem;cursor:${idx>=yms.length-1?'default':'pointer'};opacity:${idx>=yms.length-1?'.35':'1'};font-family:Sarabun,sans-serif">เดือนถัดไป ›</button>
+        </div>`;
+    }
+  }
+
+  if (!list.length) {
+    wrap.innerHTML = pageBar + `<div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem">
+      ไม่พบใบกำกับในเดือนนี้</div>`;
+    return;
+  }
+
+  const rows = list.map(inv => {
     const cust = _custCache.find(c => c.code === inv.customerCode) || {};
     const poList = (inv.items || []).map(it => it.poNo).filter(Boolean);
     const poArr  = poList.length ? poList : (inv.poList ? (Array.isArray(inv.poList) ? inv.poList : String(inv.poList).split(',').map(s=>s.trim()).filter(Boolean)) : []);
@@ -750,7 +869,7 @@ function renderIssuedInvoiceList() {
       </td>
     </tr>`;
   }).join('');
-  wrap.innerHTML = `
+  wrap.innerHTML = pageBar + `
     <table style="width:100%;border-collapse:collapse;font-size:.8rem">
       <thead>
         <tr style="border-bottom:1px solid var(--bc-card)">
@@ -1172,7 +1291,7 @@ function _invRepShowPreview(list, month, year) {
       <td style="padding:6px 8px;text-align:center;white-space:nowrap">${inv.invoiceNo}</td>
       <td style="padding:6px 8px;white-space:nowrap">${cust.name||''}</td>
       <td style="padding:6px 8px;text-align:center;white-space:nowrap">${cust.taxId||''}</td>
-      <td style="padding:6px 8px;text-align:center;font-size:.7rem">${isBranch ? `สาขา ${cust.branch}<br>(Branch ${cust.branch})` : 'สำนักงานใหญ่<br>(Head office)'}</td>
+      <td style="padding:6px 8px;text-align:center;font-size:.7rem">${isBranch ? `สาขา ${cust.branch}` : 'สำนักงานใหญ่'}</td>
       <td style="padding:6px 8px;text-align:right">${fmtB(inv.subtotal)}</td>
       <td style="padding:6px 8px;text-align:right">${fmtB(inv.vat)}</td>
       <td style="padding:6px 8px;text-align:right">${fmtB(inv.total)}</td>
@@ -1184,8 +1303,8 @@ function _invRepShowPreview(list, month, year) {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;
     padding:22px 28px 14px;border-bottom:3px solid #0d9488;gap:12px;flex-wrap:wrap">
     <div>
-      <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
-      <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
+      <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''} (สำนักงานใหญ่)</div>
+      <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''} (Head office)</div>
       <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
         ${co.address||''}<br>TAX ID: ${co.taxId||''}
       </div>
@@ -1242,6 +1361,510 @@ function _invRepShowPreview(list, month, year) {
   const swapBtn = document.querySelector('.doc-bottombar .doc-tab-btn[onclick*="_docActiveTab"]');
   if (swapBtn) swapBtn.style.display = 'none';
   if ($('invConfirmBtn')) $('invConfirmBtn').style.display = 'none';
+
+  $('docExportOverlay').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════
+// ══ ใบวางบิล — รวมใบกำกับภาษีที่ออกแล้วของลูกค้าเดียวกัน ══
+// ══════════════════════════════════════════════════════
+
+// เติม dropdown "ลูกค้า" ของใบวางบิล จาก _custCache
+function _billRefreshCustomerSelect() {
+  const sel = $('billCustomer');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— เลือกลูกค้า —</option>' +
+    (_custCache || []).map(c => `<option value="${c.code}">${c.name}${c.branch ? ' (' + c.branch + ')' : ''}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+// ── ค้นหาใบกำกับของลูกค้าที่เลือก ในช่วงวันที่ที่กำหนด -> แสดง checklist ──
+function _billLoadInvoices() {
+  const wrap = $('billInvoiceListWrap');
+  if (!wrap) return;
+  const custCode = $('billCustomer')?.value || '';
+  const dateFrom = $('billDateFrom')?.value || '';
+  const dateTo   = $('billDateTo')?.value || '';
+
+  if (!custCode) {
+    wrap.innerHTML = `<div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem">กรุณาเลือกลูกค้าก่อน</div>`;
+    return;
+  }
+
+  let list = (_invIssuedCache || []).filter(inv => inv.customerCode === custCode && !inv.billNo);
+  if (dateFrom || dateTo) {
+    list = list.filter(inv => {
+      const iso = _invIssuedDateToIso(inv.date);
+      if (!iso) return false;
+      if (dateFrom && iso < dateFrom) return false;
+      if (dateTo   && iso > dateTo)   return false;
+      return true;
+    });
+  }
+
+  if (!list.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem">ไม่พบใบกำกับที่ยังไม่วางบิลของลูกค้านี้ในช่วงที่เลือก</div>`;
+    return;
+  }
+
+  // เสนอเลขที่ใบวางบิลถัดไป (ถ้าช่องยังไม่ได้กรอก)
+  _billSuggestNextNo();
+
+  const rows = list.map((inv, idx) => {
+    const poList = (inv.items || []).map(it => it.poNo).filter(Boolean);
+    const poArr  = poList.length ? poList : (inv.poList ? (Array.isArray(inv.poList) ? inv.poList : String(inv.poList).split(',').map(s=>s.trim()).filter(Boolean)) : []);
+    const total = (inv.total !== undefined && inv.total !== '') ? parseFloat(inv.total)||0 : 0;
+    return `<tr style="border-bottom:1px solid var(--bc-card)">
+      <td style="padding:6px 8px;text-align:center">
+        <input type="checkbox" class="bill-chk" data-idx="${idx}" checked style="width:16px;height:16px;cursor:pointer">
+      </td>
+      <td style="padding:6px 8px">${inv.invoiceNo}</td>
+      <td style="padding:6px 8px">${inv.date}</td>
+      <td style="padding:6px 8px">${poArr.join(', ') || '-'}</td>
+      <td style="padding:6px 8px;text-align:right">${fmtB(total)}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead>
+        <tr style="border-bottom:1px solid var(--bc-card)">
+          <th style="padding:6px 8px;text-align:center;width:34px">
+            <input type="checkbox" id="billChkAll" checked onchange="_billToggleAll(this.checked)" style="width:16px;height:16px;cursor:pointer">
+          </th>
+          <th style="padding:6px 8px;text-align:left">เลขที่ใบกำกับ</th>
+          <th style="padding:6px 8px;text-align:left">วันที่</th>
+          <th style="padding:6px 8px;text-align:left">เลขที่ PO</th>
+          <th style="padding:6px 8px;text-align:right">จำนวนเงิน</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  wrap._billList = list;
+}
+
+function _billToggleAll(checked) {
+  document.querySelectorAll('#billInvoiceListWrap .bill-chk').forEach(c => c.checked = checked);
+}
+
+// ── เสนอเลขที่ใบวางบิลถัดไปจาก BillingNote sheet (ถ้าช่องยังว่าง) — แก้ไขเองได้เสมอ ──
+async function _billSuggestNextNo() {
+  if (!SCRIPT_URL || !$('billNo') || $('billNo').value.trim()) return;
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=getNextBillNo', {mode:'cors'});
+    const data = await res.json();
+    if (data.status === 'ok' && data.billNo && !$('billNo').value.trim()) {
+      $('billNo').value = data.billNo;
+    }
+  } catch (e) { /* เงียบไว้ — ผู้ใช้กรอกเองได้ */ }
+}
+
+// ── สร้าง HTML เอกสารใบวางบิล ──
+function _billBuildDocHtml({ billNo, billDateStr, payTerm, cust, items, wht }) {
+  const co = _companyInfoCache || {};
+  const sumTotal    = items.reduce((s,i) => s + (parseFloat(i.total)||0), 0);
+  const sumSubtotal = items.reduce((s,i) => {
+    const t = parseFloat(i.total)||0;
+    const sub = (i.subtotal !== undefined && i.subtotal !== '') ? parseFloat(i.subtotal)||0 : t/1.07;
+    return s + sub;
+  }, 0);
+  const sumVat = sumTotal - sumSubtotal;
+  const whtAmount = wht ? sumSubtotal * 0.03 : 0;
+  const netAmount = sumTotal - whtAmount;
+
+  const rows = items.map((inv, idx) => {
+    const poList = (inv.items || []).map(it => it.poNo).filter(Boolean);
+    const poArr  = poList.length ? poList : (inv.poList ? (Array.isArray(inv.poList) ? inv.poList : String(inv.poList).split(',').map(s=>s.trim()).filter(Boolean)) : []);
+    const total = (inv.total !== undefined && inv.total !== '') ? parseFloat(inv.total)||0 : 0;
+    return `<tr style="border-bottom:1px solid #e8ecf2">
+      <td style="padding:7px 10px;text-align:center">${idx + 1}</td>
+      <td style="padding:7px 10px">${inv.invoiceNo}</td>
+      <td style="padding:7px 10px;text-align:center">${inv.date}</td>
+      <td style="padding:7px 10px">${poArr.join(', ') || '-'}</td>
+      <td style="padding:7px 10px;text-align:right">${fmtB(total)}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+<div class="doc-paper" style="overflow:hidden">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;
+    padding:22px 28px 14px;border-bottom:3px solid #2563eb;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;overflow:hidden;
+        display:flex;align-items:center;justify-content:center">
+        <img src="${_getLogoSrc()}" alt="PTS" style="width:100%;height:100%;object-fit:contain"
+          onerror="this.parentNode.style.background='#2563eb';this.style.display='none';this.parentNode.innerHTML='<span style=color:#fff;font-weight:800;font-size:1.05rem>PT</span>'">
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
+        <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
+        <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
+          ${co.address||''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
+        </div>
+      </div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:1.6rem;font-weight:800;color:#2563eb;line-height:1">ใบวางบิล</div>
+      <div style="font-size:.65rem;color:#888;letter-spacing:2.5px;margin-bottom:10px">BILLING NOTE</div>
+      <table style="font-size:.78rem;margin-left:auto">
+        <tr><td style="color:#666;padding:2px 6px 2px 0">เลขที่ใบวางบิล / No:</td>
+            <td style="font-weight:700;color:#2563eb">${billNo||''}</td></tr>
+        <tr><td style="color:#666;padding:2px 6px 2px 0">วันที่ / Date:</td>
+            <td>${billDateStr}</td></tr>
+        <tr><td style="color:#666;padding:2px 6px 2px 0">เงื่อนไขการชำระเงิน:</td>
+            <td>${payTerm||''}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div style="padding:14px 28px;border-bottom:1px solid #e8ecf2">
+    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:7px">
+      ลูกค้า / CUSTOMER</div>
+    <div style="font-size:.9rem;font-weight:700;margin-bottom:2px">${cust.name||''}${cust.branch?' ('+cust.branch+')':''}</div>
+    <div style="font-size:.78rem;color:#444;margin-bottom:2px">${cust.address||''}</div>
+    <div style="font-size:.78rem;color:#444">
+      ${cust.taxId ? `เลขผู้เสียภาษี: ${cust.taxId} | ` : ''}โทร: ${cust.phone||'—'}
+    </div>
+  </div>
+
+  <div style="padding:16px 28px">
+    <table style="width:100%;border-collapse:collapse;font-size:.79rem">
+      <thead>
+        <tr style="background:#2563eb;color:#fff">
+          <th style="padding:8px 10px;text-align:center;border-radius:4px 0 0 0;width:8%">ลำดับที่</th>
+          <th style="padding:8px 10px;text-align:left">เลขที่ใบกำกับภาษี</th>
+          <th style="padding:8px 10px;text-align:center;width:14%">ลงวันที่</th>
+          <th style="padding:8px 10px;text-align:left;width:22%">เลขที่ใบสั่งซื้อ</th>
+          <th style="padding:8px 10px;text-align:right;width:16%;border-radius:0 4px 0 0">จำนวนเงิน (฿)</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr><td colspan="4" style="padding:7px 10px;text-align:right;color:#555;border-top:1px solid #e8ecf2">
+            รวมภาษีมูลค่าเพิ่ม (รวมอยู่ในยอดแต่ละใบแล้ว)</td>
+          <td style="padding:7px 10px;text-align:right;color:#888;border-top:1px solid #e8ecf2">${fmtB(sumVat)}</td></tr>
+        <tr><td colspan="4" style="padding:5px 10px;text-align:right;color:#555">รวมเงินทั้งสิ้น</td>
+          <td style="padding:5px 10px;text-align:right;font-weight:700">${fmtB(sumTotal)}</td></tr>
+        ${wht ? `
+        <tr><td colspan="4" style="padding:5px 10px;text-align:right;color:#dc2626">หัก ณ ที่จ่าย 3%</td>
+          <td style="padding:5px 10px;text-align:right;color:#dc2626">${fmtB(whtAmount)}</td></tr>` : ''}
+        <tr style="background:#1d4ed8;color:#fff">
+          <td colspan="4" style="padding:9px 10px;text-align:right;font-weight:700;font-size:.9rem;border-radius:0 0 0 4px">
+            จำนวนเงินรับสุทธิ / NET AMOUNT</td>
+          <td style="padding:9px 10px;text-align:right;font-weight:800;font-size:.9rem;border-radius:0 0 4px 0">
+            ฿ ${fmtB(netAmount)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div style="padding:0 28px 14px;font-size:.78rem;color:#444">
+    ได้รับบิลไว้ตรวจสอบตามรายการนี้ถูกต้องแล้ว จำนวน ${items.length} ฉบับ
+  </div>
+
+  <div style="display:flex;gap:12px;padding:10px 28px 28px;flex-wrap:wrap">
+    <div style="flex:1;text-align:center;min-width:160px">
+      <div style="border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับวางบิล / Received by</div>
+      <div style="font-size:.65rem;color:#aaa;margin-top:2px">( ______________ )</div>
+    </div>
+    <div style="flex:1;text-align:center;min-width:160px">
+      <div style="border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">
+        ผู้มีอำนาจลงนาม / Authorized signature<br>ในนาม ${co.name||''}</div>
+      <div style="font-size:.65rem;color:#aaa;margin-top:2px">( ______________ )</div>
+    </div>
+  </div>
+</div>`;
+}
+
+// ── สร้างใบวางบิล จากใบกำกับที่ติ๊กเลือก -> แสดง preview ในกรอบเอกสาร ──
+function _billGenerate() {
+  const wrap = $('billInvoiceListWrap');
+  const custCode = $('billCustomer')?.value || '';
+  if (!custCode || !wrap || !wrap._billList) {
+    Swal.fire({icon:'warning', title:'กรุณาเลือกลูกค้าและค้นหาใบกำกับก่อน',
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#2563eb'});
+    return;
+  }
+  const checked = Array.from(document.querySelectorAll('#billInvoiceListWrap .bill-chk:checked'))
+    .map(c => wrap._billList[parseInt(c.dataset.idx,10)]).filter(Boolean);
+  if (!checked.length) {
+    Swal.fire({icon:'warning', title:'กรุณาเลือกใบกำกับอย่างน้อย 1 ใบ',
+      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#2563eb'});
+    return;
+  }
+  const cust = _custCache.find(c => c.code === custCode) || {};
+  const billNo  = $('billNo')?.value || '';
+  const payTerm = $('billPayTerm')?.value || '';
+  const wht     = !!$('billWht')?.checked;
+  const billDateVal = $('billDate')?.value || '';
+  const billDateStr = billDateVal
+    ? new Date(billDateVal + 'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})
+    : new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+
+  // เรียงตามวันที่ใบกำกับ (เก่า -> ใหม่)
+  const items = checked.slice().sort((a,b) => _invIssuedDateToIso(a.date).localeCompare(_invIssuedDateToIso(b.date)));
+
+  const html = _billBuildDocHtml({ billNo, billDateStr, payTerm, cust, items, wht });
+
+  // เตรียมข้อมูลสำหรับบันทึก (ยืนยันวางบิล)
+  const sumTotal    = items.reduce((s,i) => s + (parseFloat(i.total)||0), 0);
+  const sumSubtotal = items.reduce((s,i) => {
+    const t = parseFloat(i.total)||0;
+    const sub = (i.subtotal !== undefined && i.subtotal !== '') ? parseFloat(i.subtotal)||0 : t/1.07;
+    return s + sub;
+  }, 0);
+  const whtAmount = wht ? sumSubtotal * 0.03 : 0;
+  const netAmount = sumTotal - whtAmount;
+  _billPreviewData = {
+    billNo, billDate: $('billDate')?.value ? _billDateToThaiBE($('billDate').value) : '',
+    customerCode: custCode, invoiceNos: items.map(i => i.invoiceNo),
+    sumTotal, whtAmount, netAmount, payTerm
+  };
+
+  _invPreviewMode = true;
+
+  let docBill = $('docBill');
+  if (!docBill) {
+    docBill = document.createElement('div');
+    docBill.id = 'docBill';
+    $('docQuo').parentNode.appendChild(docBill);
+  }
+  ['docQuo','docCost','docInv','docInvRep'].forEach(id => { if ($(id)) $(id).classList.add('dp-hidden'); });
+  docBill.classList.remove('dp-hidden');
+  docBill.innerHTML = html;
+
+  if ($('dtabQuo'))  $('dtabQuo').style.display  = 'none';
+  if ($('dtabCost')) $('dtabCost').style.display = 'none';
+  const swapBtn = document.querySelector('.doc-bottombar .doc-tab-btn[onclick*="_docActiveTab"]');
+  if (swapBtn) swapBtn.style.display = 'none';
+  if ($('invConfirmBtn')) $('invConfirmBtn').style.display = 'none';
+
+  // ปุ่ม "ยืนยันวางบิล"
+  let billConfirmBtn = $('billConfirmBtn');
+  if (!billConfirmBtn) {
+    billConfirmBtn = document.createElement('button');
+    billConfirmBtn.id = 'billConfirmBtn';
+    billConfirmBtn.className = 'doc-tab-btn no-print';
+    billConfirmBtn.style = 'padding:8px 18px;border-radius:8px;border:none;background:#2563eb;' +
+      'color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:8px';
+    billConfirmBtn.onclick = () => guardClick(billConfirmBtn, _billConfirmSave, 'กำลังบันทึก...');
+    document.querySelector('.doc-bottombar > div').prepend(billConfirmBtn);
+  }
+  billConfirmBtn.textContent = '✅ ยืนยันวางบิล ' + billNo;
+  billConfirmBtn.style.display = '';
+
+  $('docExportOverlay').classList.add('open');
+}
+
+let _billPreviewData = null;
+
+// ── แปลง yyyy-MM-dd (input date) -> dd/MM/yyyy พ.ศ. ──
+function _billDateToThaiBE(isoDate) {
+  const p = String(isoDate||'').split('-');
+  if (p.length !== 3) return '';
+  const dd = p[2], mm = p[1], yyyy = String(parseInt(p[0],10) + 543);
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+// ── ยืนยันวางบิล: บันทึก BillingNote + มาร์คใบกำกับว่าวางบิลแล้ว ──
+async function _billConfirmSave() {
+  if (!_billPreviewData) return;
+  if (!_billPreviewData.billNo) {
+    Swal.fire({icon:'warning', title:'กรุณากรอกเลขที่ใบวางบิล', background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#2563eb'});
+    return;
+  }
+  const confirmed = await Swal.fire({
+    icon:'question', title:`ยืนยันวางบิลเลขที่ ${_billPreviewData.billNo}?`,
+    html:`<div style="font-size:.83rem;color:#8b8aaa">รวม ${_billPreviewData.invoiceNos.length} ใบกำกับ — ยอดรับสุทธิ ${fmtB(_billPreviewData.netAmount)} ฿<br>
+      หลังยืนยัน ใบกำกับเหล่านี้จะถูกบันทึกว่าวางบิลแล้ว</div>`,
+    background:'#0d1b2a', color:'#cce4ff',
+    confirmButtonText:'✅ ยืนยัน', confirmButtonColor:'#2563eb',
+    showCancelButton:true, cancelButtonText:'ยกเลิก', cancelButtonColor:'#374151',
+  }).then(r => r.isConfirmed);
+  if (!confirmed) return;
+
+  Swal.fire({
+    title: 'กำลังบันทึกใบวางบิล...', html: 'กรุณารอสักครู่',
+    background:'#0d1b2a', color:'#cce4ff',
+    allowOutsideClick:false, allowEscapeKey:false, showConfirmButton:false,
+    didOpen: () => Swal.showLoading(),
+  });
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify(Object.assign({ action:'saveBillingNote', issuedBy: 'PTS' }, _billPreviewData))
+    });
+    const out = await res.json();
+    if (!out || out.status !== 'ok') throw new Error((out && out.message) || 'save failed');
+    _billPreviewData = null;
+    closeDocExport();
+    if ($('billNo')) $('billNo').value = '';
+    await fetchIssuedInvoices();
+    _billLoadInvoices();
+    Swal.fire({icon:'success',title:`บันทึกใบวางบิล ${out.billNo} สำเร็จ ✅`,background:'#0d1b2a',color:'#cce4ff',
+      timer:1800,showConfirmButton:false,toast:true,position:'top-end'});
+  } catch (e) {
+    Swal.fire({icon:'error',title:'บันทึกใบวางบิลไม่สำเร็จ',text:e.message,background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#dc2626'});
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// ══ ประวัติใบวางบิล — ดู / พิมพ์ซ้ำ ══════════════════════
+// ══════════════════════════════════════════════════════
+let _billHistCache = [];
+
+function _billHistClearFilter() {
+  if ($('billHistSearch')) $('billHistSearch').value = '';
+  if ($('billHistFrom'))   $('billHistFrom').value   = '';
+  if ($('billHistTo'))     $('billHistTo').value     = '';
+  renderBillingHistory();
+}
+
+async function fetchBillingNotes() {
+  if (!SCRIPT_URL) { renderBillingHistory(); return; }
+  const wrap = $('billHistListWrap');
+  if (wrap) wrap.innerHTML = `<div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem"><span class="spin-ico">↻</span> กำลังโหลด…</div>`;
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=getBillingNotes', {mode:'cors'});
+    const data = await res.json();
+    if (data.status === 'ok') _billHistCache = (data.bills || []).slice().reverse(); // ล่าสุดอยู่บน
+    else throw new Error(data.message || 'unknown');
+  } catch (e) {
+    if (wrap) { wrap.innerHTML = `<div style="text-align:center;padding:16px;color:#f87171;font-size:.82rem">โหลดข้อมูลไม่สำเร็จ: ${e.message}</div>`; return; }
+  }
+  renderBillingHistory();
+}
+
+function renderBillingHistory() {
+  const wrap = $('billHistListWrap');
+  if (!wrap) return;
+  const kw   = ($('billHistSearch')?.value || '').toLowerCase().split(/[\s,]+/).filter(Boolean);
+  const from = $('billHistFrom')?.value || '';
+  const to   = $('billHistTo')?.value   || '';
+
+  let list = _billHistCache.slice();
+  if (from || to) {
+    list = list.filter(b => {
+      const iso = _invIssuedDateToIso(b.date);
+      if (!iso) return false;
+      if (from && iso < from) return false;
+      if (to   && iso > to)   return false;
+      return true;
+    });
+  }
+  if (kw.length) {
+    list = list.filter(b => {
+      const cust = _custCache.find(c => c.code === b.customerCode);
+      const hay = [b.billNo, b.customerCode, cust?.name, cust?.branch, b.invoiceNos].join(' ').toLowerCase();
+      return kw.every(k => hay.includes(k));
+    });
+  }
+
+  if (!list.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem">ไม่พบประวัติใบวางบิล</div>`;
+    return;
+  }
+
+  const rows = list.map((b, idx) => {
+    const cust = _custCache.find(c => c.code === b.customerCode) || {};
+    const realIdx = _billHistCache.indexOf(b);
+    return `<tr style="border-bottom:1px solid var(--bc-card)">
+      <td style="padding:6px 8px">${b.billNo}</td>
+      <td style="padding:6px 8px">${b.date}</td>
+      <td style="padding:6px 8px">${cust.name || b.customerCode}${cust.branch?' ('+cust.branch+')':''}</td>
+      <td style="padding:6px 8px;text-align:center">${(b.invoiceNos||'').split(',').filter(Boolean).length}</td>
+      <td style="padding:6px 8px;text-align:right">${fmtB(b.sumTotal)}</td>
+      <td style="padding:6px 8px;text-align:right;color:${b.whtAmount?'#f87171':'inherit'}">${b.whtAmount ? fmtB(b.whtAmount) : '-'}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:700">${fmtB(b.netAmount)}</td>
+      <td style="padding:6px 8px;text-align:center">
+        <button onclick="_billReprint(${realIdx})" style="padding:5px 12px;border-radius:6px;border:none;
+          background:#2563eb;color:#fff;font-size:.74rem;cursor:pointer;font-family:Sarabun,sans-serif">🖨️ พิมพ์ซ้ำ</button>
+        <button onclick="guardClick(this, () => _billCancel(${realIdx}), 'กำลังยกเลิก...')" style="padding:5px 12px;border-radius:6px;border:none;margin-left:4px;
+          background:#dc2626;color:#fff;font-size:.74rem;cursor:pointer;font-family:Sarabun,sans-serif">🗑️ ยกเลิก</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead>
+        <tr style="border-bottom:1px solid var(--bc-card)">
+          <th style="padding:6px 8px;text-align:left">เลขที่ใบวางบิล</th>
+          <th style="padding:6px 8px;text-align:left">วันที่</th>
+          <th style="padding:6px 8px;text-align:left">ลูกค้า</th>
+          <th style="padding:6px 8px;text-align:center">จำนวนใบกำกับ</th>
+          <th style="padding:6px 8px;text-align:right">ยอดรวม</th>
+          <th style="padding:6px 8px;text-align:right">หัก ณ ที่จ่าย</th>
+          <th style="padding:6px 8px;text-align:right">รับสุทธิ</th>
+          <th style="padding:6px 8px;text-align:center">พิมพ์ซ้ำ</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── ยกเลิกใบวางบิล — ลบจากประวัติ + เคลียร์สถานะ "วางบิลแล้ว" ของใบกำกับที่เกี่ยวข้อง ──
+async function _billCancel(idx) {
+  const b = _billHistCache[idx];
+  if (!b) return;
+  const conf = await Swal.fire({
+    icon:'warning', title:`ยกเลิกใบวางบิล ${b.billNo}?`,
+    text:'ใบกำกับที่อยู่ในใบวางบิลนี้จะกลับมาเลือกวางบิลใหม่ได้',
+    showCancelButton:true, confirmButtonText:'ยกเลิกใบวางบิล', cancelButtonText:'ปิด',
+    confirmButtonColor:'#dc2626', background:'#0d1b2a', color:'#cce4ff'
+  });
+  if (!conf.isConfirmed) return;
+  try {
+    const res  = await fetch(SCRIPT_URL, {
+      method:'POST', mode:'cors',
+      body: JSON.stringify({ action:'deleteBillingNote', billNo: b.billNo })
+    });
+    const out = await res.json();
+    if (!out || out.status !== 'ok') throw new Error((out && out.message) || 'delete failed');
+    await fetchIssuedInvoices();
+    await fetchBillingNotes();
+    _billLoadInvoices();
+    Swal.fire({icon:'success',title:`ยกเลิกใบวางบิล ${b.billNo} แล้ว`,background:'#0d1b2a',color:'#cce4ff',
+      timer:1800,showConfirmButton:false,toast:true,position:'top-end'});
+  } catch (e) {
+    Swal.fire({icon:'error',title:'ยกเลิกไม่สำเร็จ',text:e.message,background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#dc2626'});
+  }
+}
+
+// ── พิมพ์ใบวางบิลซ้ำจากประวัติ — ดึงรายละเอียดใบกำกับจาก _invIssuedCache ──
+function _billReprint(idx) {
+  const b = _billHistCache[idx];
+  if (!b) return;
+  const cust = _custCache.find(c => c.code === b.customerCode) || {};
+  const invoiceNos = (b.invoiceNos || '').split(',').map(s => s.trim()).filter(Boolean);
+  const items = invoiceNos.map(no => _invIssuedCache.find(inv => inv.invoiceNo === no)).filter(Boolean);
+
+  const billDateStr = _invThaiDate(b.date);
+  const html = _billBuildDocHtml({
+    billNo: b.billNo, billDateStr, payTerm: b.payTerm, cust, items, wht: !!b.whtAmount
+  });
+
+  _billPreviewData = null;
+  _invPreviewMode = true;
+
+  let docBill = $('docBill');
+  if (!docBill) {
+    docBill = document.createElement('div');
+    docBill.id = 'docBill';
+    $('docQuo').parentNode.appendChild(docBill);
+  }
+  ['docQuo','docCost','docInv','docInvRep'].forEach(id => { if ($(id)) $(id).classList.add('dp-hidden'); });
+  docBill.classList.remove('dp-hidden');
+  docBill.innerHTML = html;
+
+  if ($('dtabQuo'))  $('dtabQuo').style.display  = 'none';
+  if ($('dtabCost')) $('dtabCost').style.display = 'none';
+  const swapBtn = document.querySelector('.doc-bottombar .doc-tab-btn[onclick*="_docActiveTab"]');
+  if (swapBtn) swapBtn.style.display = 'none';
+  if ($('invConfirmBtn'))  $('invConfirmBtn').style.display  = 'none';
+  if ($('billConfirmBtn')) $('billConfirmBtn').style.display = 'none';
 
   $('docExportOverlay').classList.add('open');
 }

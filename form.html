@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=6.83">
+<link rel="stylesheet" href="style.css?v=6.98">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v6.83</span>
+      <span class="ph-chip ver">v6.98</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -739,7 +739,7 @@
     <div class="cf-section-title">
       <span class="cf-section-name">📐 สูตรขนาดตัด</span>
       <div style="display:flex;gap:6px">
-        <button class="cf-add-btn" onclick="savePartFormulas()" id="pfSaveBtn">💾 บันทึก</button>
+        <button class="cf-add-btn" onclick="guardClick(this, savePartFormulas)" id="pfSaveBtn">💾 บันทึก</button>
         <button class="cf-add-btn" style="opacity:.6" onclick="resetPartFormulas()">↩ reset</button>
       </div>
     </div>
@@ -838,7 +838,7 @@
       </button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
-      <button class="btn btn-primary" onclick="saveLaborConfig()" style="padding:10px 18px;font-size:.88rem">
+      <button class="btn btn-primary" onclick="guardClick(this, saveLaborConfig)" style="padding:10px 18px;font-size:.88rem">
         💾 บันทึกเป็นค่าเริ่มต้น
       </button>
       <button class="btn btn-calc" onclick="applyLaborNow()" style="padding:10px 18px;font-size:.88rem">
@@ -945,7 +945,7 @@
       <input type="text" id="apiTab_scriptUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="apiTabSaveScript()" style="padding:9px 16px;font-size:.85rem">💾 บันทึก URL</button>
+      <button class="btn btn-primary" onclick="guardClick(this, apiTabSaveScript)" style="padding:9px 16px;font-size:.85rem">💾 บันทึก URL</button>
       <button class="btn btn-calc" onclick="loadAllData(true)" style="padding:9px 16px;font-size:.85rem">🔄 ทดสอบเชื่อมต่อ</button>
       <button class="btn" onclick="apiTabCopyScriptUrl()" style="padding:9px 16px;font-size:.85rem">📋 คัดลอก</button>
     </div>
@@ -1070,7 +1070,7 @@
           padding:9px 12px;color:#d4cfe8;font-family:Sarabun,sans-serif;font-size:.85rem;outline:none">
         <button class="apv-eye" onclick="toggleKeyVis('key_anthropic',this)">👁️</button>
         <button class="apv-eye" onclick="copyProviderKey('anthropic')">📋</button>
-        <button class="api-save-btn" onclick="saveProviderKey('anthropic')">💾</button>
+        <button class="api-save-btn" onclick="guardClick(this, () => saveProviderKey('anthropic'))">💾</button>
         <button class="api-test-btn" onclick="testProviderKey('anthropic')">🧪</button>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;padding:0 2px">
@@ -1105,7 +1105,7 @@
           padding:9px 12px;color:#d4cfe8;font-family:Sarabun,sans-serif;font-size:.85rem;outline:none">
         <button class="apv-eye" onclick="toggleKeyVis('key_openai',this)">👁️</button>
         <button class="apv-eye" onclick="copyProviderKey('openai')">📋</button>
-        <button class="api-save-btn" onclick="saveProviderKey('openai')">💾</button>
+        <button class="api-save-btn" onclick="guardClick(this, () => saveProviderKey('openai'))">💾</button>
         <button class="api-test-btn" onclick="testProviderKey('openai')">🧪</button>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;padding:0 2px">
@@ -1140,7 +1140,7 @@
           padding:9px 12px;color:#d4cfe8;font-family:Sarabun,sans-serif;font-size:.85rem;outline:none">
         <button class="apv-eye" onclick="toggleKeyVis('key_gemini',this)">👁️</button>
         <button class="apv-eye" onclick="copyProviderKey('gemini')">📋</button>
-        <button class="api-save-btn" onclick="saveProviderKey('gemini')">💾</button>
+        <button class="api-save-btn" onclick="guardClick(this, () => saveProviderKey('gemini'))">💾</button>
         <button class="api-test-btn" onclick="testProviderKey('gemini')">🧪</button>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;padding:0 2px">
@@ -1740,6 +1740,9 @@
       ✏️ แก้ไข Order — <span id="ordEdit_noPO" style="color:var(--c1)"></span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;margin-bottom:14px">
+      <div class="field" style="grid-column:1/-1"><label>ลูกค้า</label>
+        <select id="ordEdit_customer"></select>
+      </div>
       <div class="field"><label>วันที่สั่งซื้อ</label><input type="date" id="ordEdit_orderDate"></div>
       <div class="field"><label>วันที่ต้องการ</label><input type="date" id="ordEdit_wantDate"></div>
       <div class="field"><label>Process</label>
@@ -1781,7 +1784,7 @@
       <div class="field" style="grid-column:1/-1"><label>หมายเหตุ</label><input type="text" id="ordEdit_note"></div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      <button class="btn btn-primary" id="ordEdit_saveBtn" onclick="saveOrderEdit()" style="padding:10px 18px;font-size:.88rem">💾 บันทึก</button>
+      <button class="btn btn-primary" id="ordEdit_saveBtn" onclick="guardClick(this, saveOrderEdit)" style="padding:10px 18px;font-size:.88rem">💾 บันทึก</button>
       <button class="btn" onclick="closeOrderEdit()" style="padding:10px 18px;font-size:.88rem">ยกเลิก</button>
       <span id="ordEdit_status_msg" style="font-size:.76rem;color:var(--t3)"></span>
     </div>
@@ -2043,6 +2046,7 @@
     <button type="button" class="ord-subtab-btn active" id="invSubBtn1" onclick="_invSubTabSwitch('1')">📑 ออกใบกำกับ</button>
     <button type="button" class="ord-subtab-btn" id="invSubBtn2" onclick="_invSubTabSwitch('2')">👥 เพิ่มลูกค้า</button>
     <button type="button" class="ord-subtab-btn" id="invSubBtn3" onclick="_invSubTabSwitch('3')">📊 รายงานภาษีขาย</button>
+    <button type="button" class="ord-subtab-btn" id="invSubBtn4" onclick="_invSubTabSwitch('4')">📑 ใบวางบิล</button>
   </div>
 
   <div id="invSubPanel1" class="ord-subtab-panel active">
@@ -2140,8 +2144,86 @@
   </div>
   </div><!-- end invSubPanel3 -->
 
-  <!-- ใบกำกับที่ออกแล้ว — แสดงด้านล่างเสมอ ไม่ขึ้นกับ sub-tab -->
+  <div id="invSubPanel4" class="ord-subtab-panel">
+  <!-- ใบวางบิล — รวมใบกำกับหลายใบของลูกค้าเดียวกันมาเรียกเก็บเงิน -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon ic-ext">📑</div>
+      <h2>ใบวางบิล</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px;margin-bottom:12px">
+      <div class="field" style="grid-column:span 2"><label>ลูกค้า</label>
+        <select id="billCustomer"></select>
+      </div>
+      <div class="field"><label>ใบกำกับวันที่ (จาก)</label>
+        <input type="date" id="billDateFrom">
+      </div>
+      <div class="field"><label>ใบกำกับวันที่ (ถึง)</label>
+        <input type="date" id="billDateTo">
+      </div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button type="button" onclick="_billLoadInvoices()" style="width:100%;padding:9px 12px;border-radius:8px;
+          border:none;background:#2563eb;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif">
+          🔍 ค้นหาใบกำกับ</button>
+      </div>
+    </div>
+    <div id="billInvoiceListWrap" style="overflow-x:auto;margin-bottom:12px">
+      <div style="text-align:center;padding:16px;color:var(--t3);font-size:.82rem">เลือกลูกค้าและช่วงวันที่ แล้วกด "ค้นหาใบกำกับ"</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px;margin-bottom:12px">
+      <div class="field"><label>เลขที่ใบวางบิล</label>
+        <input type="text" id="billNo" placeholder="เช่น BI26/08">
+      </div>
+      <div class="field"><label>วันที่ออกใบวางบิล</label>
+        <input type="date" id="billDate">
+      </div>
+      <div class="field" style="grid-column:span 2"><label>เงื่อนไขการชำระเงิน</label>
+        <input type="text" id="billPayTerm" value="เครดิต 30 วัน">
+      </div>
+      <div class="field" style="display:flex;align-items:center;gap:6px;padding-top:18px">
+        <input type="checkbox" id="billWht" style="width:18px;height:18px;cursor:pointer">
+        <label for="billWht" style="margin:0;cursor:pointer">หัก ณ ที่จ่าย 3%</label>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <button onclick="_billGenerate()" style="padding:9px 22px;border-radius:8px;border:none;background:#2563eb;
+        color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+        👁️ ดูตัวอย่าง / พิมพ์ใบวางบิล</button>
+    </div>
+  </div>
+
+  <!-- ประวัติใบวางบิล — แสดงเฉพาะใน sub-tab ใบวางบิล -->
   <div class="card" style="margin-top:14px">
+    <div class="card-header">
+      <div class="icon ic-ext">🕘</div>
+      <h2>ประวัติใบวางบิล</h2>
+      <button onclick="fetchBillingNotes()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        🔄 รีเฟรช
+      </button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px 14px;margin-bottom:8px;align-items:end">
+      <div class="field"><label>ค้นหา (เลขที่ใบวางบิล/ลูกค้า)</label>
+        <input type="text" id="billHistSearch" placeholder="เช่น BI26/08, บริษัท..." oninput="renderBillingHistory()">
+      </div>
+      <div class="field"><label>วันที่ออก (จาก)</label>
+        <input type="date" id="billHistFrom" onchange="renderBillingHistory()">
+      </div>
+      <div class="field"><label>วันที่ออก (ถึง)</label>
+        <input type="date" id="billHistTo" onchange="renderBillingHistory()">
+      </div>
+      <div class="field">
+        <button type="button" onclick="_billHistClearFilter()" style="padding:9px 14px;border-radius:8px;white-space:nowrap;
+          border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.1);color:#f87171;
+          font-size:.8rem;cursor:pointer;font-family:Sarabun,sans-serif">✖ ล้างการกรอง</button>
+      </div>
+    </div>
+    <div id="billHistListWrap" style="overflow-x:auto"></div>
+  </div>
+  </div><!-- end invSubPanel4 -->
+
+  <!-- ใบกำกับที่ออกแล้ว — แสดงเฉพาะ sub-tab 1-3 (ไม่แสดงใน sub-tab ใบวางบิล) -->
+  <div class="card" id="invIssuedCard" style="margin-top:14px">
     <div class="card-header">
       <div class="icon ic-ext">🧾</div>
       <h2>ใบกำกับที่ออกแล้ว</h2>
@@ -2149,6 +2231,32 @@
         background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
         🔄 รีเฟรช
       </button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px 14px;margin-bottom:8px;align-items:end">
+      <div class="field"><label>ค้นหา (เลขที่ใบกำกับ/ลูกค้า/PO)</label>
+        <input type="text" id="invIssuedFilterSearch" placeholder="เช่น 2606027, บริษัท..." oninput="renderIssuedInvoiceList()">
+      </div>
+      <div class="field"><label>ประเภท</label>
+        <select id="invIssuedFilterType" onchange="renderIssuedInvoiceList()">
+          <option value="">ทั้งหมด</option>
+          <option value="full">เต็มรูป</option>
+          <option value="short">อย่างย่อ</option>
+        </select>
+      </div>
+      <div class="field"><label>วันที่ออก (จาก)</label>
+        <input type="date" id="invIssuedFilterFrom" onchange="renderIssuedInvoiceList()">
+      </div>
+      <div class="field"><label>วันที่ออก (ถึง)</label>
+        <input type="date" id="invIssuedFilterTo" onchange="renderIssuedInvoiceList()">
+      </div>
+      <div class="field">
+        <button type="button" onclick="_invClearIssuedFilter()" style="padding:9px 14px;border-radius:8px;white-space:nowrap;
+          border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.1);color:#f87171;
+          font-size:.8rem;cursor:pointer;font-family:Sarabun,sans-serif">✖ ล้างการกรอง</button>
+      </div>
+    </div>
+    <div style="font-size:.7rem;color:var(--t3);margin:0 0 12px">
+      💡 ใส่ได้หลายคำพร้อมกัน คั่นด้วย เว้นวรรค หรือ คอมมา (,) — เช่น "2606027, บริษัท เอ็นเคพี"
     </div>
     <div id="invIssuedListWrap" style="overflow-x:auto"></div>
   </div>
@@ -2197,8 +2305,8 @@
     <button type="button" class="btn" onclick="invEditAddItem()" style="padding:6px 14px;font-size:.78rem;margin-bottom:14px">➕ เพิ่มรายการ</button>
 
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      <button class="btn btn-primary" onclick="saveInvoiceEdit()" style="padding:10px 18px;font-size:.88rem">💾 บันทึก</button>
-      <button class="btn" onclick="saveInvoiceEditAndReprint()" style="padding:10px 18px;font-size:.88rem">🖨️ บันทึก + พิมพ์ใหม่</button>
+      <button class="btn btn-primary" onclick="guardClick(this, saveInvoiceEdit)" style="padding:10px 18px;font-size:.88rem">💾 บันทึก</button>
+      <button class="btn" onclick="guardClick(this, saveInvoiceEditAndReprint)" style="padding:10px 18px;font-size:.88rem">🖨️ บันทึก + พิมพ์ใหม่</button>
       <button class="btn" onclick="_invPreviewEditDoc()" style="padding:10px 18px;font-size:.88rem">👁️ View</button>
       <button class="btn" onclick="closeInvoiceEdit()" style="padding:10px 18px;font-size:.88rem">ยกเลิก</button>
     </div>
@@ -2311,14 +2419,14 @@
   </div>
 </div>
 
-<script src="core.js?v=6.83"></script>
-<script src="data.js?v=6.83"></script>
-<script src="formcalc.js?v=6.83"></script>
-<script src="aifeatures.js?v=6.83"></script>
-<script src="theme.js?v=6.83"></script>
-<script src="order.js?v=6.83"></script>
-<script src="purchase.js?v=6.83"></script>
-<script src="invoice.js?v=6.83"></script>
+<script src="core.js?v=6.98"></script>
+<script src="data.js?v=6.98"></script>
+<script src="formcalc.js?v=6.98"></script>
+<script src="aifeatures.js?v=6.98"></script>
+<script src="theme.js?v=6.98"></script>
+<script src="order.js?v=6.98"></script>
+<script src="purchase.js?v=6.98"></script>
+<script src="invoice.js?v=6.98"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2417,7 +2525,7 @@
       <button onclick="closeDocCfg()" style="padding:8px 16px;border-radius:8px;
         border:1px solid rgba(255,255,255,.15);background:transparent;color:#94a3b8;
         font-family:'Sarabun',sans-serif;cursor:pointer">ยกเลิก</button>
-      <button onclick="saveCompanyCfg()" style="padding:8px 20px;border-radius:8px;
+      <button onclick="guardClick(this, saveCompanyCfg)" style="padding:8px 20px;border-radius:8px;
         border:none;background:#3b82f6;color:#fff;font-family:'Sarabun',sans-serif;
         font-weight:700;cursor:pointer">💾 บันทึก</button>
     </div>
@@ -2447,9 +2555,143 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260613-V',
+    ref: '#REV-20260613-AK',
     date: '2026-06-13',
     current: true,
+    items: [
+      'เพิ่มปุ่ม "🗑️ ยกเลิก" ในประวัติใบวางบิล — ลบใบวางบิลและคืนสถานะ "วางบิลแล้ว" ของใบกำกับที่เกี่ยวข้อง',
+      'เพิ่ม deleteBillingNote ใน Code.gs (ต้อง Redeploy)',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AJ',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ย้าย "ประวัติใบวางบิล" เข้าไปอยู่ใน sub-tab "ใบวางบิล" (4) แทนการเป็น sub-tab แยก (5)',
+      'ซ่อนการ์ด "ใบกำกับที่ออกแล้ว" เมื่ออยู่ใน sub-tab ใบวางบิล (แสดงเฉพาะ sub-tab 1-3)',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AI',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'เพิ่ม sub-tab "ประวัติใบวางบิล" (5) — แสดงรายการใบวางบิลทั้งหมดจาก Sheet BillingNote พร้อมค้นหา/กรองวันที่',
+      'เพิ่มปุ่ม "พิมพ์ซ้ำ" — สร้างหน้าเอกสารใบวางบิลซ้ำจากประวัติ (ดึงรายละเอียดใบกำกับจากแคชที่โหลดไว้)',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AH',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'แก้บั๊ก: dropdown "ลูกค้า" ในการ์ดใบวางบิลไม่ขึ้นรายชื่อ (ตอนโหลด tab ครั้งแรก _custCache ยังว่างตอนเรียก _billRefreshCustomerSelect)',
+      'เพิ่มการเรียก _billRefreshCustomerSelect() ซ้ำหลัง fetchCustomers() โหลดข้อมูลเสร็จ',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AG',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'เพิ่มระบบบันทึกใบวางบิลจริง: บันทึกลง Sheet "BillingNote" + มาร์คใบกำกับว่า "วางบิลแล้ว" (ไม่แสดงซ้ำในรายการค้นหา)',
+      'เพิ่มปุ่ม "ยืนยันวางบิล" ในหน้าตัวอย่างเอกสาร พร้อม guardClick ป้องกันกดซ้ำ',
+      'เลขที่ใบวางบิล (billNo): ระบบเสนอเลขถัดไปอัตโนมัติรูปแบบ BI{ปี พ.ศ. 2 หลัก}/{เลขลำดับ} แต่ยังแก้ไข/ตั้งเองได้เสมอ',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AF',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ย้าย "ใบวางบิล" เข้าเป็น sub-tab ใหม่ (4) ในแท็บใบกำกับภาษี เคียงกับ ออกใบกำกับ/เพิ่มลูกค้า/รายงานภาษีขาย',
+      'อัปเดต _invSubTabSwitch ให้รองรับ 4 sub-tab',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AE',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'เพิ่มการ์ด "ใบวางบิล" — เลือกลูกค้า/ช่วงวันที่ใบกำกับ แล้วดึงใบกำกับมาติ๊กเลือก',
+      'สร้างหน้าพิมพ์ใบวางบิลตามแบบฟอร์มเดิม (รายการใบกำกับ/PO, รวม VAT, รวมเงิน, หัก ณ ที่จ่าย 3%, รับสุทธิ, ช่องเซ็นรับ)',
+      'หมายเหตุ: เฟสนี้เป็น UI/Layout เท่านั้น ยังไม่มีเลขที่อัตโนมัติ/บันทึกประวัติ/มาร์คใบกำกับว่าวางบิลแล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AD',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'แก้ไข Order: เปลี่ยนช่อง "ลูกค้า" เป็น dropdown เลือกจากรายชื่อลูกค้า (เหมือน Process)',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AC',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'แก้ไข Order: เพิ่มช่อง "ลูกค้า" ให้แก้ไขได้ในป๊อปอัพแก้ไข Order',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AB',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'เพิ่มระบบ guardClick ป้องกันกดปุ่มบันทึก/ปุ่มสำคัญซ้ำขณะรอข้อมูลจาก cloud (ปุ่มจะถูกล็อก+แสดงสถานะจนกว่าทำงานเสร็จ)',
+      'นำไปใช้กับปุ่มบันทึก: Order, ใบกำกับ, ลูกค้า, Item Master, สูตรขนาดตัด, ค่าแรง, ตั้งค่าบริษัท, API Key/URL',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AA',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'จัดเรียงแถบตัวกรอง "ใบกำกับที่ออกแล้ว" ใหม่ให้กระชับ (ช่องค้นหากว้างขึ้น, ปุ่มล้างกรองพอดีตัว)',
+      'ปรับแถบเลือกเดือนให้เป็นกรอบกะทัดรัด อยู่กึ่งกลางสวยงามขึ้น',
+    ],
+  },
+  {
+    ref: '#REV-20260613-Z',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ใบกำกับที่ออกแล้ว: แบ่งแสดงเป็นรายเดือน (หน้าละ 1 เดือน) เรียงจากเดือนปัจจุบัน/ล่าสุดไปเก่า พร้อมปุ่มเลื่อนเดือนก่อนหน้า/ถัดไป',
+    ],
+  },
+  {
+    ref: '#REV-20260613-Y',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ใบกำกับที่ออกแล้ว: เพิ่มระบบกรองละเอียด — ค้นหา (เลขที่ใบกำกับ/ลูกค้า/PO หลายคำ), ประเภท, ช่วงวันที่ออก + ปุ่ม "ล้างการกรอง"',
+    ],
+  },
+  {
+    ref: '#REV-20260613-X',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ตาราง DATA: ปุ่ม "📦 Order" แสดงได้ทุกสถานะ (ไม่จำกัดแค่ "รอสรุป") เผื่อดึงใบเสนอราคาเดิมมาเปิด Order เลขที่ PO ใหม่',
+      'กดปุ่ม Order: ถ้า No.Quo นี้เคยอ้างอิงกับ PO อื่นแล้ว จะมี popup แจ้งเตือนรายการ PO ที่เคยใช้ พร้อมปุ่มยืนยัน/ยกเลิก',
+      'ตอนบันทึก Order ใหม่: ถ้า No.Quo ซ้ำกับ Order เดิม เปลี่ยนจาก error ห้ามบันทึก เป็น popup แจ้งเตือน + ยืนยันเพื่อสร้าง Order ใหม่ (PO ใหม่) ต่อได้',
+    ],
+  },
+  {
+    ref: '#REV-20260613-W',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'รายงานภาษีขาย: ย้อนกลับการเพิ่ม "(Head office)/(Branch X)" ในคอลัมน์ "สำนักงานใหญ่/สาขา" (เข้าใจผิด)',
+      'รายงานภาษีขาย: เพิ่ม "(สำนักงานใหญ่)" ต่อท้ายชื่อบริษัทผู้ออกเอกสารภาษาไทย และ "(Head office)" ต่อท้ายชื่อภาษาอังกฤษ ในหัวกระดาษ',
+    ],
+  },
+  {
+    ref: '#REV-20260613-V',
+    date: '2026-06-13',
+    current: false,
     items: [
       'ใบกำกับที่ออกแล้ว: เลขที่ PO ในคอลัมน์ "รายการ PO" คลิกได้ — เด้งไปแท็บ Order พร้อมกรองด้วยเลข PO นั้นทันที',
     ],
@@ -2476,249 +2718,4 @@ const DEV_LOGS = [
     current: false,
     items: [
       'รายงานภาษีขาย: เปลี่ยนหัวคอลัมน์ "บริษัทที่ขายไป" → "บริษัทร้านค้า" และไม่ตัดคำชื่อบริษัท (1 แถว/รายการ) พร้อมขยายความกว้างหน้าเอกสาร',
-      'รายงานภาษีขาย: เปลี่ยนช่องกรอกปีจาก ค.ศ. เป็น พ.ศ. (ให้ตรงกับวันที่ในชีตซึ่งเก็บเป็น พ.ศ.) แก้ปัญหากรองรายงานไม่ตรงปี',
-    ],
-  },
-  {
-    ref: '#REV-20260613-R',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แก้บั๊กวันที่เพี้ยนตอนแก้ไข Order (เช่น 19/5/3112): _ordDateToInput ไม่ได้แปลง พ.ศ.→ค.ศ. ก่อนใส่ใน input type=date ทำให้ตอนบันทึก _ordDateToSheet บวก 543 ซ้ำซ้อน — แก้ให้แปลง พ.ศ.→ค.ศ. ก่อนแสดงในฟอร์มแก้ไข',
-    ],
-  },
-  {
-    ref: '#REV-20260613-Q',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'หน้าต่างแก้ไข Order: กดบันทึกแล้วเพิ่ม popup "กำลังบันทึก.../กรุณารอสักครู่" ระหว่างรอบันทึกและรีโหลดข้อมูล',
-    ],
-  },
-  {
-    ref: '#REV-20260613-P',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ Order > การ์ด "รายการ Order": ช่องค้นหารองรับใส่หลายคำพร้อมกัน (คั่นด้วยเว้นวรรค/คอมมา)',
-      'เพิ่มคำอธิบายวิธีใช้งานช่องค้นหา',
-    ],
-  },
-  {
-    ref: '#REV-20260613-O',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ ใบกำกับภาษี > ออกใบกำกับ: ช่องค้นหาเลขที่ PO รองรับใส่หลายเลขพร้อมกัน (คั่นด้วยเว้นวรรค/คอมมา)',
-      'เพิ่มคำอธิบายวิธีใช้งานช่องค้นหา PO',
-    ],
-  },
-  {
-    ref: '#REV-20260613-N',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'กดยืนยันออกใบกำกับ: เพิ่ม popup "กำลังออกใบกำกับ.../กรุณารอสักครู่" ระหว่างรอบันทึกและรีโหลดข้อมูล',
-    ],
-  },
-  {
-    ref: '#REV-20260613-M',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ ใบกำกับภาษี > ออกใบกำกับ: เพิ่มปุ่ม "✖ ล้างการกรอง" ข้างช่องค้นหาเลขที่ PO',
-      'ออกใบกำกับสำเร็จ + รีโหลดข้อมูลแล้ว ให้ล้างช่องค้นหาเลขที่ PO อัตโนมัติ',
-    ],
-  },
-  {
-    ref: '#REV-20260613-L',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ ใบกำกับภาษี > ออกใบกำกับ: เพิ่มแสดงรายการเลขที่ PO ที่กำลังเลือกในสรุปยอด',
-    ],
-  },
-  {
-    ref: '#REV-20260613-K',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ออกใบกำกับภาษีสำเร็จ: ให้รีโหลดการ์ด "ใบกำกับที่ออกแล้ว" อัตโนมัติ (เดิมต้องกดรีเฟรชเอง)',
-    ],
-  },
-  {
-    ref: '#REV-20260613-J',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'เปลี่ยนชื่อแท็บ "ฟอร์ม" เป็น "BreakDown"',
-    ],
-  },
-  {
-    ref: '#REV-20260613-I',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ ใบกำกับภาษี > ออกใบกำกับ: เพิ่มช่องค้นหา/กรองตามเลขที่ PO ในรายการ "PO ที่ยังไม่ออกใบกำกับ"',
-      'เพิ่มแสดง "จำนวน" และ "หมายเหตุ" ในแต่ละรายการ PO',
-    ],
-  },
-  {
-    ref: '#REV-20260613-H',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ ใบกำกับภาษี: แบ่งเป็น 3 sub-tab เลือกหัวแท็บได้ — "ออกใบกำกับ", "เพิ่มลูกค้า" (ย้ายมาจากแท็บ ลูกค้า เดิม), "รายงานภาษีขาย" (การ์ด "ใบกำกับที่ออกแล้ว" ยังแสดงด้านล่างเสมอ)',
-      'ลบแท็บ "ลูกค้า" แยกเดิมออก เนื่องจากรวมเข้ากับแท็บ ใบกำกับภาษี แล้ว',
-    ],
-  },
-  {
-    ref: '#REV-20260613-G',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ Order: แบ่งเป็น 2 sub-tab เลือกหัวแท็บได้ — แท็บ 1 "สร้าง Order จากใบเสนอราคา", แท็บ 2 "Order ทั่วไป / ใบเสนอราคา / Item Master" (การ์ด "รายการ Order" ยังแสดงด้านล่างเสมอ)',
-    ],
-  },
-  {
-    ref: '#REV-20260613-F',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แก้การ์ดสรุป "ยังไม่ระบุสถานะ", "อื่นๆ (ค่าไม่ตรงสถานะ)", "BackOrder (เลยกำหนดส่ง)" คลิกแล้วไม่กรองผล — เกิดจาก select #trkFilter ไม่มี option ที่ตรงกับค่า filter เหล่านี้ ทำให้ตั้งค่าไม่ติด เพิ่ม option proc:, proc:__other__, overdue ให้ครบ',
-    ],
-  },
-  {
-    ref: '#REV-20260613-E',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'จัดกลุ่มการ์ดสรุปสถานะในหน้าติดตามงานใหม่: "สถานะ Process งาน" (ยังไม่ระบุสถานะ, รอ Confirm, กำลังผลิต, ส่งชุป, ส่งตัวอย่าง+รอสรุป, ส่งยังไม่ครบ, FG รอเรียก, Stock, เรียบร้อย, อื่นๆ) และ "อื่นๆ (ไม่ใช่ Process งาน)" (BackOrder เลยกำหนดส่ง)',
-    ],
-  },
-  {
-    ref: '#REV-20260613-D',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แท็บ "ใบกำกับภาษี" โหมดเดสทอป: ปรับ layout ช่อง "ลูกค้า"/"ประเภทใบกำกับ" เป็น 3fr/1fr (จากเดิม span 2 คอลัมน์เท่ากันที่ทำให้ข้อความ "รอเปิด N PO" ถูกตัด) ให้ช่องลูกค้ากว้างพอแสดงข้อความครบ',
-    ],
-  },
-  {
-    ref: '#REV-20260613-C',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แก้แท็บ "ใบกำกับภาษี" โหมดเดสทอป: ช่อง "ลูกค้า" กับ "ประเภทใบกำกับ" ทับกัน — เกิดจาก #inv_customer ตั้ง min-width: 420px ทำให้ล้นคอลัมน์ ลบ min-width และให้ใช้ width:100% ภายในพื้นที่ span 2 คอลัมน์แทน',
-    ],
-  },
-  {
-    ref: '#REV-20260613-B',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'แก้ dropdown ลูกค้า (สร้าง Order ทั่วไป/ใบเสนอราคาทั่วไป): เลือกซ้ำหลายครั้งได้ — เดิมคลิกเลือกได้แค่ครั้งเดียวเพราะคลิกซ้ำที่ช่องเดิมไม่ทำให้ event focus ยิงใหม่ (เพิ่ม onclick ช่วยเคลียร์ค่าด้วย)',
-    ],
-  },
-  {
-    ref: '#REV-20260613-A',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'การ์ด "สร้างใบเสนอราคาทั่วไป": ยกเลิกการบันทึกลงชีต Order — เหลือเฉพาะ "สร้างใบเสนอราคา/ดูตัวอย่าง" (เปิดพรีวิวพร้อมปริ้น) และ "เคลียร์การ์ด"',
-      'ลบฟังก์ชัน createGeneralQuote() ที่ไม่ใช้แล้ว',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BK',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'Dropdown ลูกค้า (สร้าง Order ทั่วไป/ใบเสนอราคาทั่วไป): เลือกแล้วสามารถกดเลือกเจ้าอื่นใหม่ได้ทันที ไม่ต้องลบช่องก่อน',
-      'แก้การบันทึกคอลัมน์ "ลูกค้า" ในชีต Order: แสดงชื่อเต็มตอนเลือก แต่บันทึกเป็น "ผู้ติดต่อ" เพื่อให้จับคู่กับระบบออกใบกำกับภาษีได้ถูกต้อง (ทั้ง Order ทั่วไป และใบเสนอราคาทั่วไป)',
-      'ย้อนแก้ตัวอย่างพรีวิวลูกค้าในหน้าหลัก (DATA) ให้กลับมาใช้รูปแบบ "ผู้ติดต่อ" ตรงกับที่บันทึกจริง เพื่อให้ออกใบกำกับภาษีหารายการ PO ที่รอออกใบกำกับเจอ',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BJ',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แก้ Code.gs: deleteOrder() อ่านคอลัมน์ No.PO ทั้งหมดครั้งเดียวแทนการวนเรียก getRange ทีละแถว (แก้ปัญหา "กำลังลบ..." ค้างเมื่อชีตมีแถวจำนวนมาก)',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BI',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แก้ชื่อลูกค้าที่บันทึกในชีต Order (คอลัมน์ AB): จับคู่ "ผู้ติดต่อ" กับชีต Customers แล้วใช้ชื่อบริษัทแบบเต็ม (+สาขา) แทนชื่อย่อ',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BH',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แก้ Code.gs: addOrder() หาตำแหน่งแถวสุดท้ายที่มีข้อมูลจริงในชีต Order (เช็คคอลัมน์ A,B) แทน appendRow()',
-      'แก้ปัญหาบันทึก Order ใหม่แล้วกระโดดไปแถวที่ห่างจากข้อมูลเดิมมาก (เช่น แถว 2172 ทั้งที่ข้อมูลจริงมีถึงแถว 1171)',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BG',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'การ์ด "สร้างใบเสนอราคาทั่วไป": เพิ่มปุ่ม "💾 สร้างใบเสนอราคา" บันทึกลงชีต Order (workType: ใบเสนอราคาทั่วไป)',
-      'ช่องรายละเอียดสินค้า/บริการ ในใบเสนอราคาทั่วไป เลือกจาก Item Master ได้ (เติมหน่วย/ราคาอัตโนมัติ)',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BF',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แก้ตาราง Item Master: แถวแก้ไขให้คอลัมน์ตรงกับหัวตาราง (ชื่อรายการ/หน่วย/ราคา/ปุ่ม)',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BE',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'เพิ่มการ์ด "รายการสินค้า/บริการที่ใช้บ่อย (Item Master)" ในแท็บ Order (ซ่อนไว้เป็นค่าเริ่มต้น)',
-      'เพิ่ม/แก้ไข/ลบ รายการสินค้า-บริการ (ชื่อ, หน่วย, ราคา/หน่วย) บันทึกลงชีต ItemMaster',
-      'ช่อง "รายการสินค้า/บริการ" ใน Order ทั่วไป เลือกจาก Item Master แล้วเติมหน่วย/ราคาให้อัตโนมัติ',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BD',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แท็บ Order: การ์ด "สร้าง Order ทั่วไป" และ "สร้างใบเสนอราคาทั่วไป" ซ่อนเนื้อหาไว้เป็นค่าเริ่มต้น',
-      'กดปุ่ม "▼ แสดง" ที่หัวการ์ดเพื่อเปิด/ปิดเนื้อหาเมื่อต้องการใช้งาน',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BC',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แก้บัค: ช่อง "รายละเอียดสินค้า/บริการ" ในใบเสนอราคาทั่วไป พิมพ์ติดกันไม่ได้ (เพราะ render ตารางใหม่ทุกครั้งที่พิมพ์ ทำให้เสีย focus)',
-      'ตอนนี้พิมพ์ในช่องรายละเอียด/หน่วย/จำนวน/ราคาได้ตามปกติ ไม่มีการ render ตารางใหม่ขณะพิมพ์',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BB',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แท็บ Order: เพิ่มการ์ด "สร้างใบเสนอราคาทั่วไป (กรอกหลายรายการเอง)" สำหรับงาน/สินค้าที่ไม่ใช่สเปคไส้กรอง',
-      'กรอกลูกค้า เลขที่ใบเสนอราคา วันที่ และเพิ่ม/ลบรายการได้หลายรายการ (รายละเอียด/จำนวน/หน่วย/ราคา)',
-      'กดปุ่ม "👁️ ดูใบเสนอราคา" เพื่อแสดงเอกสารใบเสนอราคาพร้อมคำนวณ VAT และยอดรวมอัตโนมัติ',
-    ],
-  },
-  {
-    ref: '#REV-20260612-BA',
-    
+      'รายงานภาษีขาย: เปลี่ยนช่องกรอกปีจาก ค.ศ. เป็น พ.ศ. (ให้ตรงกับวันที่ในชีตซึ่งเก็บเป็น พ.ศ.) แก้ปัญหากรองรายงาน
