@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=6.67">
+<link rel="stylesheet" href="style.css?v=6.69">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v6.67</span>
+      <span class="ph-chip ver">v6.69</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1376,6 +1376,14 @@
 <div id="tab-order" class="tab-content">
 <div style="max-width:880px;margin:0 auto;padding:12px 8px 80px">
 
+  <!-- ── Sub-tabs ของแท็บ Order ── -->
+  <div class="ord-subtabbar">
+    <button type="button" class="ord-subtab-btn active" id="ordSubBtn1" onclick="_ordSubTabSwitch('1')">📦 สร้าง Order จากใบเสนอราคา</button>
+    <button type="button" class="ord-subtab-btn" id="ordSubBtn2" onclick="_ordSubTabSwitch('2')">🧾 Order ทั่วไป / ใบเสนอราคา / Item Master</button>
+  </div>
+
+  <div id="ordSubPanel1" class="ord-subtab-panel active">
+
   <!-- สร้าง Order จากใบเสนอราคา -->
   <div class="card">
     <div class="card-header">
@@ -1467,6 +1475,10 @@
       <span id="ord_createStatus" style="font-size:.76rem;color:var(--t3)"></span>
     </div>
   </div>
+
+  </div><!-- end ordSubPanel1 -->
+
+  <div id="ordSubPanel2" class="ord-subtab-panel">
 
   <!-- สร้าง Order ทั่วไป (ไม่ผูกกับใบเสนอราคา/สเปคไส้กรอง) -->
   <div class="card" style="margin-top:14px">
@@ -1618,6 +1630,8 @@
       <div id="imTableWrap"></div>
     </div>
   </div>
+
+  </div><!-- end ordSubPanel2 -->
 
   <!-- รายการ Order -->
   <div class="card" style="margin-top:14px">
@@ -2015,33 +2029,20 @@
 <!-- ══════════════════════════════════════════════════ -->
 <!-- TAB: ลูกค้า (Customers)                            -->
 <!-- ══════════════════════════════════════════════════ -->
-<div id="tab-cust" class="tab-content">
-<div style="max-width:1000px;margin:0 auto;padding:12px 8px 80px">
-  <div class="card">
-    <div class="card-header">
-      <div class="icon ic-ext">👥</div>
-      <h2>ลูกค้า</h2>
-      <button onclick="fetchCustomers()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
-        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
-        🔄 รีเฟรช
-      </button>
-    </div>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-      <button onclick="custAddRow()"
-        style="padding:6px 16px;border-radius:8px;border:1px solid rgba(99,102,241,.4);
-        background:rgba(99,102,241,.1);color:#818cf8;font-family:'Sarabun',sans-serif;
-        font-size:.8rem;cursor:pointer">➕ เพิ่มลูกค้า</button>
-    </div>
-    <div id="custTableWrap" style="overflow-x:auto"></div>
-  </div>
-</div>
-</div><!-- end tab-cust -->
-
 <!-- ══════════════════════════════════════════════════ -->
 <!-- TAB: ใบกำกับภาษี (Tax Invoice)                     -->
 <!-- ══════════════════════════════════════════════════ -->
 <div id="tab-invoice" class="tab-content">
 <div style="max-width:100%;margin:0 auto;padding:12px 8px 80px">
+
+  <!-- ── Sub-tabs ── -->
+  <div class="ord-subtabbar">
+    <button type="button" class="ord-subtab-btn active" id="invSubBtn1" onclick="_invSubTabSwitch('1')">📑 ออกใบกำกับ</button>
+    <button type="button" class="ord-subtab-btn" id="invSubBtn2" onclick="_invSubTabSwitch('2')">👥 เพิ่มลูกค้า</button>
+    <button type="button" class="ord-subtab-btn" id="invSubBtn3" onclick="_invSubTabSwitch('3')">📊 รายงานภาษีขาย</button>
+  </div>
+
+  <div id="invSubPanel1" class="ord-subtab-panel active">
   <div class="card">
     <div class="card-header">
       <div class="icon ic-ext">📑</div>
@@ -2074,20 +2075,30 @@
         📄 ออกใบกำกับภาษี / Preview</button>
     </div>
   </div>
+  </div><!-- end invSubPanel1 -->
 
-  <div class="card" style="margin-top:14px">
+  <div id="invSubPanel2" class="ord-subtab-panel">
+  <div class="card">
     <div class="card-header">
-      <div class="icon ic-ext">🧾</div>
-      <h2>ใบกำกับที่ออกแล้ว</h2>
-      <button onclick="fetchIssuedInvoices()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+      <div class="icon ic-ext">👥</div>
+      <h2>ลูกค้า</h2>
+      <button onclick="fetchCustomers()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
         background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
         🔄 รีเฟรช
       </button>
     </div>
-    <div id="invIssuedListWrap" style="overflow-x:auto"></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button onclick="custAddRow()"
+        style="padding:6px 16px;border-radius:8px;border:1px solid rgba(99,102,241,.4);
+        background:rgba(99,102,241,.1);color:#818cf8;font-family:'Sarabun',sans-serif;
+        font-size:.8rem;cursor:pointer">➕ เพิ่มลูกค้า</button>
+    </div>
+    <div id="custTableWrap" style="overflow-x:auto"></div>
   </div>
+  </div><!-- end invSubPanel2 -->
 
-  <div class="card" style="margin-top:14px">
+  <div id="invSubPanel3" class="ord-subtab-panel">
+  <div class="card">
     <div class="card-header">
       <div class="icon ic-ext">📊</div>
       <h2>รายงานภาษีขาย</h2>
@@ -2112,6 +2123,21 @@
         📊 ออกรายงานภาษีขาย / Preview</button>
     </div>
   </div>
+  </div><!-- end invSubPanel3 -->
+
+  <!-- ใบกำกับที่ออกแล้ว — แสดงด้านล่างเสมอ ไม่ขึ้นกับ sub-tab -->
+  <div class="card" style="margin-top:14px">
+    <div class="card-header">
+      <div class="icon ic-ext">🧾</div>
+      <h2>ใบกำกับที่ออกแล้ว</h2>
+      <button onclick="fetchIssuedInvoices()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        🔄 รีเฟรช
+      </button>
+    </div>
+    <div id="invIssuedListWrap" style="overflow-x:auto"></div>
+  </div>
+
 </div>
 </div><!-- end tab-invoice -->
 
@@ -2270,14 +2296,14 @@
   </div>
 </div>
 
-<script src="core.js?v=6.67"></script>
-<script src="data.js?v=6.67"></script>
-<script src="formcalc.js?v=6.67"></script>
-<script src="aifeatures.js?v=6.67"></script>
-<script src="theme.js?v=6.67"></script>
-<script src="order.js?v=6.67"></script>
-<script src="purchase.js?v=6.67"></script>
-<script src="invoice.js?v=6.67"></script>
+<script src="core.js?v=6.69"></script>
+<script src="data.js?v=6.69"></script>
+<script src="formcalc.js?v=6.69"></script>
+<script src="aifeatures.js?v=6.69"></script>
+<script src="theme.js?v=6.69"></script>
+<script src="order.js?v=6.69"></script>
+<script src="purchase.js?v=6.69"></script>
+<script src="invoice.js?v=6.69"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2406,9 +2432,26 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260613-F',
+    ref: '#REV-20260613-H',
     date: '2026-06-13',
     current: true,
+    items: [
+      'แท็บ ใบกำกับภาษี: แบ่งเป็น 3 sub-tab เลือกหัวแท็บได้ — "ออกใบกำกับ", "เพิ่มลูกค้า" (ย้ายมาจากแท็บ ลูกค้า เดิม), "รายงานภาษีขาย" (การ์ด "ใบกำกับที่ออกแล้ว" ยังแสดงด้านล่างเสมอ)',
+      'ลบแท็บ "ลูกค้า" แยกเดิมออก เนื่องจากรวมเข้ากับแท็บ ใบกำกับภาษี แล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260613-G',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'แท็บ Order: แบ่งเป็น 2 sub-tab เลือกหัวแท็บได้ — แท็บ 1 "สร้าง Order จากใบเสนอราคา", แท็บ 2 "Order ทั่วไป / ใบเสนอราคา / Item Master" (การ์ด "รายการ Order" ยังแสดงด้านล่างเสมอ)',
+    ],
+  },
+  {
+    ref: '#REV-20260613-F',
+    date: '2026-06-13',
+    current: false,
     items: [
       'แก้การ์ดสรุป "ยังไม่ระบุสถานะ", "อื่นๆ (ค่าไม่ตรงสถานะ)", "BackOrder (เลยกำหนดส่ง)" คลิกแล้วไม่กรองผล — เกิดจาก select #trkFilter ไม่มี option ที่ตรงกับค่า filter เหล่านี้ ทำให้ตั้งค่าไม่ติด เพิ่ม option proc:, proc:__other__, overdue ให้ครบ',
     ],
@@ -2658,14 +2701,4 @@ const DEV_LOGS = [
     date: '2026-06-12',
     current: false,
     items: [
-      'แก้บั๊กการ์ดสรุป "ติดตามสถานะงาน": ออเดอร์ที่สถานะส่งงาน = ส่งแล้ว (หรือ Process = เรียบร้อย) จะถูกนับเป็น "เรียบร้อย" เสมอ ไม่ถูกนับซ้ำในการ์ด ส่งชุป/ส่งตัวอย่าง/ส่งยังไม่ครบ ฯลฯ',
-      'คลิกการ์ดสรุปเพื่อกรองรายการ ก็ใช้กฎเดียวกัน ทำให้จำนวนตรงกับรายการที่กรองได้จริง',
-    ],
-  },
-  {
-    ref: '#REV-20260612-AM',
-    date: '2026-06-12',
-    current: false,
-    items: [
-      'แก้บั๊ก: อัปโหลดโลโก้แล้วรูปไม่ขึ้น — Code.gs เปลี่ยน URL โลโก้จาก drive.google.com/uc เป็น lh3.googleusercontent.com (กันหน้า "ยืนยันสแกนไวรัส" ของ Drive)',
-      'แก้ onerror ของโลโก้ใน header ไม่ให้ทำลาย element รูปถาวร — ใช้ span สำรองแสดง "PT" แทน เพื่อให้รูปกลับ�
+      'แก้บั๊กการ์ดสรุป "ติดตามสถานะงาน": ออเดอร์ที่�

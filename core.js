@@ -8,6 +8,24 @@ function _toggleCardBody(id, btn) {
   el.style.display = show ? '' : 'none';
   if (btn) btn.textContent = show ? '▲ ซ่อน' : '▼ แสดง';
 }
+// ── สลับ sub-tab ในแท็บ Order ── ('1' = สร้าง Order จากใบเสนอราคา, '2' = Order ทั่วไป/ใบเสนอราคา/Item Master)
+function _ordSubTabSwitch(which) {
+  ['1','2'].forEach(n => {
+    const panel = $('ordSubPanel' + n);
+    const btn   = $('ordSubBtn' + n);
+    if (panel) panel.classList.toggle('active', n === which);
+    if (btn)   btn.classList.toggle('active', n === which);
+  });
+}
+// ── สลับ sub-tab ในแท็บ ใบกำกับภาษี ── ('1' = ออกใบกำกับ, '2' = เพิ่มลูกค้า, '3' = รายงานภาษีขาย)
+function _invSubTabSwitch(which) {
+  ['1','2','3'].forEach(n => {
+    const panel = $('invSubPanel' + n);
+    const btn   = $('invSubBtn' + n);
+    if (panel) panel.classList.toggle('active', n === which);
+    if (btn)   btn.classList.toggle('active', n === which);
+  });
+}
 const num = id => parseFloat(String($(id).value).replace(/,/g,'')) || 0;
 const fmt = n => '฿' + n.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2});
 
@@ -88,7 +106,6 @@ const TAB_DEFS = [
   { id:'order',     icon:'📦', label:'Order'    },
   { id:'track',     icon:'🚀', label:'ติดตามงาน' },
   { id:'po',        icon:'🧾', label:'ใบสั่งซื้อ' },
-  { id:'cust',      icon:'👥', label:'ลูกค้า'    },
   { id:'invoice',   icon:'📑', label:'ใบกำกับภาษี' },
   { id:'api',       icon:'🔧', label:'ตั้งค่า'  },
   { id:'mat',       icon:'🧱', label:'MAT'      },

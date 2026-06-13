@@ -1200,6 +1200,18 @@ body.trk-fullscreen-mode .trk-fs-toolbar {
 }
 .trk-fs-toolbar .trk-fs-clock { margin-left: auto; font-weight: 700; color: var(--t1); }
 
+/* ── Sub-tabs ในแท็บ Order ── */
+.ord-subtabbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.ord-subtab-btn {
+  padding: 9px 16px; border-radius: 10px; border: 1px solid var(--bc-div);
+  background: var(--bg-card, transparent); color: var(--t2);
+  font-family: 'Sarabun',sans-serif; font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.ord-subtab-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.ord-subtab-panel { display: none; }
+.ord-subtab-panel.active { display: block; }
+
 /* การ์ดสรุปจำนวนงานแยกตามสถานะ */
 .trk-summary { margin-bottom: 14px; }
 .trk-sum-group { margin-bottom: 10px; }
