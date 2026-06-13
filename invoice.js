@@ -398,7 +398,20 @@ async function invGeneratePreview() {
     const data = await res.json();
     if (!data || data.status !== 'ok') throw new Error((data && data.message) || 'failed');
     Swal.close();
-    await _invShowPreview(data.nextNo, type, cust);
+
+    // ── เสนอเลขที่ใบกำกับถัดไป แต่แก้ไขได้ (เหมือนใบวางบิล) ──
+    const numResult = await Swal.fire({
+      icon:'question', title:'เลขที่ใบกำกับ',
+      input:'text', inputValue: data.nextNo,
+      inputLabel:'ระบบเสนอเลขถัดไปให้ — แก้ไขได้ถ้าต้องการ',
+      showCancelButton:true, confirmButtonText:'ใช้เลขนี้', cancelButtonText:'ยกเลิก',
+      confirmButtonColor:'#2563eb', background:'#0d1b2a', color:'#cce4ff',
+      inputValidator: v => !v.trim() ? 'กรุณากรอกเลขที่ใบกำกับ' : undefined
+    });
+    if (!numResult.isConfirmed) return;
+    const invoiceNo = numResult.value.trim();
+
+    await _invShowPreview(invoiceNo, type, cust);
   } catch (e) {
     Swal.fire({icon:'error',title:'ขอเลขที่ไม่สำเร็จ',text:e.message,background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#dc2626'});
   }
@@ -1334,6 +1347,7 @@ function _invRepShowPreview(list, month, year) {
       <tbody>${rows || `<tr><td colspan="9" style="padding:18px;text-align:center;color:#999">ไม่มีใบกำกับในเดือนนี้</td></tr>`}</tbody>
       <tfoot>
         <tr style="background:#e0f2f1;color:#0f4f49;border-top:2px solid #0d9488;-webkit-print-color-adjust:exact;print-color-adjust:exact">
+          <td colspan="6" style="padding:8px;text-align:right;font-weight:700;border-radius:0 0 0 4px">สรุปยอดขาย ณ สิ้นเดือน</td>
           <td colspan="6" style="padding:8px;text-align:right;font-weight:700;border-radius:0 0 0 4px">สรุปยอดขาย ณ สิ้นเดือน</td>
           <td style="padding:8px;text-align:right;font-weight:800">${fmtB(sumSubtotal)}</td>
           <td style="padding:8px;text-align:right;font-weight:800">${fmtB(sumVat)}</td>

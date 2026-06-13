@@ -17,10 +17,12 @@ const ORDER_COLS = {
   update: 20, status: 22, totalTax: 23, add: 24, my: 25,
   wantDate: 26, customer: 27,
   invoiceNo: 28, invoiceDate: 29,  // AC, AD = เลขที่/วันที่ใบกำกับภาษี
-  meshOut: 30, meshIn: 31          // AE, AF = ตะแกรงนอก/ตะแกรงใน
+  meshOut: 30, meshIn: 31,         // AE, AF = ตะแกรงนอก/ตะแกรงใน
+  matTop: 32, matBot: 33           // AG, AH = ฝาบน/ฝาล่าง
 };
-const ORDER_NUM_COLS = 32;
+const ORDER_NUM_COLS = 34;
 let _orderCache = [];
+const ORDER_LOAD_LIMIT = 100; // โหลดปกติ = 100 รายการล่าสุด, กด "โหลดทั้งหมด" = 0 (ทั้งหมด)
 let _itemMasterCache = []; // รายการสินค้า/บริการที่ใช้บ่อย (Item Master) — โหลดจาก fetchItemMaster()
 let _ordEditNoPO = null;
 let _trkPage = parseInt(localStorage.getItem('ptts_trk_page')) || 1;
@@ -108,8 +110,12 @@ function updateOrderPreview() {
   if ($('ord_material')) $('ord_material').textContent = r[DT.rawMat] || '—';
 
   // ตะแกรงนอก/ตะแกรงใน — ดึงจาก DATA มาให้อัตโนมัติ แต่แก้ไขเพิ่มเติมได้ (ไม่ทับค่าที่แก้เอง)
-  _ordAutoFill('ord_meshOut', matLabel(r[DT.meshOut]) || '');
-  _ordAutoFill('ord_meshIn',  matLabel(r[DT.meshIn])  || '');
+  _ordAutoFill('ord_meshOut', r[DT.meshOut] || '');
+  _ordAutoFill('ord_meshIn',  r[DT.meshIn]  || '');
+
+  // ฝาบน/ฝาล่าง — ดึงจาก DATA มาให้อัตโนมัติ แต่แก้ไขเพิ่มเติมได้ (ไม่ทับค่าที่แก้เอง)
+  _ordAutoFill('ord_matTop', r[DT.matTop] || '');
+  _ordAutoFill('ord_matBot', r[DT.matBot] || '');
 
   _ordUpdateCreateBtn();
 }
@@ -155,6 +161,8 @@ function _ordResetCard() {
   if ($('ord_mold'))  { $('ord_mold').value = ''; delete $('ord_mold').dataset.autoVal; }
   if ($('ord_meshOut')) { $('ord_meshOut').value = ''; delete $('ord_meshOut').dataset.autoVal; }
   if ($('ord_meshIn'))  { $('ord_meshIn').value = '';  delete $('ord_meshIn').dataset.autoVal; }
+  if ($('ord_matTop')) { $('ord_matTop').value = ''; delete $('ord_matTop').dataset.autoVal; }
+  if ($('ord_matBot')) { $('ord_matBot').value = ''; delete $('ord_matBot').dataset.autoVal; }
   if ($('ord_workStatus')) $('ord_workStatus').value = 'ปรกติ';
   _ordSourceRow = null;
   updateOrderPreview();
@@ -352,6 +360,8 @@ async function createOrder() {
   row[ORDER_COLS.customer]    = customer;
   row[ORDER_COLS.meshOut]     = $('ord_meshOut')?.value || '';
   row[ORDER_COLS.meshIn]      = $('ord_meshIn')?.value || '';
+  row[ORDER_COLS.matTop]      = $('ord_matTop')?.value || '';
+  row[ORDER_COLS.matBot]      = $('ord_matBot')?.value || '';
 
   const createBtn = $('ord_createBtn');
   const statusEl  = $('ord_createStatus');
@@ -858,7 +868,8 @@ async function deleteOrderRow(noPO, noQuo) {
 }
 
 // โหลดรายการ Order จากชีต "Order"
-async function fetchOrders() {
+// showAll = true → โหลดทั้งหมด (limit=0), false/ไม่ระบุ → โหลดล่าสุด ORDER_LOAD_LIMIT รายการ
+async function fetchOrders(showAll) {
   const tbody = $('ordBody');
   const trkBody = $('trackBody');
   const trkSum  = $('trkSummary');
@@ -867,11 +878,12 @@ async function fetchOrders() {
     tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem">⚠️ ยังไม่ได้ตั้งค่า Script URL</td></tr>`;
     return;
   }
+  const limit = showAll ? 0 : ORDER_LOAD_LIMIT;
   tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--t3);font-size:.8rem"><span class="spin-ico">↻</span> กำลังโหลด…</td></tr>`;
   if (trkBody) trkBody.innerHTML = `<div style="padding:30px;text-align:center;color:var(--t3);font-size:.85rem"><span class="spin-ico">↻</span> กำลังโหลด…</div>`;
   if (trkSum)  trkSum.innerHTML  = '';
   try {
-    const res = await fetch(SCRIPT_URL + '?action=getOrders', {mode:'cors'});
+    const res = await fetch(SCRIPT_URL + '?action=getOrders&limit=' + limit, {mode:'cors'});
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.status === 'error') throw new Error(data.message || 'unknown');
@@ -880,11 +892,29 @@ async function fetchOrders() {
     _initSeenIfEmpty(SEEN_KEY_ORDER, _orderCache.map(r => r[ORDER_COLS.noPO]));
     _ordPage = 1;
     renderOrderTable();
+    renderOrdLoadBanner(data.total || _orderCache.length, data.limited);
     if (typeof renderTrackDashboard === 'function') renderTrackDashboard();
     if (typeof _invRefreshCustomerSelect === 'function') _invRefreshCustomerSelect(); // อัปเดตจำนวน PO ที่รอเปิดใบกำกับ
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="10" style="padding:30px;text-align:center;color:#f87171;font-size:.8rem">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
     if (trkBody) trkBody.innerHTML = `<div style="padding:30px;text-align:center;color:#f87171;font-size:.85rem">โหลดข้อมูลไม่สำเร็จ: ${err.message}</div>`;
+  }
+}
+
+// แบนเนอร์ "โหลดทั้งหมด" — แสดงเมื่อโหลดมาไม่ครบ (limited)
+function renderOrdLoadBanner(total, limited) {
+  const el = $('ordLoadBanner');
+  if (!el) return;
+  if (limited) {
+    el.innerHTML = `<span style="color:#f59e0b;font-size:.75rem">
+      ⚡ แสดง ${ORDER_LOAD_LIMIT.toLocaleString()} รายการล่าสุด จากทั้งหมด ${total.toLocaleString()} รายการ &nbsp;
+      <button onclick="fetchOrders(true)" style="padding:3px 10px;border-radius:6px;cursor:pointer;
+        font-family:Sarabun,sans-serif;font-size:.72rem;border:1px solid #f59e0b;
+        background:rgba(245,158,11,.15);color:#f59e0b">
+        📂 โหลดทั้งหมด ${total.toLocaleString()} รายการ
+      </button></span>`;
+  } else {
+    el.innerHTML = '';
   }
 }
 
@@ -1229,6 +1259,10 @@ function showOrderDetail(noPO) {
             ${rowField('📦','รายการสินค้า', g('productList'))}
             ${rowField('🔢','จำนวน', g('qty'))}
             ${rowField('🧪','วัตถุดิบ', g('material'))}
+            ${rowField('🔝','ฝาบน', g('matTop') || '—')}
+            ${rowField('🔻','ฝาล่าง', g('matBot') || '—')}
+            ${rowField('🕸️','ตะแกรงนอก', g('meshOut') || '—')}
+            ${rowField('🕸️','ตะแกรงใน', g('meshIn') || '—')}
             ${rowField('💰','ราคาเสนอขาย', price ? price.toLocaleString('th-TH',{minimumFractionDigits:2}) + ' บาท' : '—')}
           </div>
 
@@ -1415,8 +1449,10 @@ async function _ordCopySpec(noPO) {
   if (status === 'เรียบร้อย') status = 'เรียบร้อยพร้อมส่ง';
 
   const refId   = dtRow ? (dtRow[DT.refId] || '—') : '—';
-  const meshOut = dtRow ? matLabel(dtRow[DT.meshOut]) : '';
-  const meshIn  = dtRow ? matLabel(dtRow[DT.meshIn])  : '';
+  const meshOut = g('meshOut') || (dtRow ? matLabel(dtRow[DT.meshOut]) : '');
+  const meshIn  = g('meshIn')  || (dtRow ? matLabel(dtRow[DT.meshIn])  : '');
+  const matTop  = g('matTop') || (dtRow ? matLabel(dtRow[DT.matTop]) : '');
+  const matBot  = g('matBot') || (dtRow ? matLabel(dtRow[DT.matBot]) : '');
   const gapWeld = dtRow ? String(dtRow[DT.gapWeld] || '').trim() : '';
 
   const productList = g('productList') || '—';
@@ -1431,6 +1467,8 @@ async function _ordCopySpec(noPO) {
     `แบบงาน: ${g('workType') || '—'}`,
     `รายการ: ${productLine}`,
     `จำนวน: ${qty} ลูก.`,
+    `ฝาบน: ${matTop || '—'}`,
+    `ฝาล่าง: ${matBot || '—'}`,
     `ตะแกรงนอก: ${meshOut || '—'}`,
     `ตะแกรงใน: ${meshIn || '—'}`,
     `ช่องว่างจีบเหลือ: ${gapWeld ? gapWeld + ' mm.' : '—'}`,
@@ -1478,6 +1516,8 @@ function _ordPrintDetail(noPO) {
       <tr><td class="lbl2">แม่พิมพ์</td><td>${g('mold')}</td><td class="lbl2">แบบงาน</td><td>${g('workType')}</td></tr>
       <tr><td class="lbl2">รายการสินค้า</td><td>${g('productList')}</td><td class="lbl2">จำนวน</td><td>${g('qty')}</td></tr>
       <tr><td class="lbl2">วัตถุดิบ</td><td>${g('material')}</td><td class="lbl2">ราคาเสนอขาย</td><td>${price ? price.toLocaleString('th-TH',{minimumFractionDigits:2})+' บาท' : '—'}</td></tr>
+      <tr><td class="lbl2">ฝาบน</td><td>${g('matTop') || '—'}</td><td class="lbl2">ฝาล่าง</td><td>${g('matBot') || '—'}</td></tr>
+      <tr><td class="lbl2">ตะแกรงนอก</td><td>${g('meshOut') || '—'}</td><td class="lbl2">ตะแกรงใน</td><td>${g('meshIn') || '—'}</td></tr>
       <tr><td class="lbl2">Process</td><td>${g('process')}</td><td class="lbl2">สถานะส่งงาน</td><td>${g('statusDeliver')}</td></tr>
       <tr><td class="lbl2">หมายเหตุ</td><td colspan="3">${g('note')}</td></tr>
     </table>
@@ -1536,6 +1576,8 @@ function openEditOrder(noPO) {
   $('ordEdit_material').value    = r[ORDER_COLS.material] || '';
   $('ordEdit_meshOut').value      = r[ORDER_COLS.meshOut] || '';
   $('ordEdit_meshIn').value       = r[ORDER_COLS.meshIn] || '';
+  if ($('ordEdit_matTop')) $('ordEdit_matTop').value = r[ORDER_COLS.matTop] || '';
+  if ($('ordEdit_matBot')) $('ordEdit_matBot').value = r[ORDER_COLS.matBot] || '';
   $('ordEdit_note').value        = r[ORDER_COLS.note] || '';
   if ($('ordEdit_workStatus')) $('ordEdit_workStatus').value = r[ORDER_COLS.status] || 'ปรกติ';
   _ordClearPoFile('ordEdit');
@@ -1569,6 +1611,8 @@ async function saveOrderEdit() {
   row[ORDER_COLS.material]    = $('ordEdit_material').value;
   row[ORDER_COLS.meshOut]     = $('ordEdit_meshOut').value;
   row[ORDER_COLS.meshIn]      = $('ordEdit_meshIn').value;
+  row[ORDER_COLS.matTop]      = $('ordEdit_matTop')?.value ?? row[ORDER_COLS.matTop] ?? '';
+  row[ORDER_COLS.matBot]      = $('ordEdit_matBot')?.value ?? row[ORDER_COLS.matBot] ?? '';
   row[ORDER_COLS.note]        = $('ordEdit_note').value;
   row[ORDER_COLS.poFile]      = r[ORDER_COLS.poFile] || '';
   row[ORDER_COLS.poFilePath]  = r[ORDER_COLS.poFilePath] || '';
@@ -1609,6 +1653,73 @@ async function saveOrderEdit() {
   } finally {
     if (saveBtn) saveBtn.disabled = false;
   }
+}
+
+// ── Backfill ฝาบน/ฝาล่าง (matTop/matBot) ให้ Order เก่าทุกแถว (รันครั้งเดียว) ──
+// ดึงค่าจาก DATA (DT.matTop/DT.matBot ตาม noQuo) มาเติมคอลัมน์ AG/AH ของ Order
+// ที่ยังว่างอยู่ — ไม่ทับค่าที่มีอยู่แล้ว
+async function _ordBackfillMatTopBot() {
+  const confirmRes = await Swal.fire({
+    icon: 'question',
+    title: 'ดึงฝาบน/ฝาล่าง ย้อนหลัง?',
+    html: 'ระบบจะดึงค่า "ฝาบน/ฝาล่าง" จากข้อมูล DATA (ตาม No.Quo) มาเติมใน Order ทุกแถวที่ยังไม่มีข้อมูล<br><span style="font-size:.78rem;color:#8b8aaa">แถวที่มีข้อมูลอยู่แล้วจะไม่ถูกทับ — ทำครั้งนี้ครั้งเดียวก็พอ</span>',
+    showCancelButton: true,
+    confirmButtonText: '✅ เริ่มดึงข้อมูล', cancelButtonText: 'ยกเลิก',
+    background: '#0a1c2e', color: '#f1f5f9',
+    confirmButtonColor: '#f59e0b', cancelButtonColor: '#475569'
+  });
+  if (!confirmRes.isConfirmed) return;
+
+  Swal.fire({
+    title: '⏳ กำลังโหลดข้อมูล...', allowOutsideClick: false,
+    background: '#0d1b2a', color: '#cce4ff', didOpen: () => Swal.showLoading()
+  });
+
+  if (!_dtCache || !_dtCache.length) await dtRefresh(false);
+  if (!_orderCache || !_orderCache.length) await fetchOrders();
+
+  const targets = [];
+  for (const r of _orderCache) {
+    const curTop = String(r[ORDER_COLS.matTop] ?? '').trim();
+    const curBot = String(r[ORDER_COLS.matBot] ?? '').trim();
+    if (curTop && curBot) continue; // มีข้อมูลครบแล้ว ไม่ต้องแก้
+
+    const noQuo = String(r[ORDER_COLS.noQuo] ?? '').trim();
+    const noPO  = String(r[ORDER_COLS.noPO] ?? '').trim();
+    if (!noPO || !noQuo) continue;
+
+    const dt = (_dtCache || []).find(row => String(row[DT.noQuo] || '').trim() === noQuo);
+    if (!dt) continue;
+
+    const matTop = matLabel(dt[DT.matTop]) || '';
+    const matBot = matLabel(dt[DT.matBot]) || '';
+    if (!matTop && !matBot) continue;
+
+    const row = r.slice();
+    while (row.length < ORDER_NUM_COLS) row.push('');
+    if (!curTop && matTop) row[ORDER_COLS.matTop] = matTop;
+    if (!curBot && matBot) row[ORDER_COLS.matBot] = matBot;
+    targets.push({ noPO, row });
+  }
+
+  if (!targets.length) {
+    Swal.fire({icon:'info', title:'ไม่มีรายการที่ต้องอัปเดต', text:'ทุก Order มีข้อมูลฝาบน/ฝาล่างอยู่แล้ว หรือไม่พบข้อมูลใน DATA', background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1'});
+    return;
+  }
+
+  let done = 0;
+  for (const t of targets) {
+    Swal.update({ title: `⏳ กำลังอัปเดต... (${done + 1}/${targets.length})`, html: `No.PO: ${t.noPO}` });
+    try {
+      await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'updateOrder', noPO: t.noPO, row: t.row }) });
+    } catch (e) { /* ข้ามรายการที่ error */ }
+    done++;
+  }
+
+  await fetchOrders();
+  Swal.fire({icon:'success', title:'เสร็จแล้ว ✅', text:`อัปเดตฝาบน/ฝาล่าง ${done} รายการ`, background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1'});
 }
 
 // ══════════════════════════════════════════════════════
@@ -2037,4 +2148,3 @@ function renderTrackDashboard() {
     </div>`;
   }).join('');
 }
-      

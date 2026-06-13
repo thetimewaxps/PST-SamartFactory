@@ -140,6 +140,7 @@ const TAB_DEFS = [
   { id:'track',     icon:'🚀', label:'ติดตามงาน' },
   { id:'po',        icon:'🧾', label:'ใบสั่งซื้อ' },
   { id:'invoice',   icon:'📑', label:'ใบกำกับภาษี' },
+  { id:'plating',   icon:'🧪', label:'ใบส่งชุบ' },
   { id:'api',       icon:'🔧', label:'ตั้งค่า'  },
   { id:'mat',       icon:'🧱', label:'MAT'      },
 ];
@@ -296,6 +297,7 @@ function switchTab(name) {
   if (name === 'po')        { fetchSuppliers(); fetchPurchaseOrders(); if (!_poEditingNo && !_poItems.length) _poNewForm(); }
   if (name === 'cust')       { fetchCustomers(); fetchOrders(); }
   if (name === 'invoice')    { fetchCustomers(); fetchOrders(); invInit(); }
+  if (name === 'plating')    { fetchSuppliers(); fetchOrders(); platingInit(); }
 }
 
 // ── Tab Manager UI ───────────────────────────────────

@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=6.98">
+<link rel="stylesheet" href="style.css?v=7.33">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v6.98</span>
+      <span class="ph-chip ver">v7.33</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1436,6 +1436,14 @@
           </select>
         </div>
         <div>วัตถุดิบ: <b id="ord_material">—</b></div>
+        <div style="display:flex;align-items:center;gap:6px">ฝาบน:
+          <input type="text" id="ord_matTop" placeholder="ฝาบน"
+            style="flex:1;min-width:0;padding:3px 8px;font-size:.78rem;font-weight:700;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg1,#fff)">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">ฝาล่าง:
+          <input type="text" id="ord_matBot" placeholder="ฝาล่าง"
+            style="flex:1;min-width:0;padding:3px 8px;font-size:.78rem;font-weight:700;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg1,#fff)">
+        </div>
         <div style="display:flex;align-items:center;gap:6px">ตะแกรงนอก:
           <input type="text" id="ord_meshOut" placeholder="ตะแกรงนอก"
             style="flex:1;min-width:0;padding:3px 8px;font-size:.78rem;font-weight:700;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg1,#fff)">
@@ -1638,10 +1646,16 @@
     <div class="card-header">
       <div class="icon ic-ext">🗂️</div>
       <h2>รายการ Order</h2>
-      <button onclick="fetchOrders()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
-        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
-        🔄 รีเฟรช
-      </button>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="_ordBackfillMatTopBot()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(245,158,11,.35);
+          background:rgba(245,158,11,.1);color:#f59e0b;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+          🧩 ดึงฝาบน/ฝาล่าง (1 ครั้ง)
+        </button>
+        <button onclick="fetchOrders()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+          background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+          🔄 รีเฟรช
+        </button>
+      </div>
     </div>
     <div style="position:relative;margin-bottom:10px">
       <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:.85rem">🔍</span>
@@ -1701,6 +1715,7 @@
         ↺ ล้างตัวกรอง
       </button>
     </div>
+    <div id="ordLoadBanner" style="margin-bottom:8px;padding:0 2px"></div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--bc-card)">
       <table style="width:100%;border-collapse:collapse;min-width:980px">
         <thead>
@@ -1768,6 +1783,8 @@
       <div class="field"><label>ราคา</label><input type="number" id="ordEdit_price" step="0.01"></div>
       <div class="field" style="grid-column:1/-1"><label>รายการสินค้า</label><input type="text" id="ordEdit_productList"></div>
       <div class="field"><label>วัตถุดิบ</label><input type="text" id="ordEdit_material"></div>
+      <div class="field"><label>ฝาบน</label><input type="text" id="ordEdit_matTop"></div>
+      <div class="field"><label>ฝาล่าง</label><input type="text" id="ordEdit_matBot"></div>
       <div class="field"><label>ตะแกรงนอก</label><input type="text" id="ordEdit_meshOut"></div>
       <div class="field"><label>ตะแกรงใน</label><input type="text" id="ordEdit_meshIn"></div>
       <div class="field" style="grid-column:1/-1"><label>แนบไฟล์ PO</label>
@@ -2264,6 +2281,78 @@
 </div>
 </div><!-- end tab-invoice -->
 
+<div id="tab-plating" class="tab-content">
+<div style="max-width:100%;margin:0 auto;padding:12px 8px 80px">
+
+  <!-- ออกใบส่งชุบ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon ic-ext">🧪</div>
+      <h2>ออกใบส่งชุบ</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px;margin-bottom:12px">
+      <div class="field" style="grid-column:span 2"><label>ร้านชุบ</label>
+        <select id="platingSupplier" onchange="localStorage.setItem('ptts_plating_supplier', this.value)"></select>
+      </div>
+      <div class="field"><label>เลขที่ใบส่งชุบ</label>
+        <input type="text" id="platingNo" placeholder="เช่น ZP69/08">
+      </div>
+      <div class="field"><label>วันที่ออกใบส่งชุบ</label>
+        <input type="date" id="platingDate">
+      </div>
+    </div>
+
+    <div style="font-size:.82rem;font-weight:700;color:var(--c1);margin-bottom:8px">
+      📦 Order ที่สถานะ "ออกใบแจ้งรายการส่งชุปงานแล้ว"</div>
+    <div id="platingOrderListWrap" style="overflow-x:auto;margin-bottom:14px"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:.82rem;font-weight:700;color:var(--c1)">➕ รายการเพิ่มเอง (ไม่ผูกกับ Order)</div>
+      <button type="button" onclick="_platingAddExtraItem()" style="padding:6px 14px;border-radius:8px;
+        border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#818cf8;
+        font-family:'Sarabun',sans-serif;font-size:.8rem;cursor:pointer">➕ เพิ่มรายการ</button>
+    </div>
+    <div id="platingExtraItemsWrap" style="overflow-x:auto;margin-bottom:14px"></div>
+
+    <div style="text-align:right">
+      <button onclick="_platingGenerate()" style="padding:9px 22px;border-radius:8px;border:none;background:#2563eb;
+        color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+        👁️ ดูตัวอย่าง / พิมพ์ใบส่งชุบ</button>
+    </div>
+  </div>
+
+  <!-- ประวัติใบส่งชุบ -->
+  <div class="card" style="margin-top:14px">
+    <div class="card-header">
+      <div class="icon ic-ext">🕘</div>
+      <h2>ประวัติใบส่งชุบ</h2>
+      <button onclick="fetchPlatingNotes()" style="margin-left:auto;padding:6px 12px;border-radius:8px;border:1px solid rgba(52,211,153,.3);
+        background:rgba(52,211,153,.1);color:#6ecfad;font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        🔄 รีเฟรช
+      </button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px 14px;margin-bottom:8px;align-items:end">
+      <div class="field"><label>ค้นหา (เลขที่ใบส่งชุบ/ร้านชุบ/Order)</label>
+        <input type="text" id="platingHistSearch" placeholder="เช่น ZP69/08, ..." oninput="renderPlatingHistory()">
+      </div>
+      <div class="field"><label>วันที่ออก (จาก)</label>
+        <input type="date" id="platingHistFrom" onchange="renderPlatingHistory()">
+      </div>
+      <div class="field"><label>วันที่ออก (ถึง)</label>
+        <input type="date" id="platingHistTo" onchange="renderPlatingHistory()">
+      </div>
+      <div class="field">
+        <button type="button" onclick="_platingHistClearFilter()" style="padding:9px 14px;border-radius:8px;white-space:nowrap;
+          border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.1);color:#f87171;
+          font-size:.8rem;cursor:pointer;font-family:Sarabun,sans-serif">✖ ล้างการกรอง</button>
+      </div>
+    </div>
+    <div id="platingHistListWrap" style="overflow-x:auto"></div>
+  </div>
+
+</div>
+</div><!-- end tab-plating -->
+
 <!-- Invoice Edit Modal -->
 <div id="invEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;
   align-items:center;justify-content:center;padding:16px">
@@ -2419,14 +2508,15 @@
   </div>
 </div>
 
-<script src="core.js?v=6.98"></script>
-<script src="data.js?v=6.98"></script>
-<script src="formcalc.js?v=6.98"></script>
-<script src="aifeatures.js?v=6.98"></script>
-<script src="theme.js?v=6.98"></script>
-<script src="order.js?v=6.98"></script>
-<script src="purchase.js?v=6.98"></script>
-<script src="invoice.js?v=6.98"></script>
+<script src="core.js?v=7.33"></script>
+<script src="data.js?v=7.33"></script>
+<script src="formcalc.js?v=7.33"></script>
+<script src="aifeatures.js?v=7.33"></script>
+<script src="theme.js?v=7.33"></script>
+<script src="order.js?v=7.33"></script>
+<script src="purchase.js?v=7.33"></script>
+<script src="invoice.js?v=7.33"></script>
+<script src="plating.js?v=7.33"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2555,167 +2645,226 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260613-AK',
-    date: '2026-06-13',
+    ref: '#REV-20260614-P',
+    date: '2026-06-14',
     current: true,
     items: [
-      'เพิ่มปุ่ม "🗑️ ยกเลิก" ในประวัติใบวางบิล — ลบใบวางบิลและคืนสถานะ "วางบิลแล้ว" ของใบกำกับที่เกี่ยวข้อง',
-      'เพิ่ม deleteBillingNote ใน Code.gs (ต้อง Redeploy)',
+      'ใบส่งชุบ: หลังบันทึกใบส่งชุบสำเร็จ รีเฟรช checklist ให้ใช้ความจำราคาที่เพิ่งบันทึกไปทันที (ไม่ต้องรีโหลดหน้า)',
     ],
   },
   {
-    ref: '#REV-20260613-AJ',
-    date: '2026-06-13',
+    ref: '#REV-20260614-O',
+    date: '2026-06-14',
     current: false,
     items: [
-      'ย้าย "ประวัติใบวางบิล" เข้าไปอยู่ใน sub-tab "ใบวางบิล" (4) แทนการเป็น sub-tab แยก (5)',
-      'ซ่อนการ์ด "ใบกำกับที่ออกแล้ว" เมื่ออยู่ใน sub-tab ใบวางบิล (แสดงเฉพาะ sub-tab 1-3)',
+      'ใบส่งชุบ (checklist): เอาคอลัมน์ "รายการวัตถุดิบรวม" ออก แทนด้วยคอลัมน์ "รูปแบบงาน" (แบบงานของ Order)',
     ],
   },
   {
-    ref: '#REV-20260613-AI',
-    date: '2026-06-13',
+    ref: '#REV-20260614-N',
+    date: '2026-06-14',
     current: false,
     items: [
-      'เพิ่ม sub-tab "ประวัติใบวางบิล" (5) — แสดงรายการใบวางบิลทั้งหมดจาก Sheet BillingNote พร้อมค้นหา/กรองวันที่',
-      'เพิ่มปุ่ม "พิมพ์ซ้ำ" — สร้างหน้าเอกสารใบวางบิลซ้ำจากประวัติ (ดึงรายละเอียดใบกำกับจากแคชที่โหลดไว้)',
+      'ใบส่งชุบ: เปลี่ยนชื่อสถานะ "งานเคยชุบแล้ว" → "งานเก่า" ให้ตรงกับหัวคอลัมน์ "งานเก่า/ใหม่" (ตั้งอัตโนมัติเมื่อระบบจำราคาได้)',
     ],
   },
   {
-    ref: '#REV-20260613-AH',
-    date: '2026-06-13',
+    ref: '#REV-20260614-M',
+    date: '2026-06-14',
     current: false,
     items: [
-      'แก้บั๊ก: dropdown "ลูกค้า" ในการ์ดใบวางบิลไม่ขึ้นรายชื่อ (ตอนโหลด tab ครั้งแรก _custCache ยังว่างตอนเรียก _billRefreshCustomerSelect)',
-      'เพิ่มการเรียก _billRefreshCustomerSelect() ซ้ำหลัง fetchCustomers() โหลดข้อมูลเสร็จ',
+      'ใบส่งชุบ: เพิ่มระบบจำราคา — ถ้ารายการเดิม (ชื่อ+รูปแบบวัสดุตรงกันเป๊ะ) เคยตั้งราคาไว้ จะใส่ราคาให้อัตโนมัติ พร้อมไอคอน 🧠',
+      'ระบบจะจำราคาอัตโนมัติทุกครั้งที่ออกใบส่งชุบสำเร็จ (เก็บที่ Sheet "PlatingPriceMemory")',
+      'Code.gs: เพิ่ม getPlatingPriceMemory / savePlatingPriceMemory',
     ],
   },
   {
-    ref: '#REV-20260613-AG',
-    date: '2026-06-13',
+    ref: '#REV-20260614-L',
+    date: '2026-06-14',
     current: false,
     items: [
-      'เพิ่มระบบบันทึกใบวางบิลจริง: บันทึกลง Sheet "BillingNote" + มาร์คใบกำกับว่า "วางบิลแล้ว" (ไม่แสดงซ้ำในรายการค้นหา)',
-      'เพิ่มปุ่ม "ยืนยันวางบิล" ในหน้าตัวอย่างเอกสาร พร้อม guardClick ป้องกันกดซ้ำ',
-      'เลขที่ใบวางบิล (billNo): ระบบเสนอเลขถัดไปอัตโนมัติรูปแบบ BI{ปี พ.ศ. 2 หลัก}/{เลขลำดับ} แต่ยังแก้ไข/ตั้งเองได้เสมอ',
+      'ใบส่งชุบ: เปิดให้ติ๊ก "🚫 ไม่ต้องชุบ" ได้กับทุกรายการ (ไม่จำกัดแค่รายการที่ไม่มีวัสดุชุบเลย)',
     ],
   },
   {
-    ref: '#REV-20260613-AF',
-    date: '2026-06-13',
+    ref: '#REV-20260614-K',
+    date: '2026-06-14',
     current: false,
     items: [
-      'ย้าย "ใบวางบิล" เข้าเป็น sub-tab ใหม่ (4) ในแท็บใบกำกับภาษี เคียงกับ ออกใบกำกับ/เพิ่มลูกค้า/รายงานภาษีขาย',
-      'อัปเดต _invSubTabSwitch ให้รองรับ 4 sub-tab',
+      'ใบส่งชุบ: ย้ายการบันทึกมาร์ค "ไม่ต้องชุบ" จาก localStorage ไปเก็บที่ Sheet "PlatingNoNeed" ให้เห็นตรงกันทุกเครื่อง',
+      'Code.gs: เพิ่ม getPlatingNoNeed / savePlatingNoNeed',
     ],
   },
   {
-    ref: '#REV-20260613-AE',
-    date: '2026-06-13',
+    ref: '#REV-20260614-J',
+    date: '2026-06-14',
     current: false,
     items: [
-      'เพิ่มการ์ด "ใบวางบิล" — เลือกลูกค้า/ช่วงวันที่ใบกำกับ แล้วดึงใบกำกับมาติ๊กเลือก',
-      'สร้างหน้าพิมพ์ใบวางบิลตามแบบฟอร์มเดิม (รายการใบกำกับ/PO, รวม VAT, รวมเงิน, หัก ณ ที่จ่าย 3%, รับสุทธิ, ช่องเซ็นรับ)',
-      'หมายเหตุ: เฟสนี้เป็น UI/Layout เท่านั้น ยังไม่มีเลขที่อัตโนมัติ/บันทึกประวัติ/มาร์คใบกำกับว่าวางบิลแล้ว',
+      'ใบส่งชุบ: เพิ่มมาร์ค "🚫 ไม่ต้องชุบ" สำหรับรายการที่ไม่มีวัสดุชุบเลย พร้อมตัวเลือกซ่อนรายการที่มาร์คไว้ออกจาก checklist',
     ],
   },
   {
-    ref: '#REV-20260613-AD',
-    date: '2026-06-13',
+    ref: '#REV-20260614-I',
+    date: '2026-06-14',
     current: false,
     items: [
-      'แก้ไข Order: เปลี่ยนช่อง "ลูกค้า" เป็น dropdown เลือกจากรายชื่อลูกค้า (เหมือน Process)',
+      'ใบส่งชุบ: เปลี่ยนหน่วยจาก "ชิ้น" เป็น "Set" และเปลี่ยนหัวคอลัมน์ "จำนวน" → "จำนวน/หน่วย"',
     ],
   },
   {
-    ref: '#REV-20260613-AC',
-    date: '2026-06-13',
+    ref: '#REV-20260614-H',
+    date: '2026-06-14',
     current: false,
     items: [
-      'แก้ไข Order: เพิ่มช่อง "ลูกค้า" ให้แก้ไขได้ในป๊อปอัพแก้ไข Order',
+      'ใบส่งชุบ: แถว "ชื่อวัตถุดิบ:" เปลี่ยนเครื่องหมายไม่มีวัสดุจาก ✕ เป็น ❌ ให้เหมือนกับแถวจำนวนชิ้น',
     ],
   },
   {
-    ref: '#REV-20260613-AB',
-    date: '2026-06-13',
+    ref: '#REV-20260614-G',
+    date: '2026-06-14',
     current: false,
     items: [
-      'เพิ่มระบบ guardClick ป้องกันกดปุ่มบันทึก/ปุ่มสำคัญซ้ำขณะรอข้อมูลจาก cloud (ปุ่มจะถูกล็อก+แสดงสถานะจนกว่าทำงานเสร็จ)',
-      'นำไปใช้กับปุ่มบันทึก: Order, ใบกำกับ, ลูกค้า, Item Master, สูตรขนาดตัด, ค่าแรง, ตั้งค่าบริษัท, API Key/URL',
+      'ใบส่งชุบ: ช่องฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน แสดงจำนวนชิ้นแทนเครื่องหมาย ✓ และแสดง ❌ เมื่อไม่มีวัสดุนั้น',
     ],
   },
   {
-    ref: '#REV-20260613-AA',
-    date: '2026-06-13',
+    ref: '#REV-20260614-F',
+    date: '2026-06-14',
     current: false,
     items: [
-      'จัดเรียงแถบตัวกรอง "ใบกำกับที่ออกแล้ว" ใหม่ให้กระชับ (ช่องค้นหากว้างขึ้น, ปุ่มล้างกรองพอดีตัว)',
-      'ปรับแถบเลือกเดือนให้เป็นกรอบกะทัดรัด อยู่กึ่งกลางสวยงามขึ้น',
+      'ใบส่งชุบ: เปลี่ยนหัวคอลัมน์ "หมายเหตุ" → "งานเก่า/ใหม่" ให้ตรงกับข้อมูลที่แสดง',
     ],
   },
   {
-    ref: '#REV-20260613-Z',
-    date: '2026-06-13',
+    ref: '#REV-20260614-E',
+    date: '2026-06-14',
     current: false,
     items: [
-      'ใบกำกับที่ออกแล้ว: แบ่งแสดงเป็นรายเดือน (หน้าละ 1 เดือน) เรียงจากเดือนปัจจุบัน/ล่าสุดไปเก่า พร้อมปุ่มเลื่อนเดือนก่อนหน้า/ถัดไป',
+      'ใบส่งชุบ: เพิ่มแถว "ชื่อวัตถุดิบ:" แสดงชื่อวัตถุดิบ (ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน) ของแต่ละรายการ ให้ตรงกับข้อมูล PO',
     ],
   },
   {
-    ref: '#REV-20260613-Y',
-    date: '2026-06-13',
+    ref: '#REV-20260614-D',
+    date: '2026-06-14',
     current: false,
     items: [
-      'ใบกำกับที่ออกแล้ว: เพิ่มระบบกรองละเอียด — ค้นหา (เลขที่ใบกำกับ/ลูกค้า/PO หลายคำ), ประเภท, ช่วงวันที่ออก + ปุ่ม "ล้างการกรอง"',
+      'ใบส่งชุบ: เปลี่ยนข้อความหัวตาราง "Order ที่สถานะ "ส่งชุป"" → "Order ที่สถานะ "ออกใบแจ้งรายการส่งชุปงานแล้ว""',
     ],
   },
   {
-    ref: '#REV-20260613-X',
-    date: '2026-06-13',
+    ref: '#REV-20260614-C',
+    date: '2026-06-14',
     current: false,
     items: [
-      'ตาราง DATA: ปุ่ม "📦 Order" แสดงได้ทุกสถานะ (ไม่จำกัดแค่ "รอสรุป") เผื่อดึงใบเสนอราคาเดิมมาเปิด Order เลขที่ PO ใหม่',
-      'กดปุ่ม Order: ถ้า No.Quo นี้เคยอ้างอิงกับ PO อื่นแล้ว จะมี popup แจ้งเตือนรายการ PO ที่เคยใช้ พร้อมปุ่มยืนยัน/ยกเลิก',
-      'ตอนบันทึก Order ใหม่: ถ้า No.Quo ซ้ำกับ Order เดิม เปลี่ยนจาก error ห้ามบันทึก เป็น popup แจ้งเตือน + ยืนยันเพื่อสร้าง Order ใหม่ (PO ใหม่) ต่อได้',
+      'ใบส่งชุบ: เปลี่ยนชื่อ "ซ่อนรายการที่ส่งชุบแล้ว" → "รายการแจ้งชุบแล้ว"',
+      'ใบส่งชุบ: เอาฟังก์ชัน "ซ่อนรายการที่ออกใบกำกับภาษีแล้ว" ออก',
     ],
   },
   {
-    ref: '#REV-20260613-W',
-    date: '2026-06-13',
+    ref: '#REV-20260614-B',
+    date: '2026-06-14',
     current: false,
     items: [
-      'รายงานภาษีขาย: ย้อนกลับการเพิ่ม "(Head office)/(Branch X)" ในคอลัมน์ "สำนักงานใหญ่/สาขา" (เข้าใจผิด)',
-      'รายงานภาษีขาย: เพิ่ม "(สำนักงานใหญ่)" ต่อท้ายชื่อบริษัทผู้ออกเอกสารภาษาไทย และ "(Head office)" ต่อท้ายชื่อภาษาอังกฤษ ในหัวกระดาษ',
+      'Code.gs: getOrders แก้ปัญหาแถวว่างท้ายชีตทำให้โหลด Order มาว่างเปล่า (หาแถวข้อมูลจริงจากคอลัมน์ No.PO)',
+      'ใบส่งชุบ: ตั้งค่าเริ่มต้นวันที่ออกใบ = วันนี้ และจำร้านชุบที่เลือกล่าสุดไว้เป็นค่าเริ่มต้น',
     ],
   },
   {
-    ref: '#REV-20260613-V',
-    date: '2026-06-13',
+    ref: '#REV-20260614-A',
+    date: '2026-06-14',
     current: false,
     items: [
-      'ใบกำกับที่ออกแล้ว: เลขที่ PO ในคอลัมน์ "รายการ PO" คลิกได้ — เด้งไปแท็บ Order พร้อมกรองด้วยเลข PO นั้นทันที',
+      'แก้ไฟล์ core.js, order.js, invoice.js, theme.js, plating.js ที่ถูกตัดท้ายขาด (ทำให้ทั้งแอปพังและรายชื่อร้านชุบไม่แสดง)',
+      'เติมฟังก์ชัน plating.js ให้สมบูรณ์: สร้าง/บันทึก/ดูประวัติ/พิมพ์ซ้ำ/ยกเลิก ใบส่งชุบ',
     ],
   },
   {
-    ref: '#REV-20260613-U',
+    ref: '#REV-20260613-BD',
     date: '2026-06-13',
     current: false,
     items: [
-      'รายงานภาษีขาย: คอลัมน์ "สำนักงานใหญ่/สาขา" เพิ่มภาษาอังกฤษกำกับ — "สำนักงานใหญ่ (Head office)" / "สาขา X (Branch X)"',
+      'Order: เปลี่ยนมาโหลดแบบแบ่งหน้า (pagination) — โหลดล่าสุด 100 รายการตามค่าเริ่มต้น เหมือนแท็บ DATA',
+      'เพิ่มแบนเนอร์ "โหลดทั้งหมด" เมื่อมี Order มากกว่า 100 รายการ',
     ],
   },
   {
-    ref: '#REV-20260613-T',
+    ref: '#REV-20260613-BC',
     date: '2026-06-13',
     current: false,
     items: [
-      'รายงานภาษีขาย: แก้สีหัวตาราง/แถวสรุปยอด ที่เป็นตัวอักษรขาวบนพื้นเข้ม ทำให้พิมพ์ขาวดำแล้วมองไม่เห็น — เปลี่ยนเป็นพื้นอ่อน ตัวอักษรเข้ม อ่านได้ทั้งสีและขาวดำ',
+      'ยกเลิกแคชข้อมูล Order ฝั่ง client (เปลี่ยนไปใช้ pagination แทน)',
     ],
   },
   {
-    ref: '#REV-20260613-S',
+    ref: '#REV-20260613-BB',
     date: '2026-06-13',
     current: false,
     items: [
-      'รายงานภาษีขาย: เปลี่ยนหัวคอลัมน์ "บริษัทที่ขายไป" → "บริษัทร้านค้า" และไม่ตัดคำชื่อบริษัท (1 แถว/รายการ) พร้อมขยายความกว้างหน้าเอกสาร',
-      'รายงานภาษีขาย: เปลี่ยนช่องกรอกปีจาก ค.ศ. เป็น พ.ศ. (ให้ตรงกับวันที่ในชีตซึ่งเก็บเป็น พ.ศ.) แก้ปัญหากรองรายงาน
+      'ใบส่งชุบ: เพิ่มตัวกรอง "ซ่อนรายการที่ออกใบกำกับภาษีแล้ว" (เปิดใช้เป็นค่าเริ่มต้น)',
+    ],
+  },
+  {
+    ref: '#REV-20260613-BA',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ใบส่งชุบ: ถ้าไม่มีวัสดุ (ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน) แสดง ❌ เหมือนเดิม แทนช่องกรอกจำนวน',
+      'ใบส่งชุบ: เปลี่ยนชื่อคอลัมน์ "สถานะชุบ" เป็น "งานเก่า/ใหม่"',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AZ',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ใบส่งชุบ: เปลี่ยนคอลัมน์ ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน จากเครื่องหมาย ✔/❌ เป็นช่องกรอกจำนวน แก้ไขได้',
+      'ค่าเริ่มต้นของช่องจำนวน = จำนวน Order ถ้ามีวัสดุนั้นๆ, หรือ 0 ถ้าไม่มี',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AY',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ใบส่งชุบ: ลบคอลัมน์ "สถานะ Order" ออกจากตาราง checklist',
+      'ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน: ตอนสร้าง Order ใหม่ ดึงค่าเป็นรหัสวัตถุดิบ (ไม่ใช่ชื่อเต็ม) ให้ตรงกับรายการอื่นในใบส่งชุบ',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AX',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'รายละเอียด Order (และใบสั่งงานพิมพ์): เพิ่มแถวแสดง ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน ในส่วน "ข้อมูลหลัก"',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AW',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ใบส่งชุบ: เช็ค ✔/❌ ของ ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน ใช้แค่ข้อความ MAT (มี/ไม่มี) เท่านั้น ไม่ต้องอ่านราคาจาก DATA แล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AV',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'ใบส่งชุบ + คัดลอกสเปกงาน: เปลี่ยนมาใช้ข้อมูล ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน จากชีต Order เป็นหลัก (ไม่ดึงจาก DATA อีก เพราะ 1 Order อาจมีใบเสนอราคามากกว่า 1 รายการ) — ข้อมูลจาก DATA ใช้เป็น fallback เฉพาะ Order เก่าที่ยังไม่มีข้อมูลในคอลัมน์นี้',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AU',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'Order: เพิ่มปุ่ม "🧩 ดึงฝาบน/ฝาล่าง (1 ครั้ง)" ในแท็บ Order — ดึงข้อมูลฝาบน/ฝาล่างจาก DATA มาเติม Order เก่าที่ยังไม่มีข้อมูล (ไม่ทับแถวที่มีข้อมูลแล้ว)',
+    ],
+  },
+  {
+    ref: '#REV-20260613-AT',
+    date: '2026-06-13',
+    current: false,
+    items: [
+      'Order: เพิ่มคอลัมน์ ฝาบน (AG)/ฝาล่าง (AH) ในชีต Order — ดึง�
