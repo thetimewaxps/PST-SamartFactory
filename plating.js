@@ -755,6 +755,7 @@ async function sharePlatingShareCard() {
     const canvas = await _platingShareCardAsImage();
     if (!canvas) { if (win && !win.closed) win.close(); return; }
     const fileName = `PTS-${_platingShareData.platingNo || 'plating'}.png`;
+    const dataUrl = canvas.toDataURL('image/png');
 
     // ลองใช้ Web Share API พร้อมไฟล์ก่อน (mobile native share sheet → เลือก LINE/Telegram ได้)
     if (navigator.canShare && navigator.share) {
@@ -767,16 +768,18 @@ async function sharePlatingShareCard() {
             if (win && !win.closed) { try { win.close(); } catch(e) {} }
             return;
           } catch(e) {
-            // ผู้ใช้กดยกเลิก หรือแชร์ไม่สำเร็จ → ปิดแท็บเปล่าทิ้ง ไม่ต้อง fallback ต่อ
-            if (win && !win.closed) { try { win.close(); } catch(_) {} }
-            return;
+            // ผู้ใช้กดยกเลิก (AbortError) → ปิดแท็บเปล่าทิ้ง ไม่ต้อง fallback ต่อ
+            if (e && e.name === 'AbortError') {
+              if (win && !win.closed) { try { win.close(); } catch(_) {} }
+              return;
+            }
+            // แชร์ไม่สำเร็จด้วยเหตุอื่น → ไปต่อที่ fallback ด้านล่าง (เปิดรูปในแท็บใหม่)
           }
         }
       }
     }
 
     // fallback: เปิดภาพในแท็บใหม่ ให้แตะค้างที่รูปแล้วเลือก "บันทึกรูปภาพ"/"แชร์"
-    const dataUrl = canvas.toDataURL('image/png');
     if (win && !win.closed) {
       _openImageInNewTab(win, dataUrl, fileName);
     } else {
