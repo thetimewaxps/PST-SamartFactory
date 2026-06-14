@@ -1069,29 +1069,54 @@ select option { background: var(--sel-bg); color: var(--t1); }
   .page-header::before,
   .page-header::after { left: 0; }
 
+  /* ── เมนูเดี่ยวบนสุด (เช่น แดชบอร์ด) เหนือกลุ่มฝ่ายขาย ── */
+  .sb-top-item {
+    font-size: .86rem; font-weight: 700; padding: 10px 13px;
+    margin-bottom: 6px; border-radius: 10px;
+  }
+  .sb-top-item .t-icon { font-size: 1.2rem; }
+  .sb-top-item.active { color: var(--c1); background: var(--c1-10); }
+
   /* ── Sidebar Group Menu (เปิด-ปิด submenu ตามแผนก) ── */
-  .sb-group { margin-bottom: 2px; }
+  .sb-group { margin-bottom: 6px; }
   .sb-group-header {
     width: 100%; display: flex; align-items: center; gap: 10px;
-    padding: 9px 13px; border-radius: 10px; border: none; background: transparent;
-    color: var(--t2); font-family: 'Sarabun', sans-serif; font-size: .82rem; font-weight: 700;
-    cursor: pointer; text-align: left; letter-spacing: .2px;
+    padding: 10px 13px; border-radius: 10px; border: none;
+    background: var(--c1-10);
+    color: var(--t1); font-family: 'Sarabun', sans-serif; font-size: .86rem; font-weight: 800;
+    cursor: pointer; text-align: left; letter-spacing: .3px;
+    text-transform: uppercase;
     transition: background .15s, color .15s;
   }
-  .sb-group-header:hover { background: var(--c1-10); color: var(--t1); }
-  .sb-group-header .t-icon { font-size: 1.15rem; flex-shrink: 0; }
+  .sb-group-header:hover { background: var(--c1-20, var(--c1-10)); color: var(--c1); }
+  .sb-group-header .t-icon { font-size: 1.2rem; flex-shrink: 0; }
   .sb-group-header .t-label { flex: 1; }
-  .sb-caret { font-size: .68rem; color: var(--t4); flex-shrink: 0; }
+  .sb-caret {
+    font-size: .8rem; color: var(--c1); flex-shrink: 0;
+    transition: transform .2s;
+  }
+  .sb-group.open .sb-caret { transform: rotate(0deg); }
   .sb-group-items {
     display: flex; flex-direction: column;
     max-height: 0; overflow: hidden;
     transition: max-height .25s ease;
-    padding-left: 10px;
+    padding: 4px 0 4px 12px;
+    margin-left: 10px;
+    border-left: 2px solid var(--bc-div);
   }
   .sb-group.open .sb-group-items { max-height: 600px; }
-  .sb-group-items .tab-btn { font-size: .84rem; padding: 8px 13px; }
-  .tab-btn.sb-placeholder { opacity: .45; cursor: not-allowed; }
-  .tab-btn.sb-placeholder:hover { background: transparent; color: var(--t4); }
+  .sb-group-items .tab-btn {
+    font-size: .8rem; font-weight: 500; padding: 7px 12px;
+    color: var(--t3);
+  }
+  .sb-group-items .tab-btn .t-icon { font-size: 1rem; opacity: .85; }
+  .sb-group-items .tab-btn:hover { color: var(--t1); }
+  .sb-group-items .tab-btn.active {
+    color: var(--c1); font-weight: 700;
+    background: var(--c1-10);
+  }
+  .tab-btn.sb-placeholder { opacity: .4; cursor: not-allowed; }
+  .tab-btn.sb-placeholder:hover { background: transparent; color: var(--t4) !important; }
 }
 
 /* ── DESKTOP SUMMARY PANEL (≥1100px) ─────────────────── */
@@ -1380,10 +1405,18 @@ body.trk-fullscreen-mode .trk-fs-toolbar {
 .trk-steps { display: flex; align-items: flex-start; }
 .trk-step { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; width: 56px; }
 .trk-step-dot {
+  position: relative;
   width: 26px; height: 26px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: .8rem; flex-shrink: 0;
   background: rgba(148,163,184,.12); border: 2px solid #475569; color: #64748b;
+}
+.trk-step-badge {
+  position: absolute; top: -7px; right: -8px;
+  font-size: .6rem; line-height: 1;
+  width: 15px; height: 15px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #10b981; box-shadow: 0 0 0 2px var(--bg-card);
 }
 .trk-step.done .trk-step-dot { background: rgba(34,197,94,.18); border-color: #22c55e; color: #4ade80; }
 .trk-step.active .trk-step-dot {

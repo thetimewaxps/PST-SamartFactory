@@ -805,12 +805,16 @@ function renderPlatingHistory() {
     const realIdx = _platingHistCache.indexOf(p);
     const itemCount = (p.items || []).length;
     const total = (p.items || []).reduce((s,it) => s + (parseFloat(it.price)||0) * (parseFloat(it.qty)||0), 0);
-    const orderCount = String(p.orderNos||'').split(',').filter(Boolean).length;
+    const poList = String(p.orderNos||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const poHtml = poList.length
+      ? poList.map(no => `<a href="javascript:void(0)" onclick="_platingGotoOrder('${no.replace(/'/g,"\\'")}')"
+          style="color:var(--c1);text-decoration:underline;cursor:pointer">${no}</a>`).join(', ')
+      : '-';
     return `<tr style="border-bottom:1px solid var(--bc-card)">
       <td style="padding:6px 8px">${p.platingNo}</td>
       <td style="padding:6px 8px">${p.date}</td>
       <td style="padding:6px 8px">${supplier.name || p.supplierCode}</td>
-      <td style="padding:6px 8px;text-align:center">${orderCount}</td>
+      <td style="padding:6px 8px;text-align:center">${poHtml}</td>
       <td style="padding:6px 8px;text-align:center">${itemCount}</td>
       <td style="padding:6px 8px;text-align:right">${total ? fmtB(total) : '-'}</td>
       <td style="padding:6px 8px;text-align:center">
@@ -829,7 +833,7 @@ function renderPlatingHistory() {
           <th style="padding:6px 8px;text-align:left">เลขที่ใบส่งชุบ</th>
           <th style="padding:6px 8px;text-align:left">วันที่</th>
           <th style="padding:6px 8px;text-align:left">ร้านชุบ</th>
-          <th style="padding:6px 8px;text-align:center">จำนวน Order</th>
+          <th style="padding:6px 8px;text-align:center">เลขที่ PO</th>
           <th style="padding:6px 8px;text-align:center">จำนวนรายการ</th>
           <th style="padding:6px 8px;text-align:right">ยอดรวม</th>
           <th style="padding:6px 8px;text-align:center">พิมพ์ซ้ำ</th>
@@ -837,6 +841,18 @@ function renderPlatingHistory() {
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// ── กดเลขที่ PO ในประวัติใบส่งชุบ → ไปหน้า Order พร้อมกรองหาเลขนั้น ──
+function _platingGotoOrder(noPO) {
+  switchTab('order');
+  setTimeout(() => {
+    const search = $('ordFilterStatus');
+    if (search) search.value = '_all';
+    const box = $('ordSearch');
+    if (box) box.value = noPO;
+    if (typeof renderOrderTable === 'function') renderOrderTable();
+  }, 300);
 }
 
 // ── ยกเลิกใบส่งชุบ — ลบจากประวัติ (ไม่ revert สถานะ Order) ──

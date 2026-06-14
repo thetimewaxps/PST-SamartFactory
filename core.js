@@ -148,6 +148,12 @@ const TAB_DEFS = [
 // ── Sidebar Group Menu (เดสก์ท็อป ≥1024px) ─────────────
 // จัดกลุ่มแท็บตามแผนก พร้อม submenu เปิด-ปิดได้
 // รายการที่ ph:true = ฟีเจอร์ที่ยังไม่มีในระบบ (กำลังพัฒนา) — กดแล้วแจ้งเตือน ไม่เปิดแท็บจริง
+
+// รายการเมนูแบบเดี่ยว (ไม่อยู่ในกลุ่ม) — แสดงไว้บนสุด เหนือกลุ่มฝ่ายขาย
+const TOP_SIDEBAR_ITEMS = [
+  { tab:'track', label:'แดชบอร์ด', icon:'📊' },
+];
+
 const GROUP_DEFS = [
   { id:'sales', icon:'💼', label:'ฝ่ายขาย', items: [
     { tab:'breakdown' },
@@ -173,8 +179,10 @@ const GROUP_DEFS = [
     { ph:true, label:'WI', icon:'📄' },
   ]},
   { id:'account', icon:'💰', label:'บัญชี', items: [
-    { tab:'invoice' },
-    { tab:'invoice', label:'รายงานภาษีขาย', icon:'📊' },
+    { tab:'invoice', label:'ใบกำกับภาษี', icon:'📑', subTab:'1' },
+    { tab:'invoice', label:'เพิ่มลูกค้า', icon:'👥', subTab:'2' },
+    { tab:'invoice', label:'รายงานภาษีขาย', icon:'📊', subTab:'3' },
+    { tab:'invoice', label:'ใบวางบิล', icon:'📑', subTab:'4' },
     { ph:true, label:'ใบเสร็จ', icon:'🧾' },
     { ph:true, label:'รายงานภาษี', icon:'📈' },
   ]},
@@ -193,6 +201,15 @@ function _toggleSidebarGroup(id) {
 }
 function _placeholderAlert(label) {
   alert('🚧 "' + label + '" กำลังพัฒนา ยังไม่พร้อมใช้งานในขณะนี้');
+}
+
+// แท็บย่อยที่กำลังเปิดอยู่ (ใช้ไฮไลต์เมนูย่อยใน sidebar เช่น ใบกำกับภาษี / เพิ่มลูกค้า / รายงานภาษีขาย / ใบวางบิล)
+let _activeSubTab = null;
+function _sbGoto(tab, subTab) {
+  _activeSubTab = subTab || null;
+  switchTab(tab);
+  if (subTab && typeof _invSubTabSwitch === 'function') _invSubTabSwitch(subTab);
+  renderTabBar();
 }
 
 function _loadTabCfg() {
@@ -225,6 +242,23 @@ function renderTabBar() {
 
   if (isDesktop) {
     const groupState = _loadSidebarGroupState();
+    const topItemsHtml = TOP_SIDEBAR_ITEMS.map(it => {
+      if (it.ph) {
+        return `<button type="button" class="tab-btn sb-placeholder sb-top-item" onclick="_placeholderAlert('${String(it.label).replace(/'/g,"\\'")}')">
+          <span class="t-icon">⏳</span><span class="t-label">${it.label}</span>
+        </button>`;
+      }
+      if (hidden.includes(it.tab)) return '';
+      const def = TAB_DEFS.find(t=>t.id===it.tab);
+      if (!def) return '';
+      const label = it.label || def.label;
+      const icon  = it.icon  || def.icon;
+      const isActive = it.tab === _activeTab && (it.subTab||null) === (_activeSubTab||null);
+      const click = it.subTab ? `_sbGoto('${it.tab}','${it.subTab}')` : `_sbGoto('${it.tab}',null)`;
+      return `<button type="button" class="tab-btn sb-top-item${isActive?' active':''}" data-tab="${it.tab}" onclick="${click}">
+        <span class="t-icon">${icon}</span><span class="t-label">${label}</span>
+      </button>`;
+    }).join('');
     const groupsHtml = GROUP_DEFS.map(g => {
       const itemsHtml = g.items.map(it => {
         if (it.ph) {
@@ -237,8 +271,9 @@ function renderTabBar() {
         if (!def) return '';
         const label = it.label || def.label;
         const icon  = it.icon  || def.icon;
-        const isActive = it.tab === _activeTab;
-        return `<button type="button" class="tab-btn${isActive?' active':''}" id="tbtn-${it.tab}" data-tab="${it.tab}" onclick="switchTab('${it.tab}')">
+        const isActive = it.tab === _activeTab && (it.subTab||null) === (_activeSubTab||null);
+        const click = it.subTab ? `_sbGoto('${it.tab}','${it.subTab}')` : `_sbGoto('${it.tab}',null)`;
+        return `<button type="button" class="tab-btn${isActive?' active':''}" id="tbtn-${it.tab}" data-tab="${it.tab}" onclick="${click}">
           <span class="t-icon">${icon}</span><span class="t-label">${label}</span>
         </button>`;
       }).join('');
@@ -252,7 +287,7 @@ function renderTabBar() {
         <div class="sb-group-items">${itemsHtml}</div>
       </div>`;
     }).join('');
-    bar.innerHTML = sidebarHdr + groupsHtml;
+    bar.innerHTML = sidebarHdr + topItemsHtml + groupsHtml;
     const menu = $('moreMenu');
     if (menu) menu.innerHTML = '';
     return;
@@ -347,6 +382,8 @@ function switchTab(name) {
   const tabEl = $('tab-' + name);
   if (tabEl) tabEl.classList.add('active');
   _activeTab = name;
+  if (name !== 'invoice') _activeSubTab = null;
+  else if (!_activeSubTab) _activeSubTab = '1';
   localStorage.setItem('ptts_active_tab', name);
   renderTabBar();
   // แสดง summary panel ฝั่งขวาเฉพาะแท็บ "สรุป/breakdown" เท่านั้น แท็บอื่นให้เนื้อหาเต็มจอ (เดสก์ท็อป)
@@ -359,7 +396,11 @@ function switchTab(name) {
   if (name === 'api')       { initCfgTheme(); renderTabManager(); }
   if (name === 'mat')       { renderMatTable('flap'); renderMatTable('mesh'); }
   if (name === 'order')     { updateOrderPreview(); fetchOrders(); fetchCustomers().then(()=>_gordRefreshCustomerList()); fetchItemMaster(); }
-  if (name === 'track')     { fetchOrders(); renderTrackDashboard(); }
+  if (name === 'track')     {
+    fetchOrders(); renderTrackDashboard();
+    // โหลดประวัติใบแจ้งชุบ เพื่อใช้แสดงไอคอน 📨 บนขั้น "กำลังส่งชุป" ถ้าออกใบแจ้งชุบแล้ว
+    if (typeof fetchPlatingNotes === 'function') fetchPlatingNotes().then(()=>renderTrackDashboard());
+  }
   // รีเฟรชอัตโนมัติเฉพาะตอนอยู่แท็บติดตามงาน (อัตราตั้งค่าได้ในโหมดเต็มจอ)
   if (name === 'track') {
     if (typeof _trkApplyColsUI==='function') _trkApplyColsUI();

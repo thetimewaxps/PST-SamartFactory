@@ -1799,12 +1799,18 @@ function _trkLeadTimeCircle(r) {
 // ── แถบขั้นตอนแนวนอน (5 ขั้นเดิม) ──
 function _trkStepsHtml(r) {
   const cur = _ordCurrentStepIdx(r);
+  // เช็คว่า PO นี้ออกใบแจ้งชุบไปแล้วหรือยัง (ใช้ตัดสินใจแสดงไอคอน 📨 บนขั้น "กำลังส่งชุป")
+  const noPO = String(r[ORDER_COLS.noPO]||'').trim();
+  const platingSent = (typeof _platingSentOrderSet === 'function' && noPO)
+    ? _platingSentOrderSet().has(noPO) : false;
   return `<div class="trk-steps">${ORDER_FLOW_STEPS.map((s,i) => {
     const state = i < cur || cur === 5 ? 'done' : (i === cur ? 'active' : 'todo');
     const icon  = state === 'done' ? '✓' : s.icon;
     const isLast = i === ORDER_FLOW_STEPS.length - 1;
+    const badge = (i === 2 && platingSent)
+      ? `<span class="trk-step-badge" title="ออกใบแจ้งชุบแล้ว">📨</span>` : '';
     return `<div class="trk-step ${state}">
-        <div class="trk-step-dot" title="${s.label}">${icon}</div>
+        <div class="trk-step-dot" title="${s.label}">${icon}${badge}</div>
         <div class="trk-step-lbl">${s.label}</div>
       </div>${!isLast ? `<div class="trk-step-line ${i < cur || cur===5 ? 'done':''}"></div>` : ''}`;
   }).join('')}</div>`;

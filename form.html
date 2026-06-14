@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v7.36</span>
+      <span class="ph-chip ver">v7.42</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2508,15 +2508,15 @@
   </div>
 </div>
 
-<script src="core.js?v=7.36"></script>
-<script src="data.js?v=7.36"></script>
-<script src="formcalc.js?v=7.36"></script>
-<script src="aifeatures.js?v=7.36"></script>
-<script src="theme.js?v=7.36"></script>
-<script src="order.js?v=7.36"></script>
-<script src="purchase.js?v=7.36"></script>
-<script src="invoice.js?v=7.36"></script>
-<script src="plating.js?v=7.36"></script>
+<script src="core.js?v=7.42"></script>
+<script src="data.js?v=7.42"></script>
+<script src="formcalc.js?v=7.42"></script>
+<script src="aifeatures.js?v=7.42"></script>
+<script src="theme.js?v=7.42"></script>
+<script src="order.js?v=7.42"></script>
+<script src="purchase.js?v=7.42"></script>
+<script src="invoice.js?v=7.42"></script>
+<script src="plating.js?v=7.42"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2645,9 +2645,57 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260614-S',
+    ref: '#REV-20260614-Y',
     date: '2026-06-14',
     current: true,
+    items: [
+      'Sidebar: ย้ายเมนู "แดชบอร์ด" ออกมาเป็นเมนูเดี่ยวด้านบนสุด เหนือกลุ่ม "ฝ่ายขาย" (ยังใช้หน้าเดียวกับ "ติดตามงาน")',
+    ],
+  },
+  {
+    ref: '#REV-20260614-X',
+    date: '2026-06-14',
+    current: false,
+    items: [
+      'Sidebar กลุ่ม "ฝ่ายผลิต": เพิ่มเมนู "แดชบอร์ด" (ใช้หน้าเดียวกับ "ติดตามงาน") เป็นทางเข้าเพิ่มเติม',
+    ],
+  },
+  {
+    ref: '#REV-20260614-W',
+    date: '2026-06-14',
+    current: false,
+    items: [
+      'ประวัติใบส่งชุบ: เปลี่ยนคอลัมน์ "จำนวน Order" เป็น "เลขที่ PO" แสดงเลข PO เป็นลิงก์ กดแล้วไปแท็บ Order พร้อมกรองหา PO นั้นทันที',
+    ],
+  },
+  {
+    ref: '#REV-20260614-V',
+    date: '2026-06-14',
+    current: false,
+    items: [
+      'ติดตามงาน: เพิ่มไอคอน 📨 บนขั้น "กำลังส่งชุป" ของแถบ timeline ถ้า PO นั้นออกใบแจ้งชุบไปแล้ว',
+    ],
+  },
+  {
+    ref: '#REV-20260614-U',
+    date: '2026-06-14',
+    current: false,
+    items: [
+      'Sidebar กลุ่ม "บัญชี": ย้าย sub-tab ของแท็บใบกำกับภาษี (ใบกำกับภาษี/เพิ่มลูกค้า/รายงานภาษีขาย/ใบวางบิล) เข้ามาเป็นเมนูย่อยในแถบข้าง คลิกแล้วเปิดแท็บ + sub-tab ที่ตรงกันทันที พร้อมไฮไลต์',
+    ],
+  },
+  {
+    ref: '#REV-20260614-T',
+    date: '2026-06-14',
+    current: false,
+    items: [
+      'Sidebar เดสก์ท็อป: ปรับสไตล์ให้แยกชัดเจนระหว่างหัวข้อกลุ่ม (ตัวใหญ่ พื้นหลังเด่น ตัวพิมพ์ใหญ่) กับรายการ submenu (ตัวเล็กลง มีเส้นคั่นด้านซ้าย เยื้องเข้า)',
+    ],
+  },
+  {
+    ref: '#REV-20260614-S',
+    date: '2026-06-14',
+    current: false,
     items: [
       'Sidebar เดสก์ท็อป (≥1024px): จัดเมนูเป็นกลุ่มตามแผนก (ฝ่ายขาย/ฝ่ายจัดซื้อ/ฝ่ายผลิต/บัญชี/ตั้งค่า) เปิด-ปิด submenu ได้ พร้อมจำสถานะเปิด/ปิดของแต่ละกลุ่ม',
       'เพิ่มเมนู "กำลังพัฒนา" (⏳ ใบขอราคา, WorkOrder, Inspection, WI, ใบเสร็จ, รายงานภาษี) — กดแล้วแจ้งเตือนว่ายังไม่พร้อมใช้งาน',
