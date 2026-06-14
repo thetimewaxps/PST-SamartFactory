@@ -14,6 +14,7 @@ let _platingHideSent     = true; // ซ่อนรายการที่ "ส
 let _platingHideNoNeed  = true; // ซ่อนรายการที่มาร์ค "ไม่ต้องชุบ" ออกจาก checklist
 let _platingOrderPage  = 1;    // หน้าปัจจุบันของ checklist Order
 const PLATING_PAGE_SIZE = 20;  // จำนวนรายการต่อหน้า
+let _platingShareData  = null; // { platingNo, dateStr, supplier, items } — สำหรับสร้างการ์ดแชร์รูป (มือถือ)
 
 // ── หาราคาล่าสุดที่เคยใช้สำหรับรายการนี้ จากประวัติใบส่งชุบ (_platingHistCache เรียงล่าสุดก่อน) ──
 function _platingFindLastPrice(description) {
@@ -595,6 +596,185 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
 </div>`;
 }
 
+// ── สร้าง HTML "การ์ดใบส่งชุบ" สำหรับแชร์เป็นรูปบนมือถือ (แนวตั้ง กว้าง 480px รูปแบบ/สีเหมือนใบส่งชุบจริง) ──
+function _platingBuildShareCardHtml(data) {
+  const { platingNo, dateStr, supplier, items } = data;
+  const co = _companyInfoCache || {};
+
+  const fieldRow = (label, val, valColor) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f1f5f9">
+      <span style="font-size:.74rem;color:#64748b;min-width:78px;flex-shrink:0">${label}</span>
+      <span style="font-size:.8rem;font-weight:600;color:${valColor||'#1e293b'};flex:1;text-align:right">${val}</span>
+    </div>`;
+
+  const matVal = (has, mat, qtyVal, fallbackQty) => {
+    if (!has) return `<span style="color:#ef4444;font-weight:700">❌</span>`;
+    const v = (qtyVal !== undefined && qtyVal !== null && qtyVal !== '') ? qtyVal : fallbackQty;
+    const qtyTxt = (v !== undefined && v !== null && v !== '') ? v : '-';
+    return `${qtyTxt}${mat ? ` <span style="color:#777;font-size:.72rem">(${mat})</span>` : ''}`;
+  };
+
+  let grandTotal = 0;
+  const itemCards = items.map((it, idx) => {
+    const price  = parseFloat(it.price) || 0;
+    const qtyNum = parseFloat(it.qty) || 0;
+    const amount = price * qtyNum;
+    grandTotal += amount;
+    return `
+    <div style="background:#fff;border-radius:10px;overflow:hidden;margin-bottom:10px;
+      border:1px solid #e8ecf2;box-shadow:0 1px 3px rgba(0,0,0,.04)">
+      <div style="background:#2563eb;color:#fff;padding:8px 12px;font-size:.8rem;font-weight:700">
+        ${idx + 1}. ${it.noPO ? `[${it.noPO}] ` : ''}${it.description || ''}
+      </div>
+      <div style="padding:6px 12px">
+        ${fieldRow('จำนวน/หน่วย', `${it.qty||''} ${it.unit||''}`)}
+        ${fieldRow('ฝาบน', matVal(it.top, it.matTop, it.topQty, it.qty))}
+        ${fieldRow('ฝาล่าง', matVal(it.bot, it.matBot, it.botQty, it.qty))}
+        ${fieldRow('ตะแกรงนอก', matVal(it.meshOut, it.matMeshOut, it.meshOutQty, it.qty))}
+        ${fieldRow('ตะแกรงใน', matVal(it.meshIn, it.matMeshIn, it.meshInQty, it.qty))}
+        ${fieldRow('ราคา/หน่วย', price ? fmtB(price) : '-')}
+        ${fieldRow('จำนวนเงิน', amount ? fmtB(amount) : '-', '#2563eb')}
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0">
+          <span style="font-size:.74rem;color:#64748b;min-width:78px;flex-shrink:0">งานเก่า/ใหม่</span>
+          <span style="font-size:.78rem;font-weight:600;color:#555;flex:1;text-align:right">${it.status||'-'}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div id="platingShareCardInner" style="background:#f1f5f9;border-radius:16px;overflow:hidden;
+    font-family:'Sarabun',Tahoma,sans-serif;text-align:left;padding:14px">
+
+    <!-- Header -->
+    <div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;
+      border-bottom:3px solid #2563eb">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:44px;height:44px;border-radius:10px;flex-shrink:0;overflow:hidden;
+          display:flex;align-items:center;justify-content:center">
+          <img src="${_getLogoSrc()}" alt="PTS" style="width:100%;height:100%;object-fit:contain"
+            onerror="this.parentNode.style.background='#2563eb';this.style.display='none';this.parentNode.innerHTML='<span style=color:#fff;font-weight:800;font-size:.95rem>PT</span>'">
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:.86rem;color:#1a2232">${co.name||''}</div>
+          <div style="font-size:.6rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:1.15rem;font-weight:800;color:#2563eb;line-height:1">ใบส่งชุบ</div>
+          <div style="font-size:.58rem;color:#888;letter-spacing:1.5px">PLATING DELIVERY NOTE</div>
+        </div>
+      </div>
+      <table style="font-size:.76rem;width:100%">
+        <tr><td style="color:#666;padding:2px 6px 2px 0">เลขที่ / No:</td>
+            <td style="font-weight:700;color:#2563eb">${platingNo||''}</td></tr>
+        <tr><td style="color:#666;padding:2px 6px 2px 0">วันที่ / Date:</td>
+            <td>${dateStr}</td></tr>
+      </table>
+    </div>
+
+    <!-- ร้านชุบ -->
+    <div style="background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:10px">
+      <div style="font-size:.6rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">
+        ร้านชุบ / PLATING SHOP</div>
+      <div style="font-size:.86rem;font-weight:700;margin-bottom:2px">${supplier.name||''}</div>
+      <div style="font-size:.76rem;color:#444;margin-bottom:2px">${supplier.address||''}</div>
+      <div style="font-size:.76rem;color:#444">โทร: ${supplier.contact||'—'}</div>
+    </div>
+
+    <!-- รายการ -->
+    ${itemCards}
+
+    <!-- รวมทั้งสิ้น -->
+    <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;
+      align-items:center;justify-content:space-between;border-top:3px solid #2563eb">
+      <span style="font-size:.86rem;font-weight:700;color:#1a2232">รวมทั้งสิ้น</span>
+      <span style="font-size:1.05rem;font-weight:800;color:#2563eb">${fmtB(grandTotal)}</span>
+    </div>
+  </div>`;
+}
+
+// ── render การ์ดใบส่งชุบลง #platingShareCardEl แล้ว capture เป็น canvas (กว้าง 480px เหมือนการ์ด Quotation) ──
+async function _platingShareCardAsImage() {
+  if (!_platingShareData) return null;
+  const el = $('platingShareCardEl');
+  if (!el) return null;
+  el.innerHTML = _platingBuildShareCardHtml(_platingShareData);
+  el.style.left = '-9999px';
+  el.style.top  = '0';
+  el.style.display = 'block';
+  try {
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e) {} }
+    await new Promise(r => setTimeout(r, 80));
+    const imgs = el.querySelectorAll('img');
+    await Promise.all(Array.from(imgs).map(im => {
+      if (im.complete && im.naturalWidth > 0) return Promise.resolve();
+      return new Promise(res => {
+        im.addEventListener('load', res, { once:true });
+        im.addEventListener('error', res, { once:true });
+        setTimeout(res, 1500);
+      });
+    }));
+    let canvas;
+    try {
+      canvas = await html2canvas(el, {
+        backgroundColor: '#f1f5f9', scale: 2,
+        useCORS: true, allowTaint: true,
+        width: 480, logging: false
+      });
+      canvas.toDataURL('image/png'); // ทดสอบว่า canvas ไม่ถูก taint
+    } catch(e) {
+      canvas = await html2canvas(el, {
+        backgroundColor: '#f1f5f9', scale: 2,
+        useCORS: true, allowTaint: true,
+        width: 480, logging: false,
+        ignoreElements: node => node.tagName === 'IMG'
+      });
+    }
+    el.style.display = 'none';
+    return canvas;
+  } catch(e) {
+    el.style.display = 'none';
+    throw e;
+  }
+}
+
+// ── แชร์การ์ดใบส่งชุบเป็นรูป ผ่าน Web Share API (ทำงานเหมือนปุ่ม "ส่งรูป" ใน Quotation เป๊ะๆ) ──
+async function sharePlatingShareCard() {
+  if (typeof html2canvas !== 'function') {
+    _notifyErr('โหลดไลบรารีไม่สำเร็จ', 'อินเทอร์เน็ต/เครือข่ายอาจบล็อก html2canvas ลองเช็คการเชื่อมต่อแล้วโหลดหน้าใหม่');
+    return;
+  }
+  try {
+    const canvas = await _platingShareCardAsImage();
+    if (!canvas) return;
+    const fileName = `PTS-${_platingShareData.platingNo || 'plating'}.png`;
+
+    if (navigator.canShare && navigator.share) {
+      canvas.toBlob(async blob => {
+        if (!blob) { _notifyErr('ไม่สามารถแชร์รูปได้', 'สร้างไฟล์ภาพไม่สำเร็จ'); return; }
+        const file = new File([blob], fileName, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file] });
+            return;
+          } catch(e) { /* user cancelled or not supported */ }
+        }
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      }, 'image/png');
+    } else {
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  } catch(e) {
+    _notifyErr('ไม่สามารถแชร์รูปได้', e && e.message);
+  }
+}
+
 // ── สร้างใบส่งชุบ จาก Order ที่ติ๊กเลือก + รายการเพิ่มเอง -> แสดง preview ──
 function _platingGenerate() {
   const wrap = $('platingOrderListWrap');
@@ -649,6 +829,7 @@ function _platingGenerate() {
   }
 
   const html = _platingBuildDocHtml({ platingNo, dateStr, supplier, items });
+  _platingShareData = { platingNo, dateStr, supplier, items };
 
   // เตรียมข้อมูลสำหรับบันทึก (ยืนยันส่งชุบ)
   _platingPreviewData = {
@@ -889,6 +1070,7 @@ function _platingReprint(idx) {
   const supplier = _supplierCache.find(s => s.code === p.supplierCode) || {};
   const dateStr = _invThaiDate(p.date);
   const html = _platingBuildDocHtml({ platingNo: p.platingNo, dateStr, supplier, items: p.items || [] });
+  _platingShareData = { platingNo: p.platingNo, dateStr, supplier, items: p.items || [] };
 
   _platingPreviewData = null;
   _invPreviewMode = true;

@@ -1149,6 +1149,12 @@ async function shareDocImage() {
     _notifyErr('โหลดไลบรารีไม่สำเร็จ', 'อินเทอร์เน็ต/เครือข่ายอาจบล็อก html2canvas ลองเช็คการเชื่อมต่อแล้วโหลดหน้าใหม่');
     return;
   }
+  // ใบส่งชุบ: ใช้การ์ดสรุป (แนวตั้ง 480px) แทนการ capture หน้าเอกสารแบบเต็ม
+  // เพื่อให้แชร์/บันทึกบนมือถือได้แน่นอน (ภาพไม่ใหญ่/กว้างเกินไป)
+  const activeEl = _getActiveDocEl();
+  if (activeEl && activeEl.id === 'docPlating' && typeof sharePlatingShareCard === 'function') {
+    return sharePlatingShareCard();
+  }
   try {
     const canvas = await _captureActiveDoc();
     if (!canvas) return;

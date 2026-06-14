@@ -25,6 +25,7 @@
 
 <!-- SHARE CARD (hidden, used for image generation) -->
 <div id="shareCardEl" style="position:fixed;left:-9999px;top:-9999px;width:480px;font-family:'Sarabun',sans-serif;font-size:14px;z-index:-1;"></div>
+<div id="platingShareCardEl" style="position:fixed;left:-9999px;top:-9999px;width:480px;font-family:'Sarabun',sans-serif;font-size:14px;z-index:-1;"></div>
 
 <!-- HEADER -->
 <div class="page-header">
@@ -36,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v7.58</span>
+      <span class="ph-chip ver">v7.59</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2508,15 +2509,15 @@
   </div>
 </div>
 
-<script src="core.js?v=7.58"></script>
-<script src="data.js?v=7.58"></script>
-<script src="formcalc.js?v=7.58"></script>
-<script src="aifeatures.js?v=7.58"></script>
-<script src="theme.js?v=7.58"></script>
-<script src="order.js?v=7.58"></script>
-<script src="purchase.js?v=7.58"></script>
-<script src="invoice.js?v=7.58"></script>
-<script src="plating.js?v=7.58"></script>
+<script src="core.js?v=7.59"></script>
+<script src="data.js?v=7.59"></script>
+<script src="formcalc.js?v=7.59"></script>
+<script src="aifeatures.js?v=7.59"></script>
+<script src="theme.js?v=7.59"></script>
+<script src="order.js?v=7.59"></script>
+<script src="purchase.js?v=7.59"></script>
+<script src="invoice.js?v=7.59"></script>
+<script src="plating.js?v=7.59"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2655,9 +2656,17 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260614-AO',
+    ref: '#REV-20260614-AP',
     date: '2026-06-14',
     current: true,
+    items: [
+      'ปุ่ม "ส่ง LINE/Telegram" ในใบส่งชุบ: เปลี่ยนวิธีแชร์บนมือถือ จากการ capture หน้าเอกสารแบบเต็ม (กว้างเกินไป แชร์ไม่ได้) เป็นสร้าง "การ์ดสรุปใบส่งชุบ" แนวตั้งขนาด 480px (รูปแบบ/สีเหมือนใบส่งชุบจริง) แล้วแชร์การ์ดนี้แทน เหมือนปุ่ม "ส่งรูป" ในใบเสนอราคา',
+    ],
+  },
+  {
+    ref: '#REV-20260614-AO',
+    date: '2026-06-14',
+    current: false,
     items: [
       'ปุ่ม "บันทึกภาพ"/"ส่ง LINE/Telegram" บนมือถือ: เพิ่มการเช็คว่าโหลดไลบรารี html2canvas สำเร็จหรือไม่ ถ้าไม่สำเร็จจะแจ้งเตือนทันที (ใช้ alert() สำรองถ้า Swal ใช้ไม่ได้) แก้ปัญหากดปุ่มแล้วไม่มีการตอบสนองเลย',
     ],
