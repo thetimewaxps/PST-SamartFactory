@@ -480,7 +480,7 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
   };
   let grandTotal = 0;
   const matCell = (has, mat) => has
-    ? `<span style="font-size:.78rem;color:#444">${mat || '-'}</span>`
+    ? `<span style="font-size:.78rem;color:#444;white-space:nowrap">${mat || '-'}</span>`
     : `<span style="color:#ef4444;font-weight:700">❌</span>`;
   const rows = items.map((it, idx) => {
     const price  = parseFloat(it.price) || 0;
@@ -504,16 +504,16 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
     </tr>` : '';
     return `
     <tr${hasMatRow ? '' : ' style="border-bottom:1px solid #e8ecf2"'}>
-      <td style="padding:7px 10px;text-align:center">${idx + 1}</td>
+      <td style="padding:7px 10px;text-align:center;white-space:nowrap">${idx + 1}</td>
       <td style="padding:7px 10px">${it.noPO ? `[${it.noPO}] ` : ''}${it.description||''}</td>
-      <td style="padding:7px 10px;text-align:center">${it.qty||''} ${it.unit||''}</td>
-      <td style="padding:7px 10px;text-align:center">${qtyCell(it.top, it.topQty, it.qty)}</td>
-      <td style="padding:7px 10px;text-align:center">${qtyCell(it.bot, it.botQty, it.qty)}</td>
-      <td style="padding:7px 10px;text-align:center">${qtyCell(it.meshOut, it.meshOutQty, it.qty)}</td>
-      <td style="padding:7px 10px;text-align:center">${qtyCell(it.meshIn, it.meshInQty, it.qty)}</td>
-      <td style="padding:7px 10px;text-align:right">${price ? fmtB(price) : '-'}</td>
-      <td style="padding:7px 10px;text-align:right">${amount ? fmtB(amount) : '-'}</td>
-      <td style="padding:7px 10px;text-align:center;font-size:.72rem;color:#555">${it.status||'-'}</td>
+      <td style="padding:7px 10px;text-align:center;white-space:nowrap">${it.qty||''} ${it.unit||''}</td>
+      <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.top, it.topQty, it.qty)}</td>
+      <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.bot, it.botQty, it.qty)}</td>
+      <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.meshOut, it.meshOutQty, it.qty)}</td>
+      <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.meshIn, it.meshInQty, it.qty)}</td>
+      <td style="padding:7px 10px;text-align:right;white-space:nowrap">${price ? fmtB(price) : '-'}</td>
+      <td style="padding:7px 10px;text-align:right;white-space:nowrap">${amount ? fmtB(amount) : '-'}</td>
+      <td style="padding:7px 10px;text-align:center;font-size:.72rem;color:#555;white-space:nowrap">${it.status||'-'}</td>
     </tr>${matRow}`;
   }).join('');
 

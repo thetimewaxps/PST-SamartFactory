@@ -1006,7 +1006,7 @@ function _getActiveDocEl() {
   return $('docQuo');
 }
 
-async function _captureActiveDoc() {
+async function _captureActiveDoc(opts) {
   const el = _getActiveDocEl();
   if (!el) return null;
   if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e) {} }
@@ -1020,46 +1020,119 @@ async function _captureActiveDoc() {
       setTimeout(res, 1500);
     });
   }));
-  return html2canvas(el, { backgroundColor:'#ffffff', scale:2, useCORS:true, allowTaint:true, logging:false });
+  const baseOpts = { backgroundColor:'#ffffff', scale:2, useCORS:true, allowTaint:true, logging:false };
+  return html2canvas(el, Object.assign({}, baseOpts, opts||{}));
+}
+
+// ── สร้าง dataURL ของเอกสาร พร้อมกันปัญหา canvas ถูก taint จากรูปโลโก้ข้ามโดเมน ──
+async function _captureActiveDocDataUrl() {
+  let canvas = await _captureActiveDoc();
+  if (!canvas) return null;
+  try {
+    return canvas.toDataURL('image/png');
+  } catch(e) {
+    // canvas ถูก taint (เช่น โลโก้โหลดจากโดเมนอื่นที่ไม่อนุญาต CORS) → ลองใหม่โดยข้ามรูปภาพ
+    canvas = await _captureActiveDoc({ ignoreElements: node => node.tagName === 'IMG' });
+    if (!canvas) return null;
+    return canvas.toDataURL('image/png');
+  }
+}
+
+// ── เปิดภาพเอกสารในแท็บใหม่ (เผื่อดาวน์โหลดอัตโนมัติใช้ไม่ได้บนมือถือ/แอปในตัว) ──
+function _openImageInNewTab(win, dataUrl, fileName) {
+  if (!win || win.closed) {
+    win = window.open(dataUrl, '_blank');
+    return;
+  }
+  try {
+    win.document.title = fileName;
+    win.document.body.style.margin = '0';
+    win.document.body.style.background = '#111';
+    win.document.body.innerHTML =
+      '<div style="font-family:Sarabun,sans-serif;color:#fff;font-size:13px;text-align:center;padding:10px">' +
+      'แตะค้างที่รูป แล้วเลือก "บันทึกรูปภาพ" หรือ "แชร์" เพื่อส่งให้ลูกค้า' +
+      '</div>' +
+      '<img src="' + dataUrl + '" style="display:block;width:100%">';
+  } catch(e) {
+    win.location.href = dataUrl;
+  }
 }
 
 // ── บันทึกเอกสารที่แสดงอยู่เป็นไฟล์ภาพ PNG ──
 async function saveDocAsImage() {
+  // เปิดแท็บเปล่าไว้ก่อน (ขณะยังมี user-gesture) เผื่อต้องใช้แสดงภาพบนมือถือ
+  let win = null;
+  try { win = window.open('', '_blank'); } catch(e) {}
   try {
-    const canvas = await _captureActiveDoc();
-    if (!canvas) return;
-    const link = document.createElement('a');
-    link.download = `PTS-doc-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    const dataUrl = await _captureActiveDocDataUrl();
+    if (!dataUrl) { if (win && !win.closed) win.close(); return; }
+    const fileName = `PTS-doc-${Date.now()}.png`;
+
+    // วิธีหลัก: ดาวน์โหลดไฟล์ตรง (ใช้ได้บน Desktop และ Chrome/Android ส่วนใหญ่)
+    let downloaded = false;
+    try {
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      downloaded = true;
+    } catch(e) { /* ไปใช้วิธีเปิดแท็บใหม่แทน */ }
+
+    if (win && !win.closed) {
+      _openImageInNewTab(win, dataUrl, fileName);
+    } else if (!downloaded) {
+      window.open(dataUrl, '_blank');
+    } else if (win) {
+      // ดาวน์โหลดสำเร็จแล้ว ปิดแท็บเปล่าทิ้ง
+      try { win.close(); } catch(e) {}
+    }
   } catch(e) {
+    if (win && !win.closed) { try { win.close(); } catch(_) {} }
     Swal.fire({icon:'warning',title:'ไม่สามารถบันทึกภาพได้',text:e.message,
-      background:'#0d1b2a',color:'#cce4ff',timer:2500,showConfirmButton:false,toast:true,position:'top-end'});
+      background:'#0d1b2a',color:'#cce4ff',timer:3000,showConfirmButton:false,toast:true,position:'top-end'});
   }
 }
 
 // ── แชร์เอกสารที่แสดงอยู่เป็นภาพ ผ่าน Web Share API (LINE/Telegram/อื่นๆ บนมือถือ) ──
 async function shareDocImage() {
+  let win = null;
   try {
-    const canvas = await _captureActiveDoc();
-    if (!canvas) return;
+    const dataUrl = await _captureActiveDocDataUrl();
+    if (!dataUrl) return;
     const fileName = `PTS-doc-${Date.now()}.png`;
-    canvas.toBlob(async blob => {
-      const file = new File([blob], fileName, { type:'image/png' });
-      if (navigator.canShare && navigator.canShare({ files:[file] })) {
-        try { await navigator.share({ files:[file], title:'เอกสาร PTS' }); return; } catch(e) { /* ผู้ใช้กดยกเลิก */ }
+
+    // แปลง dataURL → Blob/File เพื่อใช้กับ Web Share API
+    let file = null;
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      file = new File([blob], fileName, { type:'image/png' });
+    } catch(e) { /* ใช้ทางเลือกอื่นด้านล่าง */ }
+
+    if (file && navigator.canShare && navigator.canShare({ files:[file] })) {
+      try {
+        await navigator.share({ files:[file], title:'เอกสาร PTS' });
+        return;
+      } catch(e) {
+        if (e && e.name === 'AbortError') return; // ผู้ใช้กดยกเลิกเอง
+        // แชร์ไฟล์ไม่ได้ → เปิดภาพในแท็บใหม่ให้แตะค้างเพื่อแชร์เอง
       }
-      // เครื่อง/เบราว์เซอร์ไม่รองรับ Web Share API → ดาวน์โหลดแทน
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      Swal.fire({icon:'info',title:'บันทึกภาพแล้ว',text:'อุปกรณ์นี้แชร์โดยตรงไม่ได้ กรุณาส่งไฟล์ภาพที่บันทึกไว้ให้ลูกค้าทาง LINE/Telegram',
-        background:'#0d1b2a',color:'#cce4ff',timer:3500,showConfirmButton:false,toast:true,position:'top-end'});
-    }, 'image/png');
+    }
+
+    // อุปกรณ์/เบราว์เซอร์ไม่รองรับการแชร์ไฟล์ → เปิดภาพในแท็บใหม่ ให้แตะค้างเพื่อบันทึก/แชร์
+    win = window.open('', '_blank');
+    if (win) {
+      _openImageInNewTab(win, dataUrl, fileName);
+    } else {
+      window.open(dataUrl, '_blank');
+    }
+    Swal.fire({icon:'info',title:'เปิดภาพในแท็บใหม่แล้ว',text:'แตะค้างที่รูปเพื่อบันทึก/แชร์ไปยัง LINE หรือ Telegram',
+      background:'#0d1b2a',color:'#cce4ff',timer:3500,showConfirmButton:false,toast:true,position:'top-end'});
   } catch(e) {
+    if (win && !win.closed) { try { win.close(); } catch(_) {} }
     Swal.fire({icon:'warning',title:'ไม่สามารถแชร์ภาพได้',text:e.message,
-      background:'#0d1b2a',color:'#cce4ff',timer:2500,showConfirmButton:false,toast:true,position:'top-end'});
+      background:'#0d1b2a',color:'#cce4ff',timer:3000,showConfirmButton:false,toast:true,position:'top-end'});
   }
 }
 
