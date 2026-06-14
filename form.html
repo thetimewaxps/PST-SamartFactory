@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v7.62</span>
+      <span class="ph-chip ver">v7.63</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2509,15 +2509,15 @@
   </div>
 </div>
 
-<script src="core.js?v=7.62"></script>
-<script src="data.js?v=7.62"></script>
-<script src="formcalc.js?v=7.62"></script>
-<script src="aifeatures.js?v=7.62"></script>
-<script src="theme.js?v=7.62"></script>
-<script src="order.js?v=7.62"></script>
-<script src="purchase.js?v=7.62"></script>
-<script src="invoice.js?v=7.62"></script>
-<script src="plating.js?v=7.62"></script>
+<script src="core.js?v=7.63"></script>
+<script src="data.js?v=7.63"></script>
+<script src="formcalc.js?v=7.63"></script>
+<script src="aifeatures.js?v=7.63"></script>
+<script src="theme.js?v=7.63"></script>
+<script src="order.js?v=7.63"></script>
+<script src="purchase.js?v=7.63"></script>
+<script src="invoice.js?v=7.63"></script>
+<script src="plating.js?v=7.63"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2656,9 +2656,18 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260614-AS',
+    ref: '#REV-20260614-AT',
     date: '2026-06-14',
     current: true,
+    items: [
+      'เพิ่มระบบ Service Worker auto-update: เมื่อเปิดโปรแกรมแล้วมีเวอร์ชันใหม่บน GitHub จะดาวน์โหลด+สลับและรีโหลดหน้าให้อัตโนมัติ ไม่ต้องกดปุ่ม "คืนค่าฟอร์ม" เอง (ใช้ sw.js ที่มีอยู่แล้ว แต่ form.html ยังไม่เคยลงทะเบียนใช้งาน)',
+      'แก้บั๊กเดิม: ปุ่ม "Dev Logs" (ประวัติการแก้ไขงาน) กดแล้วไม่ขึ้นป็อปอัพ เพราะไฟล์ form.html ถูกตัดท้ายขาดหายไป (ฟังก์ชัน openDevLogs/closeDevLogs และตัวแสดงรายการ DEV_LOGS ไม่ได้ถูกสร้างไว้เลย) — เพิ่มฟังก์ชันที่หายไปและปิด script/body/html ให้ครบ',
+    ],
+  },
+  {
+    ref: '#REV-20260614-AS',
+    date: '2026-06-14',
+    current: false,
     items: [
       'แก้ปุ่ม "ส่ง LINE/Telegram" ใบส่งชุบ ที่เปิดแท็บใหม่แล้วเป็นหน้าว่างบนมือถือ: เปลี่ยนวิธีทั้งหมด ไม่เปิดแท็บใหม่อีกต่อไป แต่แสดงรูปการ์ดในป็อปอัพหน้าเดิม ให้แตะค้างที่รูปเพื่อบันทึก/แชร์ได้เลย พร้อมปุ่ม "บันทึกรูป" และ "แชร์ไปยัง LINE/Telegram" (ถ้ามือถือรองรับ)',
     ],
@@ -2814,304 +2823,98 @@ const DEV_LOGS = [
     current: false,
     items: [
       'Sidebar: ปุ่ม "แดชบอร์ด" เมื่อ active เน้นชัดเจนขึ้น (พื้นหลังสีเข้ม ตัวอักษรขาว)',
-      'ทุกครั้งที่เปิดโปรแกรมใหม่/รีเฟรช → เริ่มที่แท็บ "แดชบอร์ด/ติดตามงาน" เสมอ (ไม่กลับไปแท็บเดิมที่บันทึกไว้)',
+      'ทุกครั้งที่เปิดโปรแกรมใหม่/รีเฟรช → เริ่มที่แท็บ "แดชบอร์ด/ติดตามงาน" เสมอ (ไม่กลับไปแท็บเดิมที่บันทึกไวไว้)',
     ],
   },
-  {
-    ref: '#REV-20260614-Y',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'Sidebar: ย้ายเมนู "แดชบอร์ด" ออกมาเป็นเมนูเดี่ยวด้านบนสุด เหนือกลุ่ม "ฝ่ายขาย" (ยังใช้หน้าเดียวกับ "ติดตามงาน")',
-    ],
-  },
-  {
-    ref: '#REV-20260614-X',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'Sidebar กลุ่ม "ฝ่ายผลิต": เพิ่มเมนู "แดชบอร์ด" (ใช้หน้าเดียวกับ "ติดตามงาน") เป็นทางเข้าเพิ่มเติม',
-    ],
-  },
-  {
-    ref: '#REV-20260614-W',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ประวัติใบส่งชุบ: เปลี่ยนคอลัมน์ "จำนวน Order" เป็น "เลขที่ PO" แสดงเลข PO เป็นลิงก์ กดแล้วไปแท็บ Order พร้อมกรองหา PO นั้นทันที',
-    ],
-  },
-  {
-    ref: '#REV-20260614-V',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ติดตามงาน: เพิ่มไอคอน 📨 บนขั้น "กำลังส่งชุป" ของแถบ timeline ถ้า PO นั้นออกใบแจ้งชุบไปแล้ว',
-    ],
-  },
-  {
-    ref: '#REV-20260614-U',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'Sidebar กลุ่ม "บัญชี": ย้าย sub-tab ของแท็บใบกำกับภาษี (ใบกำกับภาษี/เพิ่มลูกค้า/รายงานภาษีขาย/ใบวางบิล) เข้ามาเป็นเมนูย่อยในแถบข้าง คลิกแล้วเปิดแท็บ + sub-tab ที่ตรงกันทันที พร้อมไฮไลต์',
-    ],
-  },
-  {
-    ref: '#REV-20260614-T',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'Sidebar เดสก์ท็อป: ปรับสไตล์ให้แยกชัดเจนระหว่างหัวข้อกลุ่ม (ตัวใหญ่ พื้นหลังเด่น ตัวพิมพ์ใหญ่) กับรายการ submenu (ตัวเล็กลง มีเส้นคั่นด้านซ้าย เยื้องเข้า)',
-    ],
-  },
-  {
-    ref: '#REV-20260614-S',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'Sidebar เดสก์ท็อป (≥1024px): จัดเมนูเป็นกลุ่มตามแผนก (ฝ่ายขาย/ฝ่ายจัดซื้อ/ฝ่ายผลิต/บัญชี/ตั้งค่า) เปิด-ปิด submenu ได้ พร้อมจำสถานะเปิด/ปิดของแต่ละกลุ่ม',
-      'เพิ่มเมนู "กำลังพัฒนา" (⏳ ใบขอราคา, WorkOrder, Inspection, WI, ใบเสร็จ, รายงานภาษี) — กดแล้วแจ้งเตือนว่ายังไม่พร้อมใช้งาน',
-      'มือถือ: แถบแท็บด้านล่างยังคงรูปแบบเดิม ไม่มีการเปลี่ยนแปลง',
-    ],
-  },
-  {
-    ref: '#REV-20260614-R',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'แท็บ "ใบสั่งซื้อ" (po): ขยายเนื้อหาให้เต็มพื้นที่บนเดสก์ท็อป (max-width:100% เหมือนแท็บคำนวณ/Order)',
-    ],
-  },
-  {
-    ref: '#REV-20260614-Q',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'Summary panel (สรุปต้นทุน) ฝั่งขวา: แสดงเฉพาะแท็บ "สรุป" เท่านั้น แท็บอื่นซ่อนไว้ให้พื้นที่เนื้อหาเต็มจอ (โหมดเดสก์ท็อป)',
-    ],
-  },
-  {
-    ref: '#REV-20260614-P',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: หลังบันทึกใบส่งชุบสำเร็จ รีเฟรช checklist ให้ใช้ความจำราคาที่เพิ่งบันทึกไปทันที (ไม่ต้องรีโหลดหน้า)',
-    ],
-  },
-  {
-    ref: '#REV-20260614-O',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ (checklist): เอาคอลัมน์ "รายการวัตถุดิบรวม" ออก แทนด้วยคอลัมน์ "รูปแบบงาน" (แบบงานของ Order)',
-    ],
-  },
-  {
-    ref: '#REV-20260614-N',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เปลี่ยนชื่อสถานะ "งานเคยชุบแล้ว" → "งานเก่า" ให้ตรงกับหัวคอลัมน์ "งานเก่า/ใหม่" (ตั้งอัตโนมัติเมื่อระบบจำราคาได้)',
-    ],
-  },
-  {
-    ref: '#REV-20260614-M',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เพิ่มระบบจำราคา — ถ้ารายการเดิม (ชื่อ+รูปแบบวัสดุตรงกันเป๊ะ) เคยตั้งราคาไว้ จะใส่ราคาให้อัตโนมัติ พร้อมไอคอน 🧠',
-      'ระบบจะจำราคาอัตโนมัติทุกครั้งที่ออกใบส่งชุบสำเร็จ (เก็บที่ Sheet "PlatingPriceMemory")',
-      'Code.gs: เพิ่ม getPlatingPriceMemory / savePlatingPriceMemory',
-    ],
-  },
-  {
-    ref: '#REV-20260614-L',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เปิดให้ติ๊ก "🚫 ไม่ต้องชุบ" ได้กับทุกรายการ (ไม่จำกัดแค่รายการที่ไม่มีวัสดุชุบเลย)',
-    ],
-  },
-  {
-    ref: '#REV-20260614-K',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: ย้ายการบันทึกมาร์ค "ไม่ต้องชุบ" จาก localStorage ไปเก็บที่ Sheet "PlatingNoNeed" ให้เห็นตรงกันทุกเครื่อง',
-      'Code.gs: เพิ่ม getPlatingNoNeed / savePlatingNoNeed',
-    ],
-  },
-  {
-    ref: '#REV-20260614-J',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เพิ่มมาร์ค "🚫 ไม่ต้องชุบ" สำหรับรายการที่ไม่มีวัสดุชุบเลย พร้อมตัวเลือกซ่อนรายการที่มาร์คไว้ออกจาก checklist',
-    ],
-  },
-  {
-    ref: '#REV-20260614-I',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เปลี่ยนหน่วยจาก "ชิ้น" เป็น "Set" และเปลี่ยนหัวคอลัมน์ "จำนวน" → "จำนวน/หน่วย"',
-    ],
-  },
-  {
-    ref: '#REV-20260614-H',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: แถว "ชื่อวัตถุดิบ:" เปลี่ยนเครื่องหมายไม่มีวัสดุจาก ✕ เป็น ❌ ให้เหมือนกับแถวจำนวนชิ้น',
-    ],
-  },
-  {
-    ref: '#REV-20260614-G',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: ช่องฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน แสดงจำนวนชิ้นแทนเครื่องหมาย ✓ และแสดง ❌ เมื่อไม่มีวัสดุนั้น',
-    ],
-  },
-  {
-    ref: '#REV-20260614-F',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เปลี่ยนหัวคอลัมน์ "หมายเหตุ" → "งานเก่า/ใหม่" ให้ตรงกับข้อมูลที่แสดง',
-    ],
-  },
-  {
-    ref: '#REV-20260614-E',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เพิ่มแถว "ชื่อวัตถุดิบ:" แสดงชื่อวัตถุดิบ (ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน) ของแต่ละรายการ ให้ตรงกับข้อมูล PO',
-    ],
-  },
-  {
-    ref: '#REV-20260614-D',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เปลี่ยนข้อความหัวตาราง "Order ที่สถานะ "ส่งชุป"" → "Order ที่สถานะ "ออกใบแจ้งรายการส่งชุปงานแล้ว""',
-    ],
-  },
-  {
-    ref: '#REV-20260614-C',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เปลี่ยนชื่อ "ซ่อนรายการที่ส่งชุบแล้ว" → "รายการแจ้งชุบแล้ว"',
-      'ใบส่งชุบ: เอาฟังก์ชัน "ซ่อนรายการที่ออกใบกำกับภาษีแล้ว" ออก',
-    ],
-  },
-  {
-    ref: '#REV-20260614-B',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'Code.gs: getOrders แก้ปัญหาแถวว่างท้ายชีตทำให้โหลด Order มาว่างเปล่า (หาแถวข้อมูลจริงจากคอลัมน์ No.PO)',
-      'ใบส่งชุบ: ตั้งค่าเริ่มต้นวันที่ออกใบ = วันนี้ และจำร้านชุบที่เลือกล่าสุดไว้เป็นค่าเริ่มต้น',
-    ],
-  },
-  {
-    ref: '#REV-20260614-A',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'แก้ไฟล์ core.js, order.js, invoice.js, theme.js, plating.js ที่ถูกตัดท้ายขาด (ทำให้ทั้งแอปพังและรายชื่อร้านชุบไม่แสดง)',
-      'เติมฟังก์ชัน plating.js ให้สมบูรณ์: สร้าง/บันทึก/ดูประวัติ/พิมพ์ซ้ำ/ยกเลิก ใบส่งชุบ',
-    ],
-  },
-  {
-    ref: '#REV-20260613-BD',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'Order: เปลี่ยนมาโหลดแบบแบ่งหน้า (pagination) — โหลดล่าสุด 100 รายการตามค่าเริ่มต้น เหมือนแท็บ DATA',
-      'เพิ่มแบนเนอร์ "โหลดทั้งหมด" เมื่อมี Order มากกว่า 100 รายการ',
-    ],
-  },
-  {
-    ref: '#REV-20260613-BC',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ยกเลิกแคชข้อมูล Order ฝั่ง client (เปลี่ยนไปใช้ pagination แทน)',
-    ],
-  },
-  {
-    ref: '#REV-20260613-BB',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เพิ่มตัวกรอง "ซ่อนรายการที่ออกใบกำกับภาษีแล้ว" (เปิดใช้เป็นค่าเริ่มต้น)',
-    ],
-  },
-  {
-    ref: '#REV-20260613-BA',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ใบส่งชุบ: ถ้าไม่มีวัสดุ (ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน) แสดง ❌ เหมือนเดิม แทนช่องกรอกจำนวน',
-      'ใบส่งชุบ: เปลี่ยนชื่อคอลัมน์ "สถานะชุบ" เป็น "งานเก่า/ใหม่"',
-    ],
-  },
-  {
-    ref: '#REV-20260613-AZ',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เปลี่ยนคอลัมน์ ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน จากเครื่องหมาย ✔/❌ เป็นช่องกรอกจำนวน แก้ไขได้',
-      'ค่าเริ่มต้นของช่องจำนวน = จำนวน Order ถ้ามีวัสดุนั้นๆ, หรือ 0 ถ้าไม่มี',
-    ],
-  },
-  {
-    ref: '#REV-20260613-AY',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ใบส่งชุบ: ลบคอลัมน์ "สถานะ Order" ออกจากตาราง checklist',
-      'ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน: ตอนสร้าง Order ใหม่ ดึงค่าเป็นรหัสวัตถุดิบ (ไม่ใช่ชื่อเต็ม) ให้ตรงกับรายการอื่นในใบส่งชุบ',
-    ],
-  },
-  {
-    ref: '#REV-20260613-AX',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'รายละเอียด Order (และใบสั่งงานพิมพ์): เพิ่มแถวแสดง ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน ในส่วน "ข้อมูลหลัก"',
-    ],
-  },
-  {
-    ref: '#REV-20260613-AW',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ใบส่งชุบ: เช็ค ✔/❌ ของ ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน ใช้แค่ข้อความ MAT (มี/ไม่มี) เท่านั้น ไม่ต้องอ่านราคาจาก DATA แล้ว',
-    ],
-  },
-  {
-    ref: '#REV-20260613-AV',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'ใบส่งชุบ + คัดลอกสเปกงาน: เปลี่ยนมาใช้ข้อมูล ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน จากชีต Order เป็นหลัก (ไม่ดึงจาก DATA อีก เพราะ 1 Order อาจมีใบเสนอราคามากกว่า 1 รายการ) — ข้อมูลจาก DATA ใช้เป็น fallback เฉพาะ Order เก่าที่ยังไม่มีข้อมูลในคอลัมน์นี้',
-    ],
-  },
-  {
-    ref: '#REV-20260613-AU',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'Order: เพิ่มปุ่ม "🧩 ดึงฝาบน/ฝาล่าง (1 ครั้ง)" ในแท็บ Order — ดึงข้อมูลฝาบน/ฝาล่างจาก DATA มาเติม Order เก่าที่ยังไม่มีข้อมูล (ไม่ทับแถวที่มีข้อมูลแล้ว)',
-    ],
-  },
-  {
-    ref: '#REV-20260613-AT',
-    date: '2026-06-13',
-    current: false,
-    items: [
-      'Order: เพิ่มคอลัมน์ ฝาบน (AG)/ฝาล่าง (AH) ในชีต Order — ดึง�
+];
+
+function _renderDevLogs() {
+  const body = document.getElementById('devLogsBody');
+  if (!body) return;
+  body.innerHTML = DEV_LOGS.map(log => `
+    <div style="border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;
+      ${log.current ? 'background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.4)' : 'background:rgba(255,255,255,.02)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-family:monospace;font-size:.74rem;color:#60a5fa;font-weight:700">${log.ref}</span>
+        <span style="font-size:.7rem;color:#94a3b8">${log.date}${log.current ? ' • ปัจจุบัน' : ''}</span>
+      </div>
+      <ul style="margin:0;padding-left:18px;font-size:.78rem;color:#cce4ff;line-height:1.6">
+        ${(log.items || []).map(it => `<li>${it}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+function openDevLogs() {
+  _renderDevLogs();
+  const m = document.getElementById('devLogsModal');
+  if (m) m.style.display = 'flex';
+}
+function closeDevLogs() {
+  const m = document.getElementById('devLogsModal');
+  if (m) m.style.display = 'none';
+}
+</script>
+
+<script>
+// ===== Service Worker: ลงทะเบียนเพื่อให้แอปรีโหลด/อัปเดตเวอร์ชันใหม่อัตโนมัติ =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      reg.update().catch(() => {});
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(() => {});
+    let _swRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swRefreshed) return;
+      _swRefreshed = true;
+      window.location.reload();
+    });
+  });
+}
+</script>
+</body>
+</html>
+  const m = document.getElementById('devLogsModal');
+  if (m) m.style.display = 'flex';
+}
+function closeDevLogs() {
+  const m = document.getElementById('devLogsModal');
+  if (m) m.style.display = 'none';
+}
+</script>
+
+<script>
+// ===== Service Worker: ลงทะเบียนเพื่อให้แอปรีโหลด/อัปเดตเวอร์ชันใหม่อัตโนมัติ =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      reg.update().catch(() => {});
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(() => {});
+    let _swRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swRefreshed) return;
+      _swRefreshed = true;
+      window.location.reload();
+    });
+  });
+}
+</script>
+</body>
+</html>

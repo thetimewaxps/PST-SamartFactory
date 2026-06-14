@@ -1,7 +1,7 @@
 // Service Worker — PTS Cost Breakdown
 // แคชไฟล์หลักของแอป เพื่อให้เปิดได้แม้ออฟไลน์ และทำให้ติดตั้งเป็นแอปได้
 
-const CACHE_NAME = 'pts-cost-cache-v5.10';
+const CACHE_NAME = 'pts-cost-cache-v5.11';
 const APP_SHELL = [
   './',
   './index.html',
