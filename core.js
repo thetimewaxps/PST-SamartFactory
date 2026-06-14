@@ -210,6 +210,8 @@ let _trkViewMode = 'full';
 function _sbGoto(tab, subTab, view) {
   _activeSubTab = subTab || null;
   if (tab === 'track' && view) _trkViewMode = view;
+  localStorage.setItem('ptts_trk_view_mode', _trkViewMode);
+  localStorage.setItem('ptts_active_subtab', _activeSubTab || '');
   switchTab(tab);
   if (subTab && typeof _invSubTabSwitch === 'function') _invSubTabSwitch(subTab);
   if (tab === 'track' && typeof renderTrackDashboard === 'function') renderTrackDashboard();

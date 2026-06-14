@@ -777,12 +777,32 @@ document.addEventListener('DOMContentLoaded', () => {
   _applyLogoAll();
   // โหลดข้อมูลบริษัท (ชีต Company) มา cache ไว้ใช้ทุกจุด
   _fetchCompanyInfo();
-  // ทุกครั้งที่เปิดโปรแกรมใหม่ (รีเฟรช/เปิดแท็บใหม่) → เริ่มที่แท็บ "ติดตามงาน/แดชบอร์ด" เสมอ
-  switchTab('track');
+  // เปิดแท็บ/หน้าต่างใหม่ (ครั้งแรกของ session นี้) → เริ่มที่แท็บ "แดชบอร์ด" เสมอ
+  // ถ้าเป็นการรีเฟรช/รีโหลดหน้าเดิม (sessionStorage ยังอยู่) → กลับไปหน้าที่เปิดไว้ล่าสุด
+  const _isReload = !!sessionStorage.getItem('ptts_session_active');
+  sessionStorage.setItem('ptts_session_active', '1');
+  if (_isReload) {
+    const savedTab = localStorage.getItem('ptts_active_tab') || 'track';
+    const savedView = localStorage.getItem('ptts_trk_view_mode') || 'full';
+    const savedSubTab = localStorage.getItem('ptts_active_subtab') || '';
+    _trkViewMode = savedView;
+    _activeSubTab = savedSubTab || null;
+    switchTab(savedTab);
+    if (savedSubTab && typeof _invSubTabSwitch === 'function') _invSubTabSwitch(savedSubTab);
+    if (savedTab === 'track' && typeof renderTrackDashboard === 'function') renderTrackDashboard();
+    renderTabBar();
+  } else {
+    _trkViewMode = 'full';
+    localStorage.setItem('ptts_trk_view_mode', 'full');
+    localStorage.setItem('ptts_active_subtab', '');
+    switchTab('track');
+  }
 
   // เปิดจากปุ่ม "เปิดเต็มจอ" (?track=full) → แท็บใหม่นี้แสดงเฉพาะติดตามงานแบบเต็มจอ
   if (new URLSearchParams(location.search).get('track') === 'full') {
+    _trkViewMode = 'full';
     switchTab('track');
+    if (typeof renderTrackDashboard === 'function') renderTrackDashboard();
     document.body.classList.add('trk-fullscreen-mode');
   }
   _updateDraftBadge(); // แสดงจำนวนแบบร่างที่บันทึกไว้
@@ -1096,43 +1116,39 @@ async function saveDocAsImage() {
 }
 
 // ── แชร์เอกสารที่แสดงอยู่เป็นภาพ ผ่าน Web Share API (LINE/Telegram/อื่นๆ บนมือถือ) ──
+// ── ทำงานเหมือนปุ่ม "ส่งรูป" ใน Quotation (shareCardImage) เป๊ะๆ: capture → blob → Web Share API ──
 async function shareDocImage() {
-  let win = null;
   try {
-    const dataUrl = await _captureActiveDocDataUrl();
-    if (!dataUrl) return;
+    const canvas = await _captureActiveDoc();
+    if (!canvas) return;
     const fileName = `PTS-doc-${Date.now()}.png`;
 
-    // แปลง dataURL → Blob/File เพื่อใช้กับ Web Share API
-    let file = null;
-    try {
-      const blob = await (await fetch(dataUrl)).blob();
-      file = new File([blob], fileName, { type:'image/png' });
-    } catch(e) { /* ใช้ทางเลือกอื่นด้านล่าง */ }
-
-    if (file && navigator.canShare && navigator.canShare({ files:[file] })) {
-      try {
-        await navigator.share({ files:[file], title:'เอกสาร PTS' });
-        return;
-      } catch(e) {
-        if (e && e.name === 'AbortError') return; // ผู้ใช้กดยกเลิกเอง
-        // แชร์ไฟล์ไม่ได้ → เปิดภาพในแท็บใหม่ให้แตะค้างเพื่อแชร์เอง
-      }
-    }
-
-    // อุปกรณ์/เบราว์เซอร์ไม่รองรับการแชร์ไฟล์ → เปิดภาพในแท็บใหม่ ให้แตะค้างเพื่อบันทึก/แชร์
-    win = window.open('', '_blank');
-    if (win) {
-      _openImageInNewTab(win, dataUrl, fileName);
+    // ใช้ Web Share API พร้อม files (mobile native share sheet → เลือก Telegram/LINE ได้)
+    if (navigator.canShare && navigator.share) {
+      canvas.toBlob(async blob => {
+        const file = new File([blob], fileName, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file] });
+            return;
+          } catch(e) { /* user cancelled or not supported */ }
+        }
+        // fallback: download
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      }, 'image/png');
     } else {
-      window.open(dataUrl, '_blank');
+      // fallback: download
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
     }
-    Swal.fire({icon:'info',title:'เปิดภาพในแท็บใหม่แล้ว',text:'แตะค้างที่รูปเพื่อบันทึก/แชร์ไปยัง LINE หรือ Telegram',
-      background:'#0d1b2a',color:'#cce4ff',timer:3500,showConfirmButton:false,toast:true,position:'top-end'});
   } catch(e) {
-    if (win && !win.closed) { try { win.close(); } catch(_) {} }
-    Swal.fire({icon:'warning',title:'ไม่สามารถแชร์ภาพได้',text:e.message,
-      background:'#0d1b2a',color:'#cce4ff',timer:3000,showConfirmButton:false,toast:true,position:'top-end'});
+    Swal.fire({icon:'warning',title:'ไม่สามารถแชร์รูปได้',text:e.message,
+      background:'#0d1b2a',color:'#cce4ff',timer:2500,showConfirmButton:false,toast:true,position:'top-end'});
   }
 }
 

@@ -36,7 +36,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v7.53</span>
+      <span class="ph-chip ver">v7.55</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2508,15 +2508,15 @@
   </div>
 </div>
 
-<script src="core.js?v=7.53"></script>
-<script src="data.js?v=7.53"></script>
-<script src="formcalc.js?v=7.53"></script>
-<script src="aifeatures.js?v=7.53"></script>
-<script src="theme.js?v=7.53"></script>
-<script src="order.js?v=7.53"></script>
-<script src="purchase.js?v=7.53"></script>
-<script src="invoice.js?v=7.53"></script>
-<script src="plating.js?v=7.53"></script>
+<script src="core.js?v=7.55"></script>
+<script src="data.js?v=7.55"></script>
+<script src="formcalc.js?v=7.55"></script>
+<script src="aifeatures.js?v=7.55"></script>
+<script src="theme.js?v=7.55"></script>
+<script src="order.js?v=7.55"></script>
+<script src="purchase.js?v=7.55"></script>
+<script src="invoice.js?v=7.55"></script>
+<script src="plating.js?v=7.55"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2655,9 +2655,25 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260614-AJ',
+    ref: '#REV-20260614-AL',
     date: '2026-06-14',
     current: true,
+    items: [
+      'ปุ่ม "ส่ง LINE / Telegram" ในหน้าพรีวิวเอกสาร (ใบส่งชุบ ฯลฯ) ให้ทำงานเหมือนปุ่ม "ส่งรูป" ในใบเสนอราคาเป๊ะๆ (capture → Web Share API → fallback ดาวน์โหลด)',
+    ],
+  },
+  {
+    ref: '#REV-20260614-AK',
+    date: '2026-06-14',
+    current: false,
+    items: [
+      'เปิดแท็บ/หน้าต่างใหม่ → เริ่มที่หน้าแดชบอร์ดเสมอ, แต่ถ้าเป็นการรีเฟรช/รีโหลดหน้าเดิม → จำหน้าที่เปิดอยู่ไว้แล้วเปิดหน้าเดิมกลับมา',
+    ],
+  },
+  {
+    ref: '#REV-20260614-AJ',
+    date: '2026-06-14',
+    current: false,
     items: [
       'แก้ปุ่ม "บันทึกภาพ"/"ส่ง LINE/Telegram" บนหน้าพรีวิวเอกสารให้ใช้ได้บนมือถือ: เปิดภาพในแท็บใหม่ให้แตะค้างบันทึก/แชร์ได้หากดาวน์โหลด/แชร์ไฟล์ตรงไม่ได้ และแก้ปัญหา canvas ถูก taint จากโลโก้รูปข้ามโดเมน',
     ],
