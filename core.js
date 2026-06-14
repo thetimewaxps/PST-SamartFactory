@@ -145,6 +145,56 @@ const TAB_DEFS = [
   { id:'mat',       icon:'🧱', label:'MAT'      },
 ];
 
+// ── Sidebar Group Menu (เดสก์ท็อป ≥1024px) ─────────────
+// จัดกลุ่มแท็บตามแผนก พร้อม submenu เปิด-ปิดได้
+// รายการที่ ph:true = ฟีเจอร์ที่ยังไม่มีในระบบ (กำลังพัฒนา) — กดแล้วแจ้งเตือน ไม่เปิดแท็บจริง
+const GROUP_DEFS = [
+  { id:'sales', icon:'💼', label:'ฝ่ายขาย', items: [
+    { tab:'breakdown' },
+    { tab:'order', label:'ใบเสนอราคา', icon:'📝' },
+    { tab:'order' },
+    { tab:'data' },
+    { tab:'labor' },
+    { tab:'mold' },
+    { tab:'mat' },
+  ]},
+  { id:'purchase', icon:'🛒', label:'ฝ่ายจัดซื้อ', items: [
+    { ph:true, label:'ใบขอราคา', icon:'📨' },
+    { tab:'po' },
+    { tab:'plating' },
+    { tab:'mat' },
+  ]},
+  { id:'production', icon:'🏭', label:'ฝ่ายผลิต', items: [
+    { ph:true, label:'WorkOrder', icon:'📋' },
+    { tab:'calc', label:'คำนวณตัดเหล็ก' },
+    { tab:'mold' },
+    { tab:'track' },
+    { ph:true, label:'Inspection', icon:'🔍' },
+    { ph:true, label:'WI', icon:'📄' },
+  ]},
+  { id:'account', icon:'💰', label:'บัญชี', items: [
+    { tab:'invoice' },
+    { tab:'invoice', label:'รายงานภาษีขาย', icon:'📊' },
+    { ph:true, label:'ใบเสร็จ', icon:'🧾' },
+    { ph:true, label:'รายงานภาษี', icon:'📈' },
+  ]},
+  { id:'settings', icon:'⚙️', label:'ตั้งค่า', items: [
+    { tab:'api' },
+  ]},
+];
+function _loadSidebarGroupState() {
+  return JSON.parse(localStorage.getItem('ptts_sb_groups') || '{}');
+}
+function _toggleSidebarGroup(id) {
+  const st = _loadSidebarGroupState();
+  st[id] = !st[id];
+  localStorage.setItem('ptts_sb_groups', JSON.stringify(st));
+  renderTabBar();
+}
+function _placeholderAlert(label) {
+  alert('🚧 "' + label + '" กำลังพัฒนา ยังไม่พร้อมใช้งานในขณะนี้');
+}
+
 function _loadTabCfg() {
   let order  = JSON.parse(localStorage.getItem('ptts_tab_order')  || 'null') || TAB_DEFS.map(t=>t.id);
   const hidden = JSON.parse(localStorage.getItem('ptts_tab_hidden') || '[]');
@@ -170,8 +220,43 @@ function renderTabBar() {
     <div class="sidebar-logo"><img src="${_getLogoSrc()}" alt="PTS" class="app-logo-img" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.parentNode.textContent='PT'"></div>
     <div><div class="sidebar-title">PTS</div><div class="sidebar-sub">Cost Breakdown</div></div>
   </div>`;
-  // เดสก์ท็อป (sidebar ≥1024px): แสดงทุกแท็บแบบเรียงเดี่ยว ไม่ต้อง group ใต้ "เพิ่มเติม"
+  // เดสก์ท็อป (sidebar ≥1024px): แสดงเป็นเมนูกลุ่มตามแผนก เปิด-ปิด submenu ได้
   const isDesktop = window.innerWidth >= 1024;
+
+  if (isDesktop) {
+    const groupState = _loadSidebarGroupState();
+    const groupsHtml = GROUP_DEFS.map(g => {
+      const itemsHtml = g.items.map(it => {
+        if (it.ph) {
+          return `<button type="button" class="tab-btn sb-placeholder" onclick="_placeholderAlert('${String(it.label).replace(/'/g,"\\'")}')">
+            <span class="t-icon">⏳</span><span class="t-label">${it.label}</span>
+          </button>`;
+        }
+        if (hidden.includes(it.tab)) return '';
+        const def = TAB_DEFS.find(t=>t.id===it.tab);
+        if (!def) return '';
+        const label = it.label || def.label;
+        const icon  = it.icon  || def.icon;
+        const isActive = it.tab === _activeTab;
+        return `<button type="button" class="tab-btn${isActive?' active':''}" id="tbtn-${it.tab}" data-tab="${it.tab}" onclick="switchTab('${it.tab}')">
+          <span class="t-icon">${icon}</span><span class="t-label">${label}</span>
+        </button>`;
+      }).join('');
+      const hasActive = g.items.some(it => !it.ph && it.tab === _activeTab);
+      const isOpen = (groupState[g.id] !== undefined) ? groupState[g.id] : hasActive;
+      return `<div class="sb-group${isOpen?' open':''}">
+        <button type="button" class="sb-group-header" onclick="_toggleSidebarGroup('${g.id}')">
+          <span class="t-icon">${g.icon}</span><span class="t-label">${g.label}</span>
+          <span class="sb-caret">${isOpen?'▾':'▸'}</span>
+        </button>
+        <div class="sb-group-items">${itemsHtml}</div>
+      </div>`;
+    }).join('');
+    bar.innerHTML = sidebarHdr + groupsHtml;
+    const menu = $('moreMenu');
+    if (menu) menu.innerHTML = '';
+    return;
+  }
 
   let subItems = [];
   let moreInserted = false;
@@ -256,21 +341,16 @@ function switchTab(name) {
   const { hidden } = _loadTabCfg();
   if (hidden.includes(name)) return;
   TAB_DEFS.forEach(t => {
-    const tab  = $('tab-'  + t.id);
-    const tbtn = $('tbtn-' + t.id);
-    if (tab)  tab.classList.remove('active');
-    if (tbtn) tbtn.classList.remove('active');
+    const tab = $('tab-' + t.id);
+    if (tab) tab.classList.remove('active');
   });
-  const moreBtn = $('tbtn-more');
-  if (moreBtn) moreBtn.classList.toggle('active', SUB_TAB_IDS.includes(name));
-  const tabEl  = $('tab-'  + name);
-  const tbtnEl = $('tbtn-' + name);
-  if (tabEl)  tabEl.classList.add('active');
-  if (tbtnEl) tbtnEl.classList.add('active');
+  const tabEl = $('tab-' + name);
+  if (tabEl) tabEl.classList.add('active');
   _activeTab = name;
   localStorage.setItem('ptts_active_tab', name);
-  // แท็บ Order: ซ่อน summary panel ฝั่งขวา ให้ตารางเต็มจอ (เดสก์ท็อป)
-  document.body.classList.toggle('no-summary-tab', name === 'order');
+  renderTabBar();
+  // แสดง summary panel ฝั่งขวาเฉพาะแท็บ "สรุป/breakdown" เท่านั้น แท็บอื่นให้เนื้อหาเต็มจอ (เดสก์ท็อป)
+  document.body.classList.toggle('no-summary-tab', name !== 'breakdown');
   if (name === 'calc')      refreshCalcTab();
   if (name === 'labor')     { renderProcTable(); updateLaborPreview(); }
   if (name === 'mold')      renderMoldTable();

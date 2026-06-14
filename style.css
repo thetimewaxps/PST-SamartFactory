@@ -931,6 +931,7 @@ select option { background: var(--sel-bg); color: var(--t1); }
   #tab-api       > div[style*="max-width"],
   #tab-mat       > div[style*="max-width"],
   #tab-order     > div[style*="max-width"],
+  #tab-po        > div[style*="max-width"],
   #tab-data      > div[style*="max-width"] { max-width: 100% !important; }
 }
 
@@ -1067,6 +1068,30 @@ select option { background: var(--sel-bg); color: var(--t1); }
   /* Page header stripe covers full width already (position:relative in flow) */
   .page-header::before,
   .page-header::after { left: 0; }
+
+  /* ── Sidebar Group Menu (เปิด-ปิด submenu ตามแผนก) ── */
+  .sb-group { margin-bottom: 2px; }
+  .sb-group-header {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    padding: 9px 13px; border-radius: 10px; border: none; background: transparent;
+    color: var(--t2); font-family: 'Sarabun', sans-serif; font-size: .82rem; font-weight: 700;
+    cursor: pointer; text-align: left; letter-spacing: .2px;
+    transition: background .15s, color .15s;
+  }
+  .sb-group-header:hover { background: var(--c1-10); color: var(--t1); }
+  .sb-group-header .t-icon { font-size: 1.15rem; flex-shrink: 0; }
+  .sb-group-header .t-label { flex: 1; }
+  .sb-caret { font-size: .68rem; color: var(--t4); flex-shrink: 0; }
+  .sb-group-items {
+    display: flex; flex-direction: column;
+    max-height: 0; overflow: hidden;
+    transition: max-height .25s ease;
+    padding-left: 10px;
+  }
+  .sb-group.open .sb-group-items { max-height: 600px; }
+  .sb-group-items .tab-btn { font-size: .84rem; padding: 8px 13px; }
+  .tab-btn.sb-placeholder { opacity: .45; cursor: not-allowed; }
+  .tab-btn.sb-placeholder:hover { background: transparent; color: var(--t4); }
 }
 
 /* ── DESKTOP SUMMARY PANEL (≥1100px) ─────────────────── */
