@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v7.89</span>
+      <span class="ph-chip ver">v7.91</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2317,7 +2317,7 @@
         🔄 รีเฟรช
       </button>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px 14px;margin-bottom:8px;align-items:end">
+    <div class="inv-issued-filter-grid">
       <div class="field"><label>ค้นหา (เลขที่ใบกำกับ/ลูกค้า/PO)</label>
         <input type="text" id="invIssuedFilterSearch" placeholder="เช่น 2606027, บริษัท..." oninput="renderIssuedInvoiceList()">
       </div>
@@ -2334,7 +2334,7 @@
       <div class="field"><label>วันที่ออก (ถึง)</label>
         <input type="date" id="invIssuedFilterTo" onchange="renderIssuedInvoiceList()">
       </div>
-      <div class="field">
+      <div class="field inv-issued-filter-btn">
         <button type="button" onclick="_invClearIssuedFilter()" style="padding:9px 14px;border-radius:8px;white-space:nowrap;
           border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.1);color:#f87171;
           font-size:.8rem;cursor:pointer;font-family:Sarabun,sans-serif">✖ ล้างการกรอง</button>
@@ -2424,7 +2424,7 @@
       <div class="icon ic-ext">📋</div>
       <h2>ออกรายงาน</h2>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1.4fr auto auto;gap:10px 14px;margin-bottom:8px;align-items:end">
+    <div class="plating-report-grid">
       <div class="field"><label>วันที่ออก (จาก)</label>
         <input type="date" id="platingDetailFrom">
       </div>
@@ -2434,12 +2434,12 @@
       <div class="field"><label>ร้านชุบ</label>
         <select id="platingDetailSupplier"><option value="">ทุกร้านชุบ</option></select>
       </div>
-      <div class="field">
+      <div class="field plating-report-btn">
         <button type="button" onclick="_platingGenerateSummaryReport()" style="padding:9px 14px;border-radius:8px;white-space:nowrap;
           border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#818cf8;
           font-size:.8rem;cursor:pointer;font-family:Sarabun,sans-serif">📊 ออกรายงานสรุป</button>
       </div>
-      <div class="field">
+      <div class="field plating-report-btn">
         <button type="button" onclick="_platingGenerateDetailReport()" style="padding:9px 14px;border-radius:8px;white-space:nowrap;
           border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#818cf8;
           font-size:.8rem;cursor:pointer;font-family:Sarabun,sans-serif">📋 ออกรายงานรายละเอียดย่อย</button>
@@ -2605,15 +2605,15 @@
   </div>
 </div>
 
-<script src="core.js?v=7.89"></script>
-<script src="data.js?v=7.89"></script>
-<script src="formcalc.js?v=7.89"></script>
-<script src="aifeatures.js?v=7.89"></script>
-<script src="theme.js?v=7.89"></script>
-<script src="order.js?v=7.89"></script>
-<script src="purchase.js?v=7.89"></script>
-<script src="invoice.js?v=7.89"></script>
-<script src="plating.js?v=7.89"></script>
+<script src="core.js?v=7.91"></script>
+<script src="data.js?v=7.91"></script>
+<script src="formcalc.js?v=7.91"></script>
+<script src="aifeatures.js?v=7.91"></script>
+<script src="theme.js?v=7.91"></script>
+<script src="order.js?v=7.91"></script>
+<script src="purchase.js?v=7.91"></script>
+<script src="invoice.js?v=7.91"></script>
+<script src="plating.js?v=7.91"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2752,9 +2752,25 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260614-BT',
+    ref: '#REV-20260614-BV',
     date: '2026-06-14',
     current: true,
+    items: [
+      'ใบกำกับ: แก้แถวตัวกรอง "ใบกำกับที่ออกแล้ว" (ค้นหา/ประเภท/วันที่/ล้างการกรอง) ล้นจอในโหมดมือถือ — ปรับเป็น grid 2 คอลัมน์ และปุ่มเต็มความกว้างเมื่อหน้าจอ ≤720px',
+    ],
+  },
+  {
+    ref: '#REV-20260614-BU',
+    date: '2026-06-14',
+    current: false,
+    items: [
+      'ส่งชุบ: แก้แถวปุ่ม "ออกรายงาน" (สรุป/รายละเอียดย่อย) ล้นจอในโหมดมือถือ — ปรับเป็น grid 2 คอลัมน์ และปุ่มเต็มความกว้างเมื่อหน้าจอ ≤720px',
+    ],
+  },
+  {
+    ref: '#REV-20260614-BT',
+    date: '2026-06-14',
+    current: false,
     items: [
       'ตรวจสอบ responsive โหมดคอม/มือถือ: ตาราง MAT (ฝา/ตะแกรง) เพิ่ม overflow-x:auto ป้องกันล้นจอมือถือ — ยืนยันการ์ด Supplier/ตารางอื่นๆ แสดงผลเหมาะสมทั้งสองโหมด',
     ],

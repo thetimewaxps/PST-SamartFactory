@@ -1245,6 +1245,34 @@ select option { background: var(--sel-bg); color: var(--t1); }
   }
 }
 
+/* ── การ์ด "ใบกำกับที่ออกแล้ว" — กริดตัวกรอง/ปุ่มล้างการกรอง ── */
+.inv-issued-filter-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 10px 14px;
+  margin-bottom: 8px;
+  align-items: end;
+}
+@media (max-width: 720px) {
+  .inv-issued-filter-grid { grid-template-columns: 1fr 1fr; }
+  .inv-issued-filter-grid .inv-issued-filter-btn { grid-column: 1 / -1; }
+  .inv-issued-filter-grid .inv-issued-filter-btn button { width: 100%; }
+}
+
+/* ── การ์ด "ออกรายงาน" (ใบส่งชุบ) — กริดวันที่/ร้านชุบ/ปุ่ม ── */
+.plating-report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr auto auto;
+  gap: 10px 14px;
+  margin-bottom: 8px;
+  align-items: end;
+}
+@media (max-width: 720px) {
+  .plating-report-grid { grid-template-columns: 1fr 1fr; }
+  .plating-report-grid .plating-report-btn { grid-column: 1 / -1; }
+  .plating-report-grid .plating-report-btn button { width: 100%; }
+}
+
 /* ══ แท็บ "ติดตามงาน" — Production Tracker Dashboard ══ */
 .track-grid {
   display: grid;
