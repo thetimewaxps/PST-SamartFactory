@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v7.88</span>
+      <span class="ph-chip ver">v7.89</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1901,7 +1901,7 @@
         background:rgba(52,211,153,.1);color:#34d399;font-family:'Sarabun',sans-serif;
         font-size:.8rem;cursor:pointer">➕ เพิ่ม</button>
     </div>
-    <div id="matFlapTableWrap"></div>
+    <div id="matFlapTableWrap" style="overflow-x:auto"></div>
   </div>
 
   <!-- ตะแกรง (Mesh) -->
@@ -1913,7 +1913,7 @@
         background:rgba(52,211,153,.1);color:#34d399;font-family:'Sarabun',sans-serif;
         font-size:.8rem;cursor:pointer">➕ เพิ่ม</button>
     </div>
-    <div id="matMeshTableWrap"></div>
+    <div id="matMeshTableWrap" style="overflow-x:auto"></div>
   </div>
 
   <div style="font-size:.75rem;color:var(--t3);padding:10px 12px;
@@ -2605,15 +2605,15 @@
   </div>
 </div>
 
-<script src="core.js?v=7.88"></script>
-<script src="data.js?v=7.88"></script>
-<script src="formcalc.js?v=7.88"></script>
-<script src="aifeatures.js?v=7.88"></script>
-<script src="theme.js?v=7.88"></script>
-<script src="order.js?v=7.88"></script>
-<script src="purchase.js?v=7.88"></script>
-<script src="invoice.js?v=7.88"></script>
-<script src="plating.js?v=7.88"></script>
+<script src="core.js?v=7.89"></script>
+<script src="data.js?v=7.89"></script>
+<script src="formcalc.js?v=7.89"></script>
+<script src="aifeatures.js?v=7.89"></script>
+<script src="theme.js?v=7.89"></script>
+<script src="order.js?v=7.89"></script>
+<script src="purchase.js?v=7.89"></script>
+<script src="invoice.js?v=7.89"></script>
+<script src="plating.js?v=7.89"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2752,9 +2752,17 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260614-BS',
+    ref: '#REV-20260614-BT',
     date: '2026-06-14',
     current: true,
+    items: [
+      'ตรวจสอบ responsive โหมดคอม/มือถือ: ตาราง MAT (ฝา/ตะแกรง) เพิ่ม overflow-x:auto ป้องกันล้นจอมือถือ — ยืนยันการ์ด Supplier/ตารางอื่นๆ แสดงผลเหมาะสมทั้งสองโหมด',
+    ],
+  },
+  {
+    ref: '#REV-20260614-BS',
+    date: '2026-06-14',
+    current: false,
     items: [
       'แก้ช่องกรอกข้อมูล (input) พื้นสีดำอ่านไม่เห็นในตารางจัดการ Supplier/ลูกค้า/MAT/Item Master — เปลี่ยนเป็นสีตามธีม (var(--bg-input)/var(--t1)) ให้อ่านง่ายทั้งโหมดสว่าง/มืด',
       'ขยายความกว้างการ์ดแท็บ "จัดการ Supplier" เป็น 1100px รองรับหน้าจอคอมพิวเตอร์',
