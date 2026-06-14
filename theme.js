@@ -1041,20 +1041,26 @@ async function _captureActiveDoc(opts) {
     });
   }));
   const baseOpts = { backgroundColor:'#ffffff', scale:2, useCORS:true, allowTaint:true, logging:false };
-  return html2canvas(el, Object.assign({}, baseOpts, opts||{}));
+  let canvas = await html2canvas(el, Object.assign({}, baseOpts, opts||{}));
+  // กัน canvas ถูก taint จากรูปโลโก้ข้ามโดเมน (ไม่มี CORS header) → ถ้า taint ให้ capture ใหม่โดยข้ามรูปภาพ
+  if (!opts || !opts.ignoreElements) {
+    try {
+      canvas.toDataURL('image/png');
+    } catch(e) {
+      canvas = await html2canvas(el, Object.assign({}, baseOpts, { ignoreElements: node => node.tagName === 'IMG' }));
+    }
+  }
+  return canvas;
 }
 
-// ── สร้าง dataURL ของเอกสาร พร้อมกันปัญหา canvas ถูก taint จากรูปโลโก้ข้ามโดเมน ──
+// ── สร้าง dataURL ของเอกสาร ──
 async function _captureActiveDocDataUrl() {
-  let canvas = await _captureActiveDoc();
+  const canvas = await _captureActiveDoc();
   if (!canvas) return null;
   try {
     return canvas.toDataURL('image/png');
   } catch(e) {
-    // canvas ถูก taint (เช่น โลโก้โหลดจากโดเมนอื่นที่ไม่อนุญาต CORS) → ลองใหม่โดยข้ามรูปภาพ
-    canvas = await _captureActiveDoc({ ignoreElements: node => node.tagName === 'IMG' });
-    if (!canvas) return null;
-    return canvas.toDataURL('image/png');
+    return null;
   }
 }
 
