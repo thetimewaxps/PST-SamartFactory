@@ -744,33 +744,46 @@ async function sharePlatingShareCard() {
     _notifyErr('โหลดไลบรารีไม่สำเร็จ', 'อินเทอร์เน็ต/เครือข่ายอาจบล็อก html2canvas ลองเช็คการเชื่อมต่อแล้วโหลดหน้าใหม่');
     return;
   }
+  if (!_platingShareData) {
+    _notifyErr('ไม่สามารถแชร์รูปได้', 'ไม่พบข้อมูลใบส่งชุบ กรุณากดสร้าง/แสดงเอกสารใหม่อีกครั้ง');
+    return;
+  }
+  // เปิดแท็บเปล่าไว้ก่อน (ขณะยังมี user-gesture) เผื่อต้องใช้แสดงภาพให้แตะค้างบันทึก/แชร์บนมือถือ
+  let win = null;
+  try { win = window.open('', '_blank'); } catch(e) {}
   try {
     const canvas = await _platingShareCardAsImage();
-    if (!canvas) return;
+    if (!canvas) { if (win && !win.closed) win.close(); return; }
     const fileName = `PTS-${_platingShareData.platingNo || 'plating'}.png`;
 
+    // ลองใช้ Web Share API พร้อมไฟล์ก่อน (mobile native share sheet → เลือก LINE/Telegram ได้)
     if (navigator.canShare && navigator.share) {
-      canvas.toBlob(async blob => {
-        if (!blob) { _notifyErr('ไม่สามารถแชร์รูปได้', 'สร้างไฟล์ภาพไม่สำเร็จ'); return; }
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      if (blob) {
         const file = new File([blob], fileName, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({ files: [file] });
+            if (win && !win.closed) { try { win.close(); } catch(e) {} }
             return;
-          } catch(e) { /* user cancelled or not supported */ }
+          } catch(e) {
+            // ผู้ใช้กดยกเลิก หรือแชร์ไม่สำเร็จ → ปิดแท็บเปล่าทิ้ง ไม่ต้อง fallback ต่อ
+            if (win && !win.closed) { try { win.close(); } catch(_) {} }
+            return;
+          }
         }
-        const link = document.createElement('a');
-        link.download = fileName;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-      }, 'image/png');
+      }
+    }
+
+    // fallback: เปิดภาพในแท็บใหม่ ให้แตะค้างที่รูปแล้วเลือก "บันทึกรูปภาพ"/"แชร์"
+    const dataUrl = canvas.toDataURL('image/png');
+    if (win && !win.closed) {
+      _openImageInNewTab(win, dataUrl, fileName);
     } else {
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      window.open(dataUrl, '_blank');
     }
   } catch(e) {
+    if (win && !win.closed) { try { win.close(); } catch(_) {} }
     _notifyErr('ไม่สามารถแชร์รูปได้', e && e.message);
   }
 }
