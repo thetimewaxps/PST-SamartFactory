@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="style.css?v=7.34">
+<link rel="stylesheet" href="style.css?v=7.35">
 </head>
 <body>
 
@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.44</span>
+      <span class="ph-chip ver">v8.46</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1888,6 +1888,11 @@
       </label>
       <span class="trk-fs-clock" id="trkFsClock"></span>
     </div>
+    <div class="trk-subtab-nav">
+      <button class="trk-subtab-btn" id="trkSubTabBtn-cards" onclick="_trkSetSubTab('cards')">📊 แดชบอร์ด</button>
+      <button class="trk-subtab-btn" id="trkSubTabBtn-tasks" onclick="_trkSetSubTab('tasks')">📋 List tasks</button>
+    </div>
+    <div id="trkCardsView">
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
       <input type="text" id="trkSearch" placeholder="🔍 ค้นหา No.PO / No.Quo / ลูกค้า / สินค้า" oninput="_trkResetPage()"
         style="flex:1;min-width:200px;padding:8px 12px;font-size:.82rem;border-radius:8px;border:1px solid var(--bc-div);background:var(--bg1,#fff)">
@@ -1912,6 +1917,10 @@
     <div id="trkSummary" class="trk-summary"></div>
     <div id="trackBody" class="track-grid"></div>
     <div id="trkPager" class="trk-pager"></div>
+    </div>
+    <div id="trkTaskListView" style="display:none">
+      <div id="trkTaskList" class="trk-task-list"></div>
+    </div>
   </div>
 </div>
 </div><!-- end tab-track -->
@@ -2650,15 +2659,15 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="core.js?v=8.44"></script>
-<script src="data.js?v=8.44"></script>
-<script src="formcalc.js?v=8.44"></script>
-<script src="aifeatures.js?v=8.44"></script>
-<script src="theme.js?v=8.44"></script>
-<script src="order.js?v=8.44"></script>
-<script src="purchase.js?v=8.44"></script>
-<script src="invoice.js?v=8.44"></script>
-<script src="plating.js?v=8.44"></script>
+<script src="core.js?v=8.46"></script>
+<script src="data.js?v=8.46"></script>
+<script src="formcalc.js?v=8.46"></script>
+<script src="aifeatures.js?v=8.46"></script>
+<script src="theme.js?v=8.46"></script>
+<script src="order.js?v=8.46"></script>
+<script src="purchase.js?v=8.46"></script>
+<script src="invoice.js?v=8.46"></script>
+<script src="plating.js?v=8.46"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2801,9 +2810,25 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260615-AD',
+    ref: '#REV-20260615-AF',
     date: '2026-06-15',
     current: true,
+    items: [
+      'แท็บ "ติดตามงาน/แดชบอร์ด": เพิ่ม sub-tab ใหม่ "📋 List tasks" — แสดงสรุปยอด "รายการสินค้า = จำนวนรวม ลูก" แยกเป็น 2 คอลัมน์ (กำลังผลิต / ส่งชุปแล้ว) โดยรวมยอดจากออเดอร์ที่มีสถานะ Process ตรงกับแต่ละคอลัมน์',
+    ],
+  },
+  {
+    ref: '#REV-20260615-AE',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'หน้า "สร้าง Order จากใบเสนอราคา": เปลี่ยนข้อความสถานะตัวเล็ก (กำลังอัปโหลด/บันทึก/อัปเดต DATA) ให้เป็น popup แจ้งเตือนแบบ loading เห็นชัดขึ้น ระหว่างกดสร้าง Order',
+    ],
+  },
+  {
+    ref: '#REV-20260615-AD',
+    date: '2026-06-15',
+    current: false,
     items: [
       'หน้าติดตามงาน (Tracking): ทำตัวเลข "จำนวน" ให้เด่นขึ้น (ตัวใหญ่ + ตัวหนา + สีเน้น) เพื่อให้มองเห็นง่ายขึ้น',
     ],

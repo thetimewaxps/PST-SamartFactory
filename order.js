@@ -438,10 +438,23 @@ async function createOrder() {
   const statusEl  = $('ord_createStatus');
   if (createBtn) createBtn.disabled = true;
 
+  const _ordSetProgress = (text) => {
+    if (statusEl) statusEl.textContent = '';
+    Swal.update({ html: `<div style="font-size:.95rem">${text}</div>` });
+  };
+
   try {
+    Swal.fire({
+      title: 'กำลังสร้าง Order...',
+      html: '<div style="font-size:.95rem">⏳ กำลังเตรียมข้อมูล...</div>',
+      allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false,
+      background:'#0d1b2a', color:'#cce4ff',
+      didOpen: () => Swal.showLoading()
+    });
+
     const poFile = $('ord_poFile')?.files?.[0];
     if (poFile) {
-      if (statusEl) statusEl.textContent = '⏳ กำลังอัปโหลดไฟล์ PO...';
+      _ordSetProgress('⏳ กำลังอัปโหลดไฟล์ PO...');
       const up = await _ordUploadPoFile(poFile, noPO);
       row[ORDER_COLS.poFile]     = up.url;
       row[ORDER_COLS.poFilePath] = up.path;
@@ -449,17 +462,18 @@ async function createOrder() {
 
     const jobImg1 = $('ord_jobImg1')?.files?.[0];
     if (jobImg1) {
-      if (statusEl) statusEl.textContent = '⏳ กำลังอัปโหลดรูป Drawing...';
+      _ordSetProgress('⏳ กำลังอัปโหลดรูป Drawing...');
       const up = await _ordUploadPoFile(jobImg1, noPO);
       row[ORDER_COLS.jobImg1] = up.url;
     }
 
+    _ordSetProgress('⏳ กำลังบันทึก Order...');
     await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'addOrder', row }) });
 
     // อัปเดตสถานะของรายการต้นทาง (DATA) เป็น "ผ่าน" — แถวเดียวเท่านั้น (ตรวจ noQuo ก่อนส่ง)
-    if (statusEl) statusEl.textContent = '⏳ กำลังอัปเดตสถานะ DATA...';
+    _ordSetProgress('⏳ กำลังอัปเดตสถานะ DATA...');
     await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'updateDataStatus', noQuo, status:'ผ่าน' }) });
@@ -2290,6 +2304,59 @@ function _trkRenderSummary() {
   }).join('');
 }
 
+// ── สับแท็บย่อย "แดชบอร์ด" (การ์ดสรุป+รายการ) / "List tasks" (สรุปยอดงานตามสถานะ) ──
+let _trkSubTab = localStorage.getItem('ptts_trk_subtab') || 'cards';
+
+function _trkSetSubTab(tab) {
+  _trkSubTab = tab;
+  localStorage.setItem('ptts_trk_subtab', tab);
+  renderTrackDashboard();
+}
+
+function _trkApplySubTabUI() {
+  const cardsBtn = $('trkSubTabBtn-cards');
+  const tasksBtn = $('trkSubTabBtn-tasks');
+  const cardsView = $('trkCardsView');
+  const tasksView = $('trkTaskListView');
+  const isTasks = _trkSubTab === 'tasks';
+  if (cardsBtn) cardsBtn.classList.toggle('active', !isTasks);
+  if (tasksBtn) tasksBtn.classList.toggle('active', isTasks);
+  if (cardsView) cardsView.style.display = isTasks ? 'none' : '';
+  if (tasksView) tasksView.style.display = isTasks ? '' : 'none';
+}
+
+// สถานะที่จะแสดงในแต่ละคอลัมน์ของ "List tasks"
+const TRK_TASKLIST_GROUPS = [
+  { key:'กำลังผลิต', label:'กำลังผลิต', color:'#2563eb' },
+  { key:'ส่งชุป',    label:'ส่งชุปแล้ว', color:'#f59e0b' },
+];
+
+// รวมยอด "จำนวน" ของแต่ละ "รายการสินค้า" แยกตามสถานะ Process (กำลังผลิต / ส่งชุป)
+function _trkRenderTaskList() {
+  const wrap = $('trkTaskList');
+  if (!wrap) return;
+
+  wrap.innerHTML = TRK_TASKLIST_GROUPS.map(grp => {
+    const rows = _orderCache.filter(r => _trkEffectiveStatus(r) === grp.key);
+    const totals = new Map();
+    rows.forEach(r => {
+      const name = String(r[ORDER_COLS.productList] || '').trim() || '(ไม่ระบุรายการ)';
+      const qty = parseFloat(String(r[ORDER_COLS.qty] || '').replace(/,/g, '')) || 0;
+      totals.set(name, (totals.get(name) || 0) + qty);
+    });
+    const itemsHtml = totals.size
+      ? Array.from(totals.entries()).map(([name, qty]) =>
+          `<div class="trk-task-row">${name} = ${qty.toLocaleString('th-TH')} <span class="trk-task-unit">ลูก</span></div>`
+        ).join('')
+      : `<div class="trk-task-empty">ไม่มีงาน</div>`;
+    return `
+      <div class="trk-task-col">
+        <div class="trk-task-head">${grp.label}</div>
+        <div class="trk-task-body" style="color:${grp.color}">${itemsHtml}</div>
+      </div>`;
+  }).join('');
+}
+
 // คลิกการ์ดสรุป → ตั้งค่าตัวกรองตามสถานะ (คลิกซ้ำ = ยกเลิกตัวกรอง)
 function _trkSetFilter(val) {
   const sel = $('trkFilter');
@@ -2422,6 +2489,8 @@ function _trkGoPage(p) {
 function renderTrackDashboard() {
   const wrap = $('trackBody');
   if (!wrap) return;
+  _trkApplySubTabUI();
+  _trkRenderTaskList();
   _trkRenderSummary();
 
   const search = ($('trkSearch')?.value || '').trim().toLowerCase();

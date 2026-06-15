@@ -1432,6 +1432,38 @@ body.trk-fullscreen-mode .trk-fs-toolbar {
 .trk-meta { font-size: .7rem; color: var(--t3); margin-top: 2px; }
 .trk-qty { font-size: 1rem; font-weight: 800; color: var(--c1); }
 
+/* ── สับแท็บย่อย แดชบอร์ด / List tasks ── */
+.trk-subtab-nav { display: flex; gap: 8px; margin-bottom: 12px; }
+.trk-subtab-btn {
+  padding: 8px 16px; font-size: .82rem; font-weight: 700; border-radius: 8px;
+  border: 1px solid var(--bc-div); background: var(--bg1, #fff); color: var(--t3);
+  cursor: pointer; font-family: Sarabun, sans-serif;
+}
+.trk-subtab-btn.active { background: var(--c1); color: #fff; border-color: var(--c1); }
+
+/* ── List tasks: สรุปยอดงานตามสถานะ ── */
+.trk-task-list {
+  display: grid; grid-template-columns: 1fr; gap: 0;
+  border: 2px solid #6366f1; border-radius: 12px; overflow: hidden;
+}
+@media (min-width: 720px) {
+  .trk-task-list { grid-template-columns: 1fr 1fr; }
+}
+.trk-task-col { padding: 16px 20px; }
+.trk-task-col + .trk-task-col {
+  border-top: 2px solid #6366f1;
+}
+@media (min-width: 720px) {
+  .trk-task-col + .trk-task-col { border-top: none; border-left: 2px solid #6366f1; }
+}
+.trk-task-head {
+  text-align: center; font-size: 1.6rem; font-weight: 800; color: var(--tx1, #111);
+  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 2px solid #6366f1;
+}
+.trk-task-row { font-size: 1.4rem; font-weight: 800; line-height: 1.7; word-break: break-word; }
+.trk-task-unit { font-weight: 800; }
+.trk-task-empty { font-size: .85rem; color: var(--t3); text-align: center; padding: 12px 0; }
+
 /* วงกลม Lead Time */
 .trk-circle { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
 .trk-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); }
