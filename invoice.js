@@ -554,14 +554,10 @@ function _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal
 
   <div style="display:flex;gap:12px;padding:24px 28px 28px;flex-wrap:wrap">
     <div style="flex:1;text-align:center;min-width:160px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับเงิน / Received by</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">(<span style="display:inline-block;min-width:150px;border-bottom:1px solid #999;height:1px"></span>)</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับเงิน / Received by</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
     </div>
     <div style="flex:1;text-align:center;min-width:160px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้มีอำนาจลงนาม / Authorized signature</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">(<span style="display:inline-block;min-width:150px;border-bottom:1px solid #999;height:1px"></span>)</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้มีอำนาจลงนาม / Authorized signature</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
     </div>
   </div>
 </div>`;
@@ -859,103 +855,188 @@ function _invPrintOverlayCurrent() {
   _invPrintOverlay(_invCurrentDocData);
 }
 
-function _invPrintOverlay(data) {
+// ── โหลดฟอนต์ Sarabun (TTF) มาแปลงเป็น base64 สำหรับฝังใน PDF (cache ไว้ใน localStorage) ──
+let _SARABUN_FONT_CACHE = null;
+async function _invLoadSarabunFonts() {
+  if (_SARABUN_FONT_CACHE) return _SARABUN_FONT_CACHE;
+  try {
+    const cached = JSON.parse(localStorage.getItem('_sarabunFontB64_v2') || 'null');
+    if (cached && cached.regular && cached.bold && cached.regular.length > 10000 && cached.bold.length > 10000) {
+      _SARABUN_FONT_CACHE = cached; return cached;
+    }
+  } catch (e) {}
+  const toB64 = async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('โหลดฟอนต์ไม่สำเร็จ: ' + url);
+    const buf = await res.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  };
+  const [regular, bold] = await Promise.all([
+    toB64('https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Regular.ttf'),
+    toB64('https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Bold.ttf'),
+  ]);
+  if (regular.length < 10000 || bold.length < 10000) throw new Error('ไฟล์ฟอนต์ที่โหลดมาไม่สมบูรณ์');
+  _SARABUN_FONT_CACHE = { regular, bold };
+  try { localStorage.setItem('_sarabunFontB64_v2', JSON.stringify(_SARABUN_FONT_CACHE)); } catch (e) {}
+  return _SARABUN_FONT_CACHE;
+}
+
+// ── โหลดรูปภาพ (โลโก้) มาแปลงเป็น dataURL สำหรับฝังใน PDF ──
+function _invImgToDataURL(src) {
+  return new Promise((resolve) => {
+    if (!src) return resolve(null);
+    if (src.startsWith('data:')) return resolve(src);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+// ── ตัดข้อความให้พอดีกับความกว้าง (มม.) โดยเติม … ถ้ายาวเกิน ──
+function _invPdfTruncate(doc, text, maxWidthMm, sizePt) {
+  doc.setFontSize(sizePt);
+  if (doc.getTextWidth(text) <= maxWidthMm) return text;
+  let t = text;
+  while (t.length > 1 && doc.getTextWidth(t + '…') > maxWidthMm) t = t.slice(0, -1);
+  return t + '…';
+}
+
+// ── สร้างไฟล์ PDF สำหรับพิมพ์ทับฟอร์มกระดาษที่พิมพ์ไว้แล้ว (ตำแหน่งคงที่ ไม่ขยับตามจำนวนรายการ) ──
+async function _invPrintOverlay(data) {
   const { invoiceNo, cust, dateStr, poText, itemsArr, subtotal, vat, total, isFull } = data;
   const pos = _invOverlayGetPos();
   const rowH = pos.rowHeight.x || 7;
-  let html = '';
+  const PT2MM = 0.3528;
 
-  const addField = (key, text, extraStyle) => {
-    const p = pos[key];
-    if (!p || text === '' || text == null) return;
-    const sz = p.size || 10;
-    const fw = p.bold ? 800 : 400;
-    html += `<div style="position:absolute;left:${p.x}mm;top:${p.y}mm;font-size:${sz}pt;font-weight:${fw};white-space:nowrap;${extraStyle||''}">${text}</div>`;
-  };
+  Swal.fire({ title: 'กำลังสร้าง PDF...', background: '#0d1b2a', color: '#cce4ff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-  const co = _companyInfoCache || {};
-  const logoSrc = (typeof _getLogoSrc === 'function') ? _getLogoSrc() : (co.logoUrl || '');
-  if (logoSrc) {
-    const lp = pos.companyLogo, ls = pos.companyLogoSize;
-    html += `<img src="${logoSrc}" style="position:absolute;left:${lp.x}mm;top:${lp.y}mm;width:${ls.x}mm;height:${ls.y}mm;object-fit:contain">`;
-  }
-  addField('companyName', co.name || '', 'padding-bottom:0.8mm;border-bottom:1mm solid #2563eb;');
-  addField('companyNameEn', co.nameEn || '');
-  addField('companyAddr', co.address || '');
-  addField('companyAddrEn', co.addressEn || '');
-  const coTaxLine = co.taxId ? ('เลขประจำตัวผู้เสียภาษีอากร : ' + co.taxId) : '';
-  addField('companyTax', coTaxLine);
-  const coContactLine = [co.phone ? ('โทร: ' + co.phone) : '', co.email ? ('อีเมล์: ' + co.email) : ''].filter(Boolean).join('  ');
-  addField('companyContact', coContactLine);
+  try {
+    if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('โหลดไลบรารี jsPDF ไม่สำเร็จ (เช็คอินเทอร์เน็ต แล้วลองรีโหลดหน้าเว็บ)');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const fonts = await _invLoadSarabunFonts();
+    doc.addFileToVFS('Sarabun-Regular.ttf', fonts.regular);
+    doc.addFileToVFS('Sarabun-Bold.ttf', fonts.bold);
+    doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+    doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
+    doc.setFont('Sarabun', 'normal');
+    doc.setTextColor(0, 0, 0);
 
-  addField('custName', cust.name || '');
-  addField('custAddr', cust.address || '');
-  if (isFull && cust.taxId) addField('custTaxId', cust.taxId);
-  addField('invoiceNo', invoiceNo || '');
-  addField('date', dateStr || '');
-  addField('poNo', poText || '');
+    const addField = (key, text, opts) => {
+      const p = pos[key];
+      if (!p || text === '' || text == null) return;
+      const sz = p.size || 10;
+      doc.setFont('Sarabun', p.bold ? 'bold' : 'normal');
+      doc.setFontSize(sz);
+      let t = String(text);
+      if (opts && opts.maxWidth) t = _invPdfTruncate(doc, t, opts.maxWidth, sz);
+      doc.text(t, p.x, p.y + sz * PT2MM * 0.8);
+    };
 
-  let _ovY = pos.itemNo.y;
-  // เพดานความสูงของพื้นที่รายการสินค้า — ไม่ให้แถวสุดท้ายล้นลงไปทับ/เกินพื้นที่ "จำนวนเงินเป็นตัวอักษร"
-  // (กันไม่ให้เนื้อหารวมทั้งหน้าเกิน 297มม. ซึ่งจะทำให้เบราว์เซอร์ auto-scale ตอนพิมพ์ จนตำแหน่ง X/Y ที่ตั้งไว้คงที่ดูเหมือน "ขยับ")
-  const _ovMaxY = pos.amountWords.y - 10;
-  (itemsArr || []).forEach((it, idx) => {
-    const y = Math.min(_ovY, _ovMaxY);
-    const qty = parseFloat(it.qty) || 0;
-    const priceExVat = parseFloat(it.priceExVat) || 0;
-    const lineTotal = (it.lineTotal != null && it.lineTotal !== '') ? (parseFloat(it.lineTotal)||0) : (qty * priceExVat * 1.07);
-    const unitPrice = isFull ? priceExVat : priceExVat * 1.07;
-    const amount = isFull ? lineTotal / 1.07 : lineTotal;
+    const co = _companyInfoCache || {};
+    const logoSrc = (typeof _getLogoSrc === 'function') ? _getLogoSrc() : (co.logoUrl || '');
+    const logoData = await _invImgToDataURL(logoSrc);
+    if (logoData) {
+      const lp = pos.companyLogo, ls = pos.companyLogoSize;
+      try { doc.addImage(logoData, lp.x, lp.y, ls.x, ls.y); } catch (e) {}
+    }
+    addField('companyName', co.name || '');
+    addField('companyNameEn', co.nameEn || '');
+    addField('companyAddr', co.address || '');
+    addField('companyAddrEn', co.addressEn || '');
+    const coTaxLine = co.taxId ? ('เลขประจำตัวผู้เสียภาษีอากร : ' + co.taxId) : '';
+    addField('companyTax', coTaxLine);
+    const coContactLine = [co.phone ? ('โทร: ' + co.phone) : '', co.email ? ('อีเมล์: ' + co.email) : ''].filter(Boolean).join('  ');
+    addField('companyContact', coContactLine);
 
-    const descLines = [];
-    if (it.workType) descLines.push(it.workType);
-    if (it.od || it.id || it.h) descLines.push(`SIZE: OD${it.od||''}xID${it.id||''}xH${it.h||''} mm`);
-    if (it.meshOut) descLines.push(`ตะแกรงนอก: ${matLabel(it.meshOut)}`);
-    if (it.meshIn) descLines.push(`ตะแกรงใน: ${matLabel(it.meshIn)}`);
-    if (it.note) descLines.push(it.note);
-    descLines.forEach((l,i) => {
-      html += `<div style="position:absolute;left:${pos.itemDesc.x}mm;top:${y + i*4}mm;width:${Math.max(20, (pos.itemQty.x - pos.itemDesc.x - 2))}mm;font-size:${pos.itemDesc.size||8.5}pt;font-weight:${pos.itemDesc.bold?800:400};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l}</div>`;
+    addField('custName', cust.name || '');
+    addField('custAddr', cust.address || '');
+    if (isFull && cust.taxId) addField('custTaxId', cust.taxId);
+    addField('invoiceNo', invoiceNo || '');
+    addField('date', dateStr || '');
+    addField('poNo', poText || '');
+
+    let _ovY = pos.itemNo.y;
+    // เพดานความสูงของพื้นที่รายการสินค้า — ไม่ให้แถวสุดท้ายล้นลงไปทับ/เกินพื้นที่ "จำนวนเงินเป็นตัวอักษร"
+    const _ovMaxY = pos.amountWords.y - 10;
+    const descMaxWidth = Math.max(20, (pos.itemQty.x - pos.itemDesc.x - 2));
+    (itemsArr || []).forEach((it, idx) => {
+      const y = Math.min(_ovY, _ovMaxY);
+      const qty = parseFloat(it.qty) || 0;
+      const priceExVat = parseFloat(it.priceExVat) || 0;
+      const lineTotal = (it.lineTotal != null && it.lineTotal !== '') ? (parseFloat(it.lineTotal) || 0) : (qty * priceExVat * 1.07);
+      const unitPrice = isFull ? priceExVat : priceExVat * 1.07;
+      const amount = isFull ? lineTotal / 1.07 : lineTotal;
+
+      const descLines = [];
+      if (it.workType) descLines.push(it.workType);
+      if (it.od || it.id || it.h) descLines.push(`SIZE: OD${it.od||''}xID${it.id||''}xH${it.h||''} mm`);
+      if (it.meshOut) descLines.push(`ตะแกรงนอก: ${matLabel(it.meshOut)}`);
+      if (it.meshIn) descLines.push(`ตะแกรงใน: ${matLabel(it.meshIn)}`);
+      if (it.note) descLines.push(it.note);
+      const dsz = pos.itemDesc.size || 8.5;
+      doc.setFont('Sarabun', pos.itemDesc.bold ? 'bold' : 'normal');
+      doc.setFontSize(dsz);
+      descLines.forEach((l, i) => {
+        const t = _invPdfTruncate(doc, l, descMaxWidth, dsz);
+        doc.text(t, pos.itemDesc.x, y + i * 4 + dsz * PT2MM * 0.8);
+      });
+
+      doc.setFont('Sarabun', pos.itemNo.bold ? 'bold' : 'normal');
+      doc.setFontSize(pos.itemNo.size || 10);
+      doc.text(String(idx + 1), pos.itemNo.x, y + (pos.itemNo.size || 10) * PT2MM * 0.8);
+
+      doc.setFont('Sarabun', pos.itemQty.bold ? 'bold' : 'normal');
+      doc.setFontSize(pos.itemQty.size || 10);
+      const qtyText = qty ? fmtB(qty, qty % 1 ? 2 : 0) + ' ' + (it.unit || 'EA') : '';
+      if (qtyText) doc.text(qtyText, pos.itemQty.x, y + (pos.itemQty.size || 10) * PT2MM * 0.8);
+
+      doc.setFont('Sarabun', pos.itemPrice.bold ? 'bold' : 'normal');
+      doc.setFontSize(pos.itemPrice.size || 10);
+      doc.text(fmtB(unitPrice), pos.itemPrice.x, y + (pos.itemPrice.size || 10) * PT2MM * 0.8);
+
+      doc.setFont('Sarabun', pos.itemTotal.bold ? 'bold' : 'normal');
+      doc.setFontSize(pos.itemTotal.size || 10);
+      doc.text(fmtB(amount), pos.itemTotal.x, y + (pos.itemTotal.size || 10) * PT2MM * 0.8);
+
+      // เว้นระยะแถวถัดไปตามจำนวนบรรทัดรายละเอียด (กันทับกัน) อย่างน้อย rowH
+      _ovY += Math.max(rowH, descLines.length * 4 + 3);
     });
 
-    html += `<div style="position:absolute;left:${pos.itemNo.x}mm;top:${y}mm;font-size:${pos.itemNo.size||10}pt;font-weight:${pos.itemNo.bold?800:400}">${idx+1}</div>`;
-    html += `<div style="position:absolute;left:${pos.itemQty.x}mm;top:${y}mm;font-size:${pos.itemQty.size||10}pt;font-weight:${pos.itemQty.bold?800:400};white-space:nowrap">${qty ? fmtB(qty, qty%1?2:0)+' '+(it.unit||'EA') : ''}</div>`;
-    html += `<div style="position:absolute;left:${pos.itemPrice.x}mm;top:${y}mm;font-size:${pos.itemPrice.size||10}pt;font-weight:${pos.itemPrice.bold?800:400};text-align:right;white-space:nowrap">${fmtB(unitPrice)}</div>`;
-    html += `<div style="position:absolute;left:${pos.itemTotal.x}mm;top:${y}mm;font-size:${pos.itemTotal.size||10}pt;font-weight:${pos.itemTotal.bold?800:400};text-align:right;white-space:nowrap">${fmtB(amount)}</div>`;
+    addField('amountWords', _thaiBahtText(total));
+    addField('subtotal', fmtB(subtotal));
+    if (isFull) addField('vat', fmtB(vat));
+    addField('total', fmtB(total));
 
-    // เว้นระยะแถวถัดไปตามจำนวนบรรทัดรายละเอียด (กันทับกัน) อย่างน้อย rowH
-    _ovY += Math.max(rowH, descLines.length * 4 + 3);
-  });
-
-  addField('amountWords', _thaiBahtText(total));
-  addField('subtotal', fmtB(subtotal), 'text-align:right');
-  if (isFull) addField('vat', fmtB(vat), 'text-align:right');
-  addField('total', fmtB(total), 'text-align:right');
-
-  const docHtml = `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
-<title>พิมพ์บนฟอร์มสำเร็จ — ${invoiceNo||''}</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap">
-<style>
-  @page { size: A4; margin: 0; }
-  html,body { margin:0; padding:0; }
-  body { font-family:'Sarabun',sans-serif; color:#000; }
-  .ov-page { position:relative; width:210mm; height:297mm; }
-  .ov-page div { line-height:1.25; }
-  @media print { .ov-page { page-break-after: avoid; } }
-</style>
-</head><body>
-<div class="ov-page">${html}</div>
-</body></html>`;
-
-  const w = window.open('', '_blank');
-  if (!w) {
-    Swal.fire({icon:'error', title:'เปิดหน้าต่างไม่ได้', text:'กรุณาอนุญาต popup สำหรับเว็บไซต์นี้',
-      background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
-    return;
+    const blobUrl = doc.output('bloburl');
+    const w = window.open(blobUrl, '_blank');
+    Swal.close();
+    if (!w) {
+      Swal.fire({ icon: 'error', title: 'เปิดหน้าต่างไม่ได้', text: 'กรุณาอนุญาต popup สำหรับเว็บไซต์นี้',
+        background: '#0d1b2a', color: '#cce4ff', confirmButtonColor: '#1d65cc' });
+    }
+  } catch (e) {
+    console.error(e);
+    Swal.close();
+    Swal.fire({ icon: 'error', title: 'สร้าง PDF ไม่สำเร็จ', text: String(e && e.message || e),
+      background: '#0d1b2a', color: '#cce4ff', confirmButtonColor: '#1d65cc' });
   }
-  w.document.open();
-  w.document.write(docHtml);
-  w.document.close();
-  setTimeout(() => { try { w.focus(); w.print(); } catch(e) {} }, 350);
 }
 
 // ── ตั้งค่าตำแหน่งฟิลด์ (มม.) สำหรับพิมพ์บนฟอร์มสำเร็จ — เก็บใน localStorage ──
@@ -1892,15 +1973,11 @@ function _billBuildDocHtml({ billNo, billDateStr, payTerm, cust, items, wht }) {
 
   <div style="display:flex;gap:12px;padding:10px 28px 28px;flex-wrap:wrap">
     <div style="flex:1;text-align:center;min-width:160px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับวางบิล / Received by</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">(<span style="display:inline-block;min-width:150px;border-bottom:1px solid #999;height:1px"></span>)</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับวางบิล / Received by</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
     </div>
     <div style="flex:1;text-align:center;min-width:160px">
       <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">
-        ผู้มีอำนาจลงนาม / Authorized signature<br>ในนาม ${co.name||''}</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">(<span style="display:inline-block;min-width:150px;border-bottom:1px solid #999;height:1px"></span>)</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+        ผู้มีอำนาจลงนาม / Authorized signature<br>ในนาม ${co.name||''}</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
     </div>
   </div>
 </div>`;

@@ -596,14 +596,10 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
 
   <div style="display:flex;gap:12px;padding:10px 28px 28px;flex-wrap:wrap">
     <div style="flex:1;text-align:center;min-width:160px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้ส่งสินค้า / Sent by</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">(<span style="display:inline-block;min-width:150px;border-bottom:1px solid #999;height:1px"></span>)</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้ส่งสินค้า / Sent by</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
     </div>
     <div style="flex:1;text-align:center;min-width:160px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับสินค้า (ร้านชุบ) / Received by</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:4px">(<span style="display:inline-block;min-width:150px;border-bottom:1px solid #999;height:1px"></span>)</div>
-      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับสินค้า (ร้านชุบ) / Received by</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
     </div>
   </div>
 </div>`;

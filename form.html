@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.37</span>
+      <span class="ph-chip ver">v8.42</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2649,15 +2649,16 @@
   </div>
 </div>
 
-<script src="core.js?v=8.37"></script>
-<script src="data.js?v=8.37"></script>
-<script src="formcalc.js?v=8.37"></script>
-<script src="aifeatures.js?v=8.37"></script>
-<script src="theme.js?v=8.37"></script>
-<script src="order.js?v=8.37"></script>
-<script src="purchase.js?v=8.37"></script>
-<script src="invoice.js?v=8.37"></script>
-<script src="plating.js?v=8.37"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="core.js?v=8.42"></script>
+<script src="data.js?v=8.42"></script>
+<script src="formcalc.js?v=8.42"></script>
+<script src="aifeatures.js?v=8.42"></script>
+<script src="theme.js?v=8.42"></script>
+<script src="order.js?v=8.42"></script>
+<script src="purchase.js?v=8.42"></script>
+<script src="invoice.js?v=8.42"></script>
+<script src="plating.js?v=8.42"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2800,9 +2801,49 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260615-W',
+    ref: '#REV-20260615-AB',
     date: '2026-06-15',
     current: true,
+    items: [
+      'แก้ "สร้าง PDF ไม่สำเร็จ: No unicode cmap for font" — URL ฟอนต์ Sarabun จาก jsdelivr/google-fonts ใช้ไม่ได้ (เจอหน้า 404 แทนไฟล์ฟอนต์จริง) เปลี่ยนไปโหลดจาก raw.githubusercontent.com โดยตรง พร้อมตรวจสอบขนาดไฟล์ก่อนใช้/cache เพื่อกัน cache ค่าผิดพลาด',
+    ],
+  },
+  {
+    ref: '#REV-20260615-AA',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'แก้ "สร้าง PDF ไม่สำเร็จ: Cannot destructure jsPDF" — URL ของไลบรารี jsPDF เวอร์ชัน 2.5.2 บน cdnjs ไม่มีจริง เปลี่ยนเป็นเวอร์ชัน 2.5.1 ที่มีอยู่ พร้อมเพิ่มข้อความแจ้งเตือนชัดเจนถ้าโหลดไลบรารีไม่สำเร็จ',
+    ],
+  },
+  {
+    ref: '#REV-20260615-Z',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'ปุ่ม "พิมพ์บนฟอร์มสำเร็จ" (Dot Matrix overlay): เปลี่ยนจากพิมพ์ HTML ผ่านเบราว์เซอร์ (ตำแหน่งขยับ/หดตามจำนวนรายการ) เป็นสร้างไฟล์ PDF ด้วย jsPDF โดยฝังฟอนต์ Sarabun ตำแหน่ง X/Y (มม.) เหมือนเดิม แต่ตำแหน่งจะคงที่แน่นอนทุกครั้ง ไม่ขยับ/หดตามจำนวนรายการอีกต่อไป',
+    ],
+  },
+  {
+    ref: '#REV-20260615-Y',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'ทุกเอกสาร: ลบช่อง "( ชื่อผู้ลงนาม )" ใต้เส้นลงชื่อออก (ไม่ใช้แล้ว) เหลือเฉพาะเส้นลงชื่อและช่องวันที่',
+    ],
+  },
+  {
+    ref: '#REV-20260615-X',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'ทุกเอกสาร: เพิ่มพื้นที่เว้นว่างด้านบนเส้น/Label ลงชื่อ (margin-top: 35px) สำหรับเซ็นชื่อจริงด้วยปากกา ไม่ให้ลายเซ็นทับข้อความ label',
+    ],
+  },
+  {
+    ref: '#REV-20260615-W',
+    date: '2026-06-15',
+    current: false,
     items: [
       'ทุกเอกสาร: ปรับช่อง "( ชื่อผู้ลงนาม )" ใต้เส้นลงชื่อให้กว้างขึ้น (เส้นใต้ขั้นต่ำ 150px ยาวพอเขียนชื่อ-นามสกุล) และเว้นระยะห่างจากเส้นลงชื่อด้านบนมากขึ้น (margin-top: 10px) ไม่ให้ติดกันเกินไป',
     ],
