@@ -2338,16 +2338,22 @@ function _trkRenderTaskList() {
 
   wrap.innerHTML = TRK_TASKLIST_GROUPS.map(grp => {
     const rows = _orderCache.filter(r => _trkEffectiveStatus(r) === grp.key);
-    const totals = new Map();
-    rows.forEach(r => {
-      const name = String(r[ORDER_COLS.productList] || '').trim() || '(ไม่ระบุรายการ)';
-      const qty = parseFloat(String(r[ORDER_COLS.qty] || '').replace(/,/g, '')) || 0;
-      totals.set(name, (totals.get(name) || 0) + qty);
-    });
-    const itemsHtml = totals.size
-      ? Array.from(totals.entries()).map(([name, qty]) =>
-          `<div class="trk-task-row">${name} = ${qty.toLocaleString('th-TH')} <span class="trk-task-unit">ลูก</span></div>`
-        ).join('')
+    const itemsHtml = rows.length
+      ? rows.map(r => {
+          const name = String(r[ORDER_COLS.productList] || '').trim() || '(ไม่ระบุรายการ)';
+          const qty = parseFloat(String(r[ORDER_COLS.qty] || '').replace(/,/g, '')) || 0;
+          const workType = String(r[ORDER_COLS.workType] || '').trim() || '—';
+          const customer = String(r[ORDER_COLS.customer] || '').trim() || '—';
+          const noPO = r[ORDER_COLS.noPO];
+          const isNewRow = _isNewItem(SEEN_KEY_ORDER, noPO);
+          return `<div class="trk-task-row">
+              <div class="trk-task-circle">${_trkLeadTimeCircle(r)}</div>
+              <div class="trk-task-info">
+                <div class="trk-task-main">${name} = ${qty.toLocaleString('th-TH')} <span class="trk-task-unit">ลูก</span>${_newBadge(isNewRow)}</div>
+                <div class="trk-task-meta">แบบงาน: ${workType} · ลูกค้า: ${customer}</div>
+              </div>
+            </div>`;
+        }).join('')
       : `<div class="trk-task-empty">ไม่มีงาน</div>`;
     return `
       <div class="trk-task-col">
