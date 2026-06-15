@@ -488,7 +488,7 @@ function _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal
         <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
-          ${co.address||''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
+          ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
         </div>
       </div>
     </div>
@@ -728,6 +728,13 @@ let _invCurrentDocData = null;
 
 // ตำแหน่งเริ่มต้น (มม. จากมุมบนซ้ายของกระดาษ A4 210x297) — ปรับได้ที่ "⚙️ ตำแหน่ง"
 const _INV_OVERLAY_DEFAULT_POS = {
+  companyLogo:     {x:15, y:6},
+  companyLogoSize: {x:25, y:15},
+  companyName:   {x:45,  y:7},
+  companyNameEn: {x:45,  y:12},
+  companyAddr:   {x:45,  y:17},
+  companyAddrEn: {x:45,  y:22},
+  companyTax:    {x:45,  y:27},
   custName:    {x:18,  y:50},
   custAddr:    {x:18,  y:56},
   custTaxId:   {x:18,  y:62},
@@ -746,6 +753,10 @@ const _INV_OVERLAY_DEFAULT_POS = {
   total:       {x:178, y:254},
 };
 const _INV_OVERLAY_FIELD_LABELS = {
+  companyLogo:'ตำแหน่งโลโก้ (มุมซ้ายบน)', companyLogoSize:'ขนาดโลโก้ (กว้าง x สูง มม.)',
+  companyName:'ชื่อบริษัทเรา (ไทย)', companyNameEn:'ชื่อบริษัทเรา (อังกฤษ)',
+  companyAddr:'ที่อยู่บริษัทเรา (ไทย)', companyAddrEn:'ที่อยู่บริษัทเรา (อังกฤษ)',
+  companyTax:'เลขผู้เสียภาษี/เบอร์โทร/อีเมล์บริษัทเรา',
   custName:'ชื่อลูกค้า', custAddr:'ที่อยู่ลูกค้า', custTaxId:'เลขผู้เสียภาษีลูกค้า',
   invoiceNo:'เลขที่ใบกำกับ', date:'วันที่', poNo:'เลขที่ PO/เอกสาร',
   itemNo:'ลำดับ (แถวแรก)', itemDesc:'รายละเอียดสินค้า (แถวแรก)', itemQty:'จำนวน+หน่วย (แถวแรก)',
@@ -855,6 +866,19 @@ function _invPrintOverlay(data) {
     if (!p || text === '' || text == null) return;
     html += `<div style="position:absolute;left:${p.x}mm;top:${p.y}mm;font-size:10pt;white-space:nowrap;${extraStyle||''}">${text}</div>`;
   };
+
+  const co = _companyInfoCache || {};
+  const logoSrc = (typeof _getLogoSrc === 'function') ? _getLogoSrc() : (co.logoUrl || '');
+  if (logoSrc) {
+    const lp = pos.companyLogo, ls = pos.companyLogoSize;
+    html += `<img src="${logoSrc}" style="position:absolute;left:${lp.x}mm;top:${lp.y}mm;width:${ls.x}mm;height:${ls.y}mm;object-fit:contain">`;
+  }
+  addField('companyName', co.name || '');
+  addField('companyNameEn', co.nameEn || '');
+  addField('companyAddr', co.address || '');
+  addField('companyAddrEn', co.addressEn || '');
+  const coTaxLine = [co.taxId ? ('เลขผู้เสียภาษี: ' + co.taxId) : '', co.phone ? ('โทร: ' + co.phone) : '', co.email ? ('อีเมล์: ' + co.email) : ''].filter(Boolean).join('  ');
+  addField('companyTax', coTaxLine);
 
   addField('custName', cust.name || '');
   addField('custAddr', cust.address || '');
@@ -1588,7 +1612,7 @@ function _invRepShowPreview(list, month, year) {
       <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''} (สำนักงานใหญ่)</div>
       <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''} (Head office)</div>
       <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
-        ${co.address||''}<br>TAX ID: ${co.taxId||''}
+        ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>TAX ID: ${co.taxId||''}
       </div>
     </div>
     <div style="text-align:right;flex-shrink:0">
@@ -1782,7 +1806,7 @@ function _billBuildDocHtml({ billNo, billDateStr, payTerm, cust, items, wht }) {
         <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
-          ${co.address||''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
+          ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
         </div>
       </div>
     </div>

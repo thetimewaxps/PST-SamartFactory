@@ -1665,7 +1665,7 @@ function _renderWorkOrderHtml(d) {
         <div style="font-weight:800;font-size:.95rem">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
-          ${co.address||''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}
+          ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}
         </div>
       </div>
     </div>

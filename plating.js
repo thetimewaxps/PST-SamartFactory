@@ -543,7 +543,7 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
         <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
-          ${co.address||''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
+          ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
         </div>
       </div>
     </div>
@@ -1194,7 +1194,7 @@ function _platingBuildSummaryReportHtml(list, fromIso, toIso, supplierCode) {
         <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
-          ${co.address||''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
+          ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
         </div>
       </div>
     </div>
@@ -1318,7 +1318,7 @@ function _platingBuildDetailReportHtml(list, fromIso, toIso, supplierCode) {
         <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
-          ${co.address||''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
+          ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
         </div>
       </div>
     </div>

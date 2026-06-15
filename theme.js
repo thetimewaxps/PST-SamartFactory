@@ -1855,7 +1855,7 @@ function _refreshLogoPreview() {
 
 // ── Company config ────────────────────────────────────────────
 // ข้อมูลบริษัทเก็บที่ Google Sheet "Company" (sync ทุกอุปกรณ์)
-// fields: name, nameEn, address, phone, email, taxId, logoUrl
+// fields: name, nameEn, address, addressEn, phone, email, taxId, logoUrl
 // ใช้ใน: buildDocuments() → ใบเสนอราคา + ใบจำแนกต้นทุน + ใบกำกับภาษี
 // ตั้งค่าผ่าน: ดูแบบเสนอราคา → ⚙️ ตั้งค่าบริษัท
 async function saveCompanyCfg() {
@@ -1864,9 +1864,10 @@ async function saveCompanyCfg() {
     return;
   }
   const cfg = {
-    name:    $('cfg_coName').value.trim(),
-    nameEn:  $('cfg_coNameEn').value.trim(),
-    address: $('cfg_coAddr').value.trim(),
+    name:      $('cfg_coName').value.trim(),
+    nameEn:    $('cfg_coNameEn').value.trim(),
+    address:   $('cfg_coAddr').value.trim(),
+    addressEn: $('cfg_coAddrEn').value.trim(),
     phone:   $('cfg_coTel').value.trim(),
     email:   $('cfg_coEmail').value.trim(),
     taxId:   $('cfg_coTaxId').value.trim(),
@@ -1893,7 +1894,8 @@ async function openDocCfg() {
   const cfg = _companyInfoCache || {};
   $('cfg_coName').value   = cfg.name    || 'บริษัท ปทิตตา ไส้กรองและวิศวกรรม จำกัด';
   $('cfg_coNameEn').value = cfg.nameEn  || 'PATITTA FILTER ENGINEERING CO., LTD.';
-  $('cfg_coAddr').value   = cfg.address || 'เลขที่ 589/12 แขวงบางนาใต้ เขตบางนา กรุงเทพมหานคร 10260';
+  $('cfg_coAddr').value   = cfg.address   || 'เลขที่ 589/12 แขวงบางนาใต้ เขตบางนา กรุงเทพมหานคร 10260';
+  $('cfg_coAddrEn').value = cfg.addressEn || '';
   $('cfg_coTel').value    = cfg.phone   || '02-345-6789, 081-999-8888';
   $('cfg_coEmail').value  = cfg.email   || 'sales@patitta-engine.co.th';
   $('cfg_coTaxId').value  = cfg.taxId   || '0105574001897';

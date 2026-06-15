@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.14</span>
+      <span class="ph-chip ver">v8.21</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2747,6 +2747,10 @@
         <input id="cfg_coAddr" style="width:100%;margin-top:3px;padding:6px 10px;border-radius:7px;
           border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#cce4ff;
           font-family:'Sarabun',sans-serif;font-size:.8rem"></label>
+      <label>Address (English)<br>
+        <input id="cfg_coAddrEn" style="width:100%;margin-top:3px;padding:6px 10px;border-radius:7px;
+          border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#cce4ff;
+          font-family:'Sarabun',sans-serif;font-size:.8rem"></label>
       <div style="display:flex;gap:8px">
         <label style="flex:1">โทรศัพท์<br>
           <input id="cfg_coTel" style="width:100%;margin-top:3px;padding:6px 10px;border-radius:7px;
@@ -2796,9 +2800,66 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
+    ref: '#REV-20260615-G',
+    date: '2026-06-15',
+    current: true,
+    items: [
+      '"พิมพ์บนฟอร์มสำเร็จ": แยกช่องหัวกระดาษบริษัทเราเป็น ชื่อ(ไทย)/ชื่อ(อังกฤษ)/ที่อยู่(ไทย)/ที่อยู่(อังกฤษ)/เลขผู้เสียภาษี-เบอร์โทร-อีเมล์ — เพิ่มชื่ออังกฤษและอีเมล์ที่ขาดไป และทุกบรรทัดใช้ขนาดตัวอักษรเท่ากัน (10pt) ปรับตำแหน่งแต่ละบรรทัดได้ที่ "⚙️ ตำแหน่ง"',
+    ],
+  },
+  {
+    ref: '#REV-20260615-F',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      '"พิมพ์บนฟอร์มสำเร็จ": แก้ระยะห่างหัวกระดาษบริษัทเรา (ที่อยู่อังกฤษทับช่องเลขผู้เสียภาษี/เบอร์โทร) — ลดขนาดตัวอักษรที่อยู่อังกฤษ และขยับช่องเลขผู้เสียภาษี/เบอร์โทรลง (ปรับเพิ่มได้ที่ "⚙️ ตำแหน่ง" ถ้าจำเป็น)',
+    ],
+  },
+  {
+    ref: '#REV-20260615-E',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      '"พิมพ์บนฟอร์มสำเร็จ": ช่องที่อยู่บริษัทเรา เพิ่มที่อยู่ภาษาอังกฤษ (addressEn) เป็นบรรทัดที่ 2 ต่อจากที่อยู่ภาษาไทย (ถ้าซ้อนกับช่องอื่น ปรับระยะห่างได้ที่ปุ่ม "⚙️ ตำแหน่ง")',
+    ],
+  },
+  {
+    ref: '#REV-20260615-D',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'หัวกระดาษเอกสาร (ใบกำกับภาษี/ใบเสนอราคา/ใบสั่งงาน/ใบชุบ ฯลฯ): แสดงที่อยู่บริษัทภาษาอังกฤษ (addressEn) ต่อจากที่อยู่ภาษาไทย ถ้ามีการกรอกไว้',
+    ],
+  },
+  {
+    ref: '#REV-20260615-C',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      '⚙️ ตั้งค่าบริษัท: เพิ่มฟิลด์ "Address (English)" สำหรับบันทึกที่อยู่บริษัทภาษาอังกฤษ (sync กับ Google Sheet "Company")',
+      'Code.gs: เพิ่ม field company_address_en ใน getCompanyInfo/saveCompanyInfo',
+    ],
+  },
+  {
+    ref: '#REV-20260615-B',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      '"พิมพ์บนฟอร์มสำเร็จ": เพิ่มโลโก้บริษัทที่หัวกระดาษ (ดึงจากโลโก้ที่ตั้งค่าไว้) ปรับตำแหน่ง/ขนาดได้ที่ปุ่ม "⚙️ ตำแหน่ง"',
+    ],
+  },
+  {
+    ref: '#REV-20260615-A',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      '"พิมพ์บนฟอร์มสำเร็จ" (ใบกำกับ/ใบเสนอราคา): เพิ่มชื่อบริษัทเรา/ที่อยู่/เลขผู้เสียภาษี-เบอร์โทร ที่หัวกระดาษ (ดึงจากข้อมูลบริษัทที่ตั้งค่าไว้) ปรับตำแหน่งได้ที่ปุ่ม "⚙️ ตำแหน่ง"',
+    ],
+  },
+  {
     ref: '#REV-20260614-CS',
     date: '2026-06-14',
-    current: true,
+    current: false,
     items: [
       'การ์ด "สร้าง Order จากใบเสนอราคา": select ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน เปลี่ยนแหล่งตัวเลือกจากประวัติ Order เป็นรายการ MAT (ฝา/ตะแกรง) ที่ตั้งไว้ในแท็บ MAT',
     ],
