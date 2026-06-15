@@ -485,7 +485,7 @@ function _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal
           onerror="this.parentNode.style.background='#2563eb';this.style.display='none';this.parentNode.innerHTML='<span style=color:#fff;font-weight:800;font-size:1.05rem>PT</span>'">
       </div>
       <div>
-        <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
+        <div style="font-weight:800;font-size:.95rem;color:#1a2232;padding-bottom:3px;border-bottom:1px solid #2563eb;margin-bottom:3px">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
           ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
@@ -735,9 +735,9 @@ const _INV_OVERLAY_DEFAULT_POS = {
   companyAddr:   {x:45,  y:17},
   companyAddrEn: {x:45,  y:22},
   companyTax:    {x:45,  y:27},
+  custTaxId:   {x:18,  y:44},
   custName:    {x:18,  y:50},
   custAddr:    {x:18,  y:56},
-  custTaxId:   {x:18,  y:62},
   invoiceNo:   {x:178, y:30},
   date:        {x:178, y:38},
   poNo:        {x:178, y:46},
@@ -873,8 +873,8 @@ function _invPrintOverlay(data) {
     const lp = pos.companyLogo, ls = pos.companyLogoSize;
     html += `<img src="${logoSrc}" style="position:absolute;left:${lp.x}mm;top:${lp.y}mm;width:${ls.x}mm;height:${ls.y}mm;object-fit:contain">`;
   }
-  addField('companyName', co.name || '');
-  addField('companyNameEn', co.nameEn || '');
+  addField('companyName', co.name || '', 'font-size:13pt;font-weight:800;padding-bottom:0.8mm;border-bottom:0.5mm solid #2563eb;');
+  addField('companyNameEn', co.nameEn || '', 'font-size:11pt;font-weight:700;');
   addField('companyAddr', co.address || '');
   addField('companyAddrEn', co.addressEn || '');
   const coTaxLine = [co.taxId ? ('เลขผู้เสียภาษี: ' + co.taxId) : '', co.phone ? ('โทร: ' + co.phone) : '', co.email ? ('อีเมล์: ' + co.email) : ''].filter(Boolean).join('  ');
@@ -1609,7 +1609,7 @@ function _invRepShowPreview(list, month, year) {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;
     padding:22px 28px 14px;border-bottom:3px solid #0d9488;gap:12px;flex-wrap:wrap">
     <div>
-      <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''} (สำนักงานใหญ่)</div>
+      <div style="font-weight:800;font-size:.95rem;color:#1a2232;padding-bottom:3px;border-bottom:1px solid #0d9488;margin-bottom:3px">${co.name||''} (สำนักงานใหญ่)</div>
       <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''} (Head office)</div>
       <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
         ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>TAX ID: ${co.taxId||''}
@@ -1803,7 +1803,7 @@ function _billBuildDocHtml({ billNo, billDateStr, payTerm, cust, items, wht }) {
           onerror="this.parentNode.style.background='#2563eb';this.style.display='none';this.parentNode.innerHTML='<span style=color:#fff;font-weight:800;font-size:1.05rem>PT</span>'">
       </div>
       <div>
-        <div style="font-weight:800;font-size:.95rem;color:#1a2232">${co.name||''}</div>
+        <div style="font-weight:800;font-size:.95rem;color:#1a2232;padding-bottom:3px;border-bottom:1px solid #2563eb;margin-bottom:3px">${co.name||''}</div>
         <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
         <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
           ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}

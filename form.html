@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.21</span>
+      <span class="ph-chip ver">v8.23</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2649,15 +2649,15 @@
   </div>
 </div>
 
-<script src="core.js?v=8.11"></script>
-<script src="data.js?v=8.11"></script>
-<script src="formcalc.js?v=8.11"></script>
-<script src="aifeatures.js?v=8.11"></script>
-<script src="theme.js?v=8.11"></script>
-<script src="order.js?v=8.11"></script>
-<script src="purchase.js?v=8.11"></script>
-<script src="invoice.js?v=8.11"></script>
-<script src="plating.js?v=8.11"></script>
+<script src="core.js?v=8.23"></script>
+<script src="data.js?v=8.23"></script>
+<script src="formcalc.js?v=8.23"></script>
+<script src="aifeatures.js?v=8.23"></script>
+<script src="theme.js?v=8.23"></script>
+<script src="order.js?v=8.23"></script>
+<script src="purchase.js?v=8.23"></script>
+<script src="invoice.js?v=8.23"></script>
+<script src="plating.js?v=8.23"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2800,9 +2800,26 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260615-G',
+    ref: '#REV-20260615-I',
     date: '2026-06-15',
     current: true,
+    items: [
+      '"พิมพ์บนฟอร์มสำเร็จ" (Dot Matrix): ชื่อบริษัทเรา (ไทย) ขยายขนาดเป็น 13pt ตัวหนา และเพิ่มเส้นคั่นใต้ชื่อ ระหว่างชื่อไทย-อังกฤษ ส่วนชื่ออังกฤษขยายเป็น 11pt ตัวหนา (ปรับตำแหน่งเพิ่มเติมได้ที่ "⚙️ ตำแหน่ง" ถ้าขนาดใหม่ทับบรรทัดที่อยู่)',
+    ],
+  },
+  {
+    ref: '#REV-20260615-H',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'หัวกระดาษใบกำกับ/ใบวางบิล: เพิ่มเส้นคั่นบาง (สีตามธีมเอกสาร) ระหว่างชื่อบริษัทภาษาไทยและภาษาอังกฤษ ให้ดูเป็นระเบียบเหมือนแบบที่ใช้พิมพ์จริง',
+      '"พิมพ์บนฟอร์มสำเร็จ" (Dot Matrix): ย้ายตำแหน่งเริ่มต้นของเลขผู้เสียภาษีลูกค้า (custTaxId) ขึ้นไปอยู่เหนือชื่อลูกค้า ให้ตรงตำแหน่งกับฟอร์ม Print_INV ที่ใช้พิมพ์จริง — หน้า preview ปกติบนจอไม่เปลี่ยนแปลง (ปรับเพิ่มได้ที่ "⚙️ ตำแหน่ง")',
+    ],
+  },
+  {
+    ref: '#REV-20260615-G',
+    date: '2026-06-15',
+    current: false,
     items: [
       '"พิมพ์บนฟอร์มสำเร็จ": แยกช่องหัวกระดาษบริษัทเราเป็น ชื่อ(ไทย)/ชื่อ(อังกฤษ)/ที่อยู่(ไทย)/ที่อยู่(อังกฤษ)/เลขผู้เสียภาษี-เบอร์โทร-อีเมล์ — เพิ่มชื่ออังกฤษและอีเมล์ที่ขาดไป และทุกบรรทัดใช้ขนาดตัวอักษรเท่ากัน (10pt) ปรับตำแหน่งแต่ละบรรทัดได้ที่ "⚙️ ตำแหน่ง"',
     ],
