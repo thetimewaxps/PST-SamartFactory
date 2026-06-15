@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.46</span>
+      <span class="ph-chip ver">v8.50</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2659,15 +2659,15 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="core.js?v=8.46"></script>
-<script src="data.js?v=8.46"></script>
-<script src="formcalc.js?v=8.46"></script>
-<script src="aifeatures.js?v=8.46"></script>
-<script src="theme.js?v=8.46"></script>
-<script src="order.js?v=8.46"></script>
-<script src="purchase.js?v=8.46"></script>
-<script src="invoice.js?v=8.46"></script>
-<script src="plating.js?v=8.46"></script>
+<script src="core.js?v=8.50"></script>
+<script src="data.js?v=8.50"></script>
+<script src="formcalc.js?v=8.50"></script>
+<script src="aifeatures.js?v=8.50"></script>
+<script src="theme.js?v=8.50"></script>
+<script src="order.js?v=8.50"></script>
+<script src="purchase.js?v=8.50"></script>
+<script src="invoice.js?v=8.50"></script>
+<script src="plating.js?v=8.50"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2810,9 +2810,43 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260615-AF',
+    ref: '#REV-20260615-AJ',
     date: '2026-06-15',
     current: true,
+    items: [
+      'อัปเดตค่าเริ่มต้น (default) ของตำแหน่งพิมพ์บนฟอร์มสำเร็จทุกฟิลด์ ให้ตรงกับค่าที่ปรับลงตัวแล้ว — เครื่องใหม่/เครื่องที่ยังไม่เคยตั้งค่าจะได้ค่านี้เป็นค่าเริ่มต้นทันที (เครื่องที่เคยกดบันทึกค่าของตัวเองไว้แล้วจะยังใช้ค่าที่บันทึกไว้ ไม่เปลี่ยน จนกว่าจะกด "คืนค่าเริ่มต้น")',
+    ],
+  },
+  {
+    ref: '#REV-20260615-AI',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'หน้าตั้งค่าตำแหน่งพิมพ์บนฟอร์มสำเร็จ: เพิ่มช่อง "เส้นคั่นใต้ชื่อบริษัท" ให้ปรับความหนา (X, มม.) และระยะห่างจากตัวอักษร (Y, มม.) ได้เอง',
+    ],
+  },
+  {
+    ref: '#REV-20260615-AH',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'PDF ใบกำกับ: ปรับเส้นคั่นใต้ชื่อบริษัท (ไทย) ให้หนาขึ้น และยาวเท่ากับความกว้างของชื่อบริษัทจริง',
+    ],
+  },
+  {
+    ref: '#REV-20260615-AG',
+    date: '2026-06-15',
+    current: false,
+    items: [
+      'PDF ใบกำกับ (พิมพ์บนฟอร์มสำเร็จ): เพิ่มเส้นคั่นใต้ชื่อบริษัท (ไทย) ที่หายไป ให้ตรงกับตัวอย่างหน้าจอ',
+      'PDF ใบกำกับ: เพิ่มช่อง "ช่องไฟระหว่างบรรทัดรายละเอียดสินค้า (มม.)" ในหน้าตั้งค่าตำแหน่งพิมพ์ ปรับขนาดได้เอง (ค่าเริ่มต้น 4 มม.)',
+      'หน้าตั้งค่าตำแหน่งพิมพ์บนฟอร์มสำเร็จ: ย้าย "เบอร์โทร/อีเมล์บริษัทเรา" ขึ้นไว้เหนือ "เลขประจำตัวผู้เสียภาษีอากรบริษัทเรา"',
+    ],
+  },
+  {
+    ref: '#REV-20260615-AF',
+    date: '2026-06-15',
+    current: false,
     items: [
       'แท็บ "ติดตามงาน/แดชบอร์ด": เพิ่ม sub-tab ใหม่ "📋 List tasks" — แสดงสรุปยอด "รายการสินค้า = จำนวนรวม ลูก" แยกเป็น 2 คอลัมน์ (กำลังผลิต / ส่งชุปแล้ว) โดยรวมยอดจากออเดอร์ที่มีสถานะ Process ตรงกับแต่ละคอลัมน์',
     ],

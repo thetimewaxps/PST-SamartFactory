@@ -726,41 +726,46 @@ let _invCurrentDocData = null;
 
 // ตำแหน่งเริ่มต้น (มม. จากมุมบนซ้ายของกระดาษ A4 210x297) — ปรับได้ที่ "⚙️ ตำแหน่ง"
 const _INV_OVERLAY_DEFAULT_POS = {
-  companyLogo:     {x:15, y:6},
-  companyLogoSize: {x:25, y:15},
-  companyName:   {x:45,  y:7,  size:13, bold:true},
-  companyNameEn: {x:45,  y:12, size:11, bold:true},
-  companyAddr:   {x:45,  y:17, size:10, bold:false},
-  companyAddrEn: {x:45,  y:22, size:10, bold:false},
-  companyTax:    {x:45,  y:27, size:10, bold:false},
-  companyContact:{x:45,  y:32, size:10, bold:false},
-  custTaxId:   {x:18,  y:44, size:10, bold:false},
-  custName:    {x:18,  y:50, size:10, bold:false},
-  custAddr:    {x:18,  y:56, size:10, bold:false},
-  invoiceNo:   {x:178, y:30, size:10, bold:false},
-  date:        {x:178, y:38, size:10, bold:false},
-  poNo:        {x:178, y:46, size:10, bold:false},
-  itemNo:      {x:12,  y:80, size:10, bold:false},
-  itemDesc:    {x:24,  y:80, size:8.5, bold:false},
-  itemQty:     {x:128, y:80, size:10, bold:false},
-  itemPrice:   {x:150, y:80, size:10, bold:false},
-  itemTotal:   {x:178, y:80, size:10, bold:false},
+  companyLogo:     {x:0,  y:5},
+  companyLogoSize: {x:28, y:28},
+  companyName:   {x:30,  y:7,  size:13, bold:true},
+  companyNameLine: {x:0.6, y:2},
+  companyNameEn: {x:30,  y:14, size:11, bold:true},
+  companyAddr:   {x:30,  y:22, size:11, bold:false},
+  companyAddrEn: {x:30,  y:28, size:11, bold:false},
+  companyContact:{x:30,  y:34, size:11, bold:false},
+  companyTax:    {x:30,  y:40, size:11, bold:false},
+  custTaxId:   {x:80,  y:56, size:10, bold:false},
+  custName:    {x:6,   y:65, size:10, bold:false},
+  custAddr:    {x:6,   y:71, size:10, bold:false},
+  invoiceNo:   {x:160, y:55, size:10, bold:false},
+  date:        {x:160, y:64, size:10, bold:false},
+  poNo:        {x:160, y:83, size:10, bold:false},
+  itemNo:      {x:8,   y:110, size:10, bold:false},
+  itemDesc:    {x:20,  y:80, size:10, bold:false},
+  itemQty:     {x:105, y:80, size:10, bold:false},
+  itemPrice:   {x:130, y:80, size:10, bold:false},
+  itemTotal:   {x:170, y:80, size:10, bold:false},
   rowHeight:   {x:7,   y:0},
-  amountWords: {x:18,  y:238, size:10, bold:false},
-  subtotal:    {x:178, y:238, size:10, bold:false},
-  vat:         {x:178, y:246, size:10, bold:false},
-  total:       {x:178, y:254, size:10, bold:false},
+  itemDescLineGap: {x:6, y:0},
+  amountWords: {x:20,  y:210, size:10, bold:false},
+  subtotal:    {x:170, y:210, size:10, bold:false},
+  vat:         {x:170, y:229, size:10, bold:false},
+  total:       {x:170, y:236, size:10, bold:false},
 };
 const _INV_OVERLAY_FIELD_LABELS = {
   companyLogo:'ตำแหน่งโลโก้ (มุมซ้ายบน)', companyLogoSize:'ขนาดโลโก้ (กว้าง x สูง มม.)',
-  companyName:'ชื่อบริษัทเรา (ไทย)', companyNameEn:'ชื่อบริษัทเรา (อังกฤษ)',
+  companyName:'ชื่อบริษัทเรา (ไทย)',
+  companyNameLine:'เส้นคั่นใต้ชื่อบริษัท (X=ความหนา มม., Y=ระยะห่างจากตัวอักษร มม.)',
+  companyNameEn:'ชื่อบริษัทเรา (อังกฤษ)',
   companyAddr:'ที่อยู่บริษัทเรา (ไทย)', companyAddrEn:'ที่อยู่บริษัทเรา (อังกฤษ)',
-  companyTax:'เลขประจำตัวผู้เสียภาษีอากรบริษัทเรา',
   companyContact:'เบอร์โทร/อีเมล์บริษัทเรา',
+  companyTax:'เลขประจำตัวผู้เสียภาษีอากรบริษัทเรา',
   custName:'ชื่อลูกค้า', custAddr:'ที่อยู่ลูกค้า', custTaxId:'เลขผู้เสียภาษีลูกค้า',
   invoiceNo:'เลขที่ใบกำกับ', date:'วันที่', poNo:'เลขที่ PO/เอกสาร',
   itemNo:'ลำดับ (แถวแรก)', itemDesc:'รายละเอียดสินค้า (แถวแรก)', itemQty:'จำนวน+หน่วย (แถวแรก)',
   itemPrice:'ราคาต่อหน่วย (แถวแรก)', itemTotal:'จำนวนเงิน (แถวแรก)', rowHeight:'ความสูงต่อแถว (มม.)',
+  itemDescLineGap:'ช่องไฟระหว่างบรรทัดรายละเอียดสินค้า (มม.)',
   amountWords:'จำนวนเงินเป็นตัวอักษร', subtotal:'รวมก่อน VAT', vat:'ภาษีมูลค่าเพิ่ม VAT', total:'ยอดรวมทั้งสิ้น',
 };
 
@@ -967,6 +972,18 @@ async function _invPrintOverlay(data) {
       try { doc.addImage(logoData, lp.x, lp.y, ls.x, ls.y); } catch (e) {}
     }
     addField('companyName', co.name || '');
+    // เส้นคั่นใต้ชื่อบริษัท (ไทย) — ให้ตรงกับเส้นคั่นในตัวอย่างหน้าจอ
+    if (co.name) {
+      const cnp = pos.companyName;
+      const lnp = pos.companyNameLine || {x:0.6, y:0.8};
+      const lineY = cnp.y + (cnp.size || 13) * PT2MM * 0.8 + (lnp.y != null ? lnp.y : 0.8);
+      doc.setFont('Sarabun', cnp.bold ? 'bold' : 'normal');
+      doc.setFontSize(cnp.size || 13);
+      const nameWidth = doc.getTextWidth(String(co.name));
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(lnp.x || 0.6);
+      doc.line(cnp.x, lineY, cnp.x + nameWidth, lineY);
+    }
     addField('companyNameEn', co.nameEn || '');
     addField('companyAddr', co.address || '');
     addField('companyAddrEn', co.addressEn || '');
@@ -1003,9 +1020,10 @@ async function _invPrintOverlay(data) {
       const dsz = pos.itemDesc.size || 8.5;
       doc.setFont('Sarabun', pos.itemDesc.bold ? 'bold' : 'normal');
       doc.setFontSize(dsz);
+      const descLineGap = pos.itemDescLineGap.x || 4;
       descLines.forEach((l, i) => {
         const t = _invPdfTruncate(doc, l, descMaxWidth, dsz);
-        doc.text(t, pos.itemDesc.x, y + i * 4 + dsz * PT2MM * 0.8);
+        doc.text(t, pos.itemDesc.x, y + i * descLineGap + dsz * PT2MM * 0.8);
       });
 
       doc.setFont('Sarabun', pos.itemNo.bold ? 'bold' : 'normal');
@@ -1026,7 +1044,7 @@ async function _invPrintOverlay(data) {
       doc.text(fmtB(amount), pos.itemTotal.x, y + (pos.itemTotal.size || 10) * PT2MM * 0.8);
 
       // เว้นระยะแถวถัดไปตามจำนวนบรรทัดรายละเอียด (กันทับกัน) อย่างน้อย rowH
-      _ovY += Math.max(rowH, descLines.length * 4 + 3);
+      _ovY += Math.max(rowH, descLines.length * descLineGap + 3);
     });
 
     addField('amountWords', _thaiBahtText(total));
@@ -1055,7 +1073,7 @@ function _invOverlaySettings() {
   const rows = Object.keys(_INV_OVERLAY_DEFAULT_POS).map(k => {
     const label = _INV_OVERLAY_FIELD_LABELS[k] || k;
     const hasTextStyle = (pos[k].size !== undefined);
-    if (k === 'rowHeight') {
+    if (k === 'rowHeight' || k === 'itemDescLineGap') {
       return `<tr><td style="padding:3px 8px;text-align:left;color:#cce4ff">${label}</td>
         <td colspan="4" style="padding:3px"><input type="number" step="0.5" id="ovp_${k}_x" value="${pos[k].x}" style="width:60px;font-family:Sarabun,sans-serif"></td></tr>`;
     }
