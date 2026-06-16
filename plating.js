@@ -1086,21 +1086,27 @@ function _platingGotoOrder(noPO) {
   }, 300);
 }
 
-// ── ยกเลิกใบส่งชุบ — ลบจากประวัติ (ไม่ revert สถานะ Order) ──
+// ── ยกเลิกใบส่งชุบ — ลบจากประวัติ + ถามสถานะ Process ที่จะ revert ──
 async function _platingCancel(idx) {
   const p = _platingHistCache[idx];
   if (!p) return;
-  const conf = await Swal.fire({
+  const PROC_OPTIONS = ['กำลังผลิต','ส่งชุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ','FG รอเรียก','Stock','เตรียมส่ง','(ไม่เปลี่ยนสถานะ)'];
+  const { isConfirmed, value: revertProcess } = await Swal.fire({
     icon:'warning', title:`ยกเลิกใบส่งชุบ ${p.platingNo}?`,
-    text:'Order ที่อยู่ในใบส่งชุบนี้จะกลับมาเลือกส่งชุบใหม่ได้',
+    html:`<div style="text-align:left;font-size:.85rem;margin-bottom:10px">เปลี่ยน Process ของ Order ที่เกี่ยวข้องกลับเป็น:</div>
+          <select id="swal_revertProcP" style="width:100%;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#cce4ff;font-size:.85rem">
+            ${PROC_OPTIONS.map(o => `<option value="${o}"${o==='กำลังผลิต'?' selected':''}>${o}</option>`).join('')}
+          </select>`,
     showCancelButton:true, confirmButtonText:'ยกเลิกใบส่งชุบ', cancelButtonText:'ปิด',
-    confirmButtonColor:'#dc2626', background:'#0d1b2a', color:'#cce4ff'
+    confirmButtonColor:'#dc2626', background:'#0d1b2a', color:'#cce4ff',
+    preConfirm: () => document.getElementById('swal_revertProcP').value
   });
-  if (!conf.isConfirmed) return;
+  if (!isConfirmed) return;
+  const rv = revertProcess === '(ไม่เปลี่ยนสถานะ)' ? '' : revertProcess;
   try {
     const res  = await fetch(SCRIPT_URL, {
       method:'POST', mode:'cors',
-      body: JSON.stringify({ action:'deletePlatingNote', platingNo: p.platingNo })
+      body: JSON.stringify({ action:'deletePlatingNote', platingNo: p.platingNo, revertProcess: rv })
     });
     const out = await res.json();
     if (!out || out.status !== 'ok') throw new Error((out && out.message) || 'delete failed');

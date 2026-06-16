@@ -37,7 +37,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.59</span>
+      <span class="ph-chip ver">v8.61</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1410,6 +1410,7 @@
           <option value="รอConfirm">รอConfirm</option>
           <option value="FG รอเรียก">FG รอเรียก</option>
           <option value="Stock">Stock</option>
+          <option value="เตรียมส่ง">เตรียมส่ง</option>
           <option value="เรียบร้อย">เรียบร้อย</option>
         </select>
       </div>
@@ -1549,6 +1550,7 @@
           <option value="รอConfirm">รอConfirm</option>
           <option value="FG รอเรียก">FG รอเรียก</option>
           <option value="Stock">Stock</option>
+          <option value="เตรียมส่ง">เตรียมส่ง</option>
           <option value="เรียบร้อย">เรียบร้อย</option>
         </select>
       </div>
@@ -1719,6 +1721,7 @@
           <option value="รอConfirm">รอConfirm</option>
           <option value="FG รอเรียก">FG รอเรียก</option>
           <option value="Stock">Stock</option>
+          <option value="เตรียมส่ง">เตรียมส่ง</option>
           <option value="เรียบร้อย">เรียบร้อย</option>
           <option value="">(ไม่ระบุ/ว่าง)</option>
         </select>
@@ -1803,6 +1806,7 @@
           <option value="รอConfirm">รอConfirm</option>
           <option value="FG รอเรียก">FG รอเรียก</option>
           <option value="Stock">Stock</option>
+          <option value="เตรียมส่ง">เตรียมส่ง</option>
           <option value="เรียบร้อย">เรียบร้อย</option>
         </select>
       </div>
@@ -1909,6 +1913,7 @@
         <option value="proc:รอConfirm">รอConfirm</option>
         <option value="proc:FG รอเรียก">FG รอเรียก</option>
         <option value="proc:Stock">Stock</option>
+        <option value="proc:เตรียมส่ง">เตรียมส่ง</option>
         <option value="proc:เรียบร้อย">เรียบร้อย</option>
         <option value="proc:__other__">อื่นๆ (ค่าไม่ตรงสถานะ)</option>
         <option value="overdue">BackOrder (เลยกำหนดส่ง)</option>
@@ -2659,15 +2664,15 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="core.js?v=8.59"></script>
-<script src="data.js?v=8.59"></script>
-<script src="formcalc.js?v=8.59"></script>
-<script src="aifeatures.js?v=8.59"></script>
-<script src="theme.js?v=8.59"></script>
-<script src="order.js?v=8.59"></script>
-<script src="purchase.js?v=8.59"></script>
-<script src="invoice.js?v=8.59"></script>
-<script src="plating.js?v=8.59"></script>
+<script src="core.js?v=8.61"></script>
+<script src="data.js?v=8.61"></script>
+<script src="formcalc.js?v=8.61"></script>
+<script src="aifeatures.js?v=8.61"></script>
+<script src="theme.js?v=8.61"></script>
+<script src="order.js?v=8.61"></script>
+<script src="purchase.js?v=8.61"></script>
+<script src="invoice.js?v=8.61"></script>
+<script src="plating.js?v=8.61"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2810,9 +2815,28 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
+    ref: '#REV-20260616-B',
+    date: '2026-06-16',
+    current: true,
+    items: [
+      'ปรับเงื่อนไขการเปลี่ยน Process อัตโนมัติ (Code.gs): ออกใบกำกับ → ไม่เปลี่ยนถ้าสถานะปัจจุบันเป็น "เรียบร้อย", ออกใบส่งชุบ → ไม่เปลี่ยนถ้าสถานะเป็น "เตรียมส่ง" หรือ "เรียบร้อย"',
+    ],
+  },
+  {
+    ref: '#REV-20260616-A',
+    date: '2026-06-16',
+    current: false,
+    items: [
+      'เพิ่มสถานะ Process "เตรียมส่ง" ครบทุกจุด (dropdown สร้าง/แก้ไข Order, ตัวกรอง, สี badge, Timeline step 4, Dashboard card)',
+      'ออกใบกำกับ → เปลี่ยน Process ของ Order ที่เกี่ยวข้องเป็น "เตรียมส่ง" อัตโนมัติ (Code.gs)',
+      'ออกใบส่งชุบ → เปลี่ยน Process ของ Order ที่เกี่ยวข้องเป็น "ส่งชุป" อัตโนมัติ (Code.gs)',
+      'ยกเลิกใบกำกับ/ยกเลิกใบส่งชุบ → ถามก่อนว่าจะเปลี่ยน Process กลับเป็นอะไร แล้วอัปเดตให้อัตโนมัติ',
+    ],
+  },
+  {
     ref: '#REV-20260615-AS',
     date: '2026-06-15',
-    current: true,
+    current: false,
     items: [
       'ปุ่ม "แชททีม" 💬: ซ่อนบนหน้าจอมือถือ (≤480px) เพราะบังเนื้อหา — ใช้งานได้เฉพาะหน้าจอคอมพิวเตอร์',
     ],

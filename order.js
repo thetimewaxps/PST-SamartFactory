@@ -1214,6 +1214,7 @@ function _ordProcessColor(process) {
   if (p === 'กำลังผลิต')   return {bg:'rgba(245,158,11,.15)', fg:'#fbbf24', bd:'rgba(245,158,11,.35)'};
   if (p === 'รอConfirm')   return {bg:'rgba(148,163,184,.15)',fg:'#cbd5e1', bd:'rgba(148,163,184,.35)'};
   if (p === 'Stock' || p === 'FG รอเรียก') return {bg:'rgba(99,102,241,.15)', fg:'#9b8fff', bd:'rgba(99,102,241,.35)'};
+  if (p === 'เตรียมส่ง')   return {bg:'rgba(20,184,166,.15)', fg:'#2dd4bf', bd:'rgba(20,184,166,.35)'};
   return {bg:'rgba(56,189,248,.15)', fg:'#7dd3fc', bd:'rgba(56,189,248,.35)'};
 }
 // ── สีของ badge ตามสถานะส่งงาน ──
@@ -1245,6 +1246,7 @@ function _ordCurrentStepIdx(r) {
   if (p === 'กำลังผลิต') return 1;
   if (['ส่งชุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ'].includes(p)) return 2;
   if (p === 'FG รอเรียก' || p === 'Stock') return 3;
+  if (p === 'เตรียมส่ง') return 4;
   return 1; // ค่าเริ่มต้น = กำลังผลิต (รับออเดอร์แล้ว)
 }
 // สร้าง HTML ของ Timeline แนวตั้ง
@@ -1470,7 +1472,7 @@ async function _ordQuickChangeProcess(noPO) {
   const r = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(noPO));
   if (!r) return;
   const options = {};
-  ['รอConfirm','กำลังผลิต','ส่งชุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ','FG รอเรียก','Stock','เรียบร้อย']
+  ['รอConfirm','กำลังผลิต','ส่งชุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ','FG รอเรียก','Stock','เตรียมส่ง','เรียบร้อย']
     .forEach(v => options[v] = v);
 
   const { value: newProcess } = await Swal.fire({
@@ -2243,6 +2245,7 @@ const TRK_STATUS_DEFS = [
   { key:'รอConfirm',                icon:'⏳', label:'รอ Confirm',          color:'#94a3b8', group:'process' },
   { key:'กำลังผลิต',                 icon:'🔧', label:'กำลังผลิต',           color:'#f59e0b', group:'process' },
   { key:'ส่งชุป',                    icon:'✨', label:'ส่งชุป',              color:'#fbbf24', group:'process' },
+  { key:'เตรียมส่ง',                 icon:'📦', label:'เตรียมส่ง',           color:'#2dd4bf', group:'process' },
   { key:'ส่งตัวอย่างเทส+รอสรุป',       icon:'🧪', label:'ส่งตัวอย่าง+รอสรุป',  color:'#38bdf8', group:'process' },
   { key:'ส่งยังไม่ครบ',               icon:'📤', label:'ส่งยังไม่ครบ',        color:'#fb923c', group:'process' },
   { key:'FG รอเรียก',                icon:'📦', label:'FG รอเรียก',          color:'#6366f1', group:'process' },

@@ -1322,26 +1322,32 @@ function renderIssuedInvoiceList() {
     </table>`;
 }
 
-// ── ลบใบกำกับที่ออกแล้ว (พร้อมยืนยัน) ──
+// ── ลบใบกำกับที่ออกแล้ว (พร้อมยืนยัน + ถามสถานะ Process ที่จะ revert) ──
 async function deleteIssuedInvoice(invoiceNo) {
-  const result = await Swal.fire({
+  const PROC_OPTIONS = ['กำลังผลิต','ส่งชุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ','FG รอเรียก','Stock','เตรียมส่ง','(ไม่เปลี่ยนสถานะ)'];
+  const { isConfirmed, value: revertProcess } = await Swal.fire({
     icon: 'warning',
     title: `ลบใบกำกับ ${invoiceNo}?`,
-    text: 'การลบนี้ไม่สามารถย้อนกลับได้',
+    html: `<div style="text-align:left;font-size:.85rem;margin-bottom:10px">เปลี่ยน Process ของ Order ที่เกี่ยวข้องกลับเป็น:</div>
+           <select id="swal_revertProc" style="width:100%;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#cce4ff;font-size:.85rem">
+             ${PROC_OPTIONS.map(o => `<option value="${o}"${o==='กำลังผลิต'?' selected':''}>${o}</option>`).join('')}
+           </select>`,
     showCancelButton: true,
-    confirmButtonText: 'ลบ',
+    confirmButtonText: 'ลบใบกำกับ',
     cancelButtonText: 'ยกเลิก',
     confirmButtonColor: '#dc2626',
-    background: '#0d1b2a', color: '#cce4ff'
+    background: '#0d1b2a', color: '#cce4ff',
+    preConfirm: () => document.getElementById('swal_revertProc').value
   });
-  if (!result.isConfirmed) return;
+  if (!isConfirmed) return;
 
   if (!SCRIPT_URL) return;
+  const rv = revertProcess === '(ไม่เปลี่ยนสถานะ)' ? '' : revertProcess;
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST', mode: 'cors',
       headers: {'Content-Type': 'text/plain'},
-      body: JSON.stringify({ action: 'deleteInvoiceRecord', invoiceNo })
+      body: JSON.stringify({ action: 'deleteInvoiceRecord', invoiceNo, revertProcess: rv })
     });
     const out = await res.json();
     if (!out || out.status !== 'ok') throw new Error((out && out.message) || 'delete failed');
