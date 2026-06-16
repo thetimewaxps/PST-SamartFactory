@@ -2,8 +2,8 @@
 // ══ ใบส่งชุบ (PlatingNote) — ส่งงานไปร้านชุบ ══════════════
 // ══════════════════════════════════════════════════════
 // รายการแต่ละชิ้น: { source:'order'|'extra', noPO, description, qty, unit,
-//                    top, bot, meshOut, meshIn, price, status }
-//   (top/bot/meshOut/meshIn = boolean มี/ไม่มี, price = ราคา/หน่วย,
+//                    top, bot, meshOut, meshMid, meshIn, price, status }
+//   (top/bot/meshOut/meshMid/meshIn = boolean มี/ไม่มี, price = ราคา/หน่วย,
 //    status = 'งานใหม่' | 'งานเก่า')
 
 let _platingExtraItems = [];   // รายการเพิ่มเอง (ไม่ผูกกับ Order)
@@ -30,13 +30,13 @@ function _platingFindLastPrice(description) {
   return 0;
 }
 
-// ── ความจำราคา: signature = ชื่อรายการ + รูปแบบวัสดุ (มี/ไม่มี ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน) ──
-let _platingPriceMemList = []; // cache ความจำราคา [{ key, description, top, bot, meshOut, meshIn, price }]
+// ── ความจำราคา: signature = ชื่อรายการ + รูปแบบวัสดุ (มี/ไม่มี ฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงกลาง/ตะแกรงใน) ──
+let _platingPriceMemList = []; // cache ความจำราคา [{ key, description, top, bot, meshOut, meshMid, meshIn, price }]
 
 function _platingSignature(description, p) {
   const desc = String(description||'').trim();
   if (!desc) return '';
-  const pat = (p.top?'1':'0') + (p.bot?'1':'0') + (p.meshOut?'1':'0') + (p.meshIn?'1':'0');
+  const pat = (p.top?'1':'0') + (p.bot?'1':'0') + (p.meshOut?'1':'0') + (p.meshMid?'1':'0') + (p.meshIn?'1':'0');
   return desc + '|' + pat;
 }
 
@@ -69,7 +69,7 @@ function _platingLearnPriceMemory(items) {
     } else {
       _platingPriceMemList.push({
         key, description: String(it.description||'').trim(),
-        top: !!it.top, bot: !!it.bot, meshOut: !!it.meshOut, meshIn: !!it.meshIn,
+        top: !!it.top, bot: !!it.bot, meshOut: !!it.meshOut, meshMid: !!it.meshMid, meshIn: !!it.meshIn,
         price,
       });
       changed = true;
@@ -144,16 +144,35 @@ function _platingPresenceForOrder(noPO_row) {
     top:     has(matTop),
     bot:     has(matBot),
     meshOut: has(matMeshOut),
+    meshMid: false,
     meshIn:  has(matMeshIn),
     matTop, matBot, matMeshOut, matMeshIn,
   };
 }
 
 // ── หา noPO ที่เคยออกใบส่งชุบไปแล้ว (จากประวัติ PlatingNote) เพื่อมาร์คใน checklist ──
-function _platingSentOrderSet() {
-  const set = new Set();
+// สร้าง Map: noPO → ยอดส่งชุบสะสม (จากทุกใบส่งชุบในประวัติ)
+function _platingSentQtyMap() {
+  const map = {};
   (_platingHistCache || []).forEach(p => {
-    String(p.orderNos || '').split(',').map(s => s.trim()).filter(Boolean).forEach(no => set.add(no));
+    (p.items || []).filter(it => it.source === 'order' && it.noPO).forEach(it => {
+      // ใช้ platingQty ถ้ามี (ใบใหม่) ไม่งั้นใช้ qty (ใบเก่าก่อนมีฟีเจอร์นี้)
+      const sent = parseFloat(it.platingQty != null ? it.platingQty : it.qty) || 0;
+      map[it.noPO] = (map[it.noPO] || 0) + sent;
+    });
+  });
+  return map;
+}
+
+// Set ของ noPO ที่ส่งชุบครบแล้ว (ยอดสะสม >= ยอด PO)
+function _platingSentOrderSet() {
+  const sentQtyMap = _platingSentQtyMap();
+  const set = new Set();
+  (_orderCache || []).forEach(r => {
+    const noPO = String(r[ORDER_COLS.noPO]||'').trim();
+    if (!noPO || !(noPO in sentQtyMap)) return;
+    const poQty = parseFloat(r[ORDER_COLS.qty]||'') || 0;
+    if (sentQtyMap[noPO] >= poQty) set.add(noPO);
   });
   return set;
 }
@@ -202,8 +221,9 @@ function _platingRenderOrderList() {
     return;
   }
 
-  const sentSet = _platingSentOrderSet();
-  const noNeedSet = _platingNoNeedSet();
+  const sentSet    = _platingSentOrderSet();
+  const sentQtyMap = _platingSentQtyMap();
+  const noNeedSet  = _platingNoNeedSet();
   let list = all;
   if (_platingHideSent) list = list.filter(r => !sentSet.has(String(r[ORDER_COLS.noPO]||'').trim()));
   if (_platingHideNoNeed) list = list.filter(r => !noNeedSet.has(String(r[ORDER_COLS.noPO]||'').trim()));
@@ -242,9 +262,12 @@ function _platingRenderOrderList() {
     const noPO = String(r[ORDER_COLS.noPO]||'').trim();
     const product = String(r[ORDER_COLS.productList]||'').trim() || '-';
     const qty = String(r[ORDER_COLS.qty]||'').trim() || '-';
-    const sent = sentSet.has(noPO);
+    const sent      = sentSet.has(noPO);
+    const sentQtyN  = sentQtyMap[noPO] || 0;
+    const poQtyN    = parseFloat(qty) || 0;
+    const partSent  = !sent && sentQtyN > 0;
     const noNeed = noNeedSet.has(noPO);
-    const noMatAtAll = !p.top && !p.bot && !p.meshOut && !p.meshIn;
+    const noMatAtAll = !p.top && !p.bot && !p.meshOut && !p.meshMid && !p.meshIn;
     // qtyCell: ถ้าไม่มีวัสดุนี้ ('matKey' ใน p เป็น false) แสดง ❌ / ถ้ามีให้เป็นช่องกรอกจำนวนแก้ไขได้
     const qtyCell = (hasMat, metaKey) => hasMat
       ? `<input type="number" step="1" min="0" value="${meta[metaKey] || ''}" placeholder="0"
@@ -262,11 +285,13 @@ function _platingRenderOrderList() {
       _platingOrderMeta[noPO] = {
         price: lastPrice, status: lastPrice > 0 ? 'งานเก่า' : 'งานใหม่',
         priceFromMemory: !!memPrice,
-        platingQty: qtyNum,   // จำนวนที่จะส่งชุบ (แก้ไขได้ โดยไม่กระทบ Order)
-        topQty:     p.top     ? qtyNum : 0,
-        botQty:     p.bot     ? qtyNum : 0,
-        meshOutQty: p.meshOut ? qtyNum : 0,
-        meshInQty:  p.meshIn  ? qtyNum : 0,
+        platingQty:  qtyNum,   // จำนวนที่จะส่งชุบ (แก้ไขได้ โดยไม่กระทบ Order)
+        topQty:      p.top     ? qtyNum : 0,
+        botQty:      p.bot     ? qtyNum : 0,
+        meshOutQty:  p.meshOut ? qtyNum : 0,
+        meshMid:     false,    // toggle ได้ในหน้า checklist (ค่าเริ่มต้น ❌)
+        meshMidQty:  0,
+        meshInQty:   p.meshIn  ? qtyNum : 0,
       };
     }
     const meta = _platingOrderMeta[noPO];
@@ -279,18 +304,19 @@ function _platingRenderOrderList() {
         <a href="javascript:void(0)" onclick="_platingGoToOrder('${noPO.replace(/'/g,"\\'")}')"
           style="color:#60a5fa;text-decoration:underline;cursor:pointer">${noPO}</a>
       </td>
+      <td style="padding:6px 8px;text-align:center;font-size:.74rem;white-space:nowrap">${workType}</td>
       <td style="padding:6px 8px">${product}</td>
       <td style="padding:6px 8px;text-align:center">
-        <input type="number" step="1" min="0"
+        <input type="number" step="1" min="0" max="${parseFloat(qty)||''}"
           value="${meta.platingQty !== undefined ? meta.platingQty : (parseFloat(qty)||0)}"
-          placeholder="${qty}" title="จำนวนที่จะส่งชุบ (ไม่กระทบยอด Order)"
+          placeholder="${qty}" title="จำนวนที่จะส่งชุบ (สูงสุด ${qty} ตามยอด PO)"
           oninput="_platingSetMainQty('${noPO}',this.value,this)"
           style="width:64px;padding:5px;border-radius:6px;border:1px solid rgba(250,204,21,.4);background:rgba(250,204,21,.08);color:var(--t1);font-family:Sarabun,sans-serif;font-size:.8rem;text-align:center">
       </td>
-      <td style="padding:6px 8px;text-align:center;font-size:.74rem;white-space:nowrap">${workType}</td>
       <td style="padding:6px 8px;text-align:center">${qtyCell(p.top, 'topQty')}</td>
       <td style="padding:6px 8px;text-align:center">${qtyCell(p.bot, 'botQty')}</td>
       <td style="padding:6px 8px;text-align:center">${qtyCell(p.meshOut, 'meshOutQty')}</td>
+      <td style="padding:6px 8px;text-align:center" data-nopo-meshmid="${noPO.replace(/"/g,'&quot;')}">${_platingMeshMidCell(noPO, meta)}</td>
       <td style="padding:6px 8px;text-align:center">${qtyCell(p.meshIn, 'meshInQty')}</td>
       <td style="padding:6px 8px;text-align:center">
         <div style="position:relative;display:inline-block">
@@ -308,11 +334,15 @@ function _platingRenderOrderList() {
         </select>
       </td>
       <td style="padding:6px 8px;text-align:center">
-        ${sent ? `<span style="color:#fbbf24;font-weight:700;font-size:.74rem">📌 ส่งชุบแล้ว</span>`
-          : `<label style="display:flex;align-items:center;gap:4px;justify-content:center;cursor:pointer;color:#ef4444;font-size:.74rem;font-weight:600;white-space:nowrap">
-              <input type="checkbox" ${noNeed?'checked':''} onchange="_platingToggleNoNeed('${noPO}',this.checked)" style="width:14px;height:14px;cursor:pointer">
-              🚫 ไม่ต้องชุบ
-            </label>`}
+        ${sent
+          ? `<span style="color:#fbbf24;font-weight:700;font-size:.74rem">📌 ส่งชุบแล้ว</span>`
+          : partSent
+            ? `<span style="color:#f59e0b;font-weight:700;font-size:.74rem;white-space:nowrap"
+                title="ส่งชุบไปแล้ว ${sentQtyN} จาก ${poQtyN} ชิ้น">⏳ ส่งแล้ว ${sentQtyN}/${poQtyN}</span>`
+            : `<label style="display:flex;align-items:center;gap:4px;justify-content:center;cursor:pointer;color:#ef4444;font-size:.74rem;font-weight:600;white-space:nowrap">
+                <input type="checkbox" ${noNeed?'checked':''} onchange="_platingToggleNoNeed('${noPO}',this.checked)" style="width:14px;height:14px;cursor:pointer">
+                🚫 ไม่ต้องชุบ
+              </label>`}
       </td>
     </tr>`;
   }).join('');
@@ -335,12 +365,13 @@ function _platingRenderOrderList() {
             <input type="checkbox" id="platingChkAll" onchange="_platingToggleAll(this.checked)" style="width:16px;height:16px;cursor:pointer">
           </th>
           <th style="padding:6px 8px;text-align:left">เลขที่ PO</th>
+          <th style="padding:6px 8px;text-align:center">รูปแบบงาน</th>
           <th style="padding:6px 8px;text-align:left">รายการ</th>
           <th style="padding:6px 8px;text-align:center">จำนวน</th>
-          <th style="padding:6px 8px;text-align:center">รูปแบบงาน</th>
           <th style="padding:6px 8px;text-align:center">ฝาบน</th>
           <th style="padding:6px 8px;text-align:center">ฝาล่าง</th>
           <th style="padding:6px 8px;text-align:center">ตะแกรงนอก</th>
+          <th style="padding:6px 8px;text-align:center">ตะแกรงกลาง</th>
           <th style="padding:6px 8px;text-align:center">ตะแกรงใน</th>
           <th style="padding:6px 8px;text-align:center">ราคา/หน่วย</th>
           <th style="padding:6px 8px;text-align:center">งานเก่า/ใหม่</th>
@@ -375,23 +406,69 @@ function _platingToggleAll(checked) {
   document.querySelectorAll('#platingOrderListWrap .plating-chk').forEach(c => c.checked = checked);
 }
 
+// ── ตะแกรงกลาง: toggle ❌ ↔ qty input (ค่าเริ่มต้น ❌, กดเพื่อเปิด/ปิด) ──
+function _platingMeshMidCell(noPO, meta) {
+  const noPO_esc = noPO.replace(/'/g, "\\'");
+  const noPO_attr = noPO.replace(/"/g, '&quot;');
+  if (!meta.meshMid) {
+    return `<button onclick="_platingToggleMeshMid('${noPO_esc}')"
+      title="คลิกเพื่อเพิ่มตะแกรงกลาง"
+      style="background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:4px;font-size:1rem;line-height:1;transition:background .15s"
+      onmouseover="this.style.background='rgba(239,68,68,.1)'"
+      onmouseout="this.style.background='none'">❌</button>`;
+  }
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+    <input type="number" step="1" min="0" value="${meta.meshMidQty || ''}" placeholder="0"
+      data-pqtype="meshMidQty" data-nopo="${noPO_attr}"
+      oninput="_platingSetOrderMeta('${noPO_esc}','meshMidQty',this.value)"
+      style="width:64px;padding:6px;border-radius:6px;border:1px solid var(--bc-input);background:var(--bg-input);color:var(--t1);font-family:Sarabun,sans-serif;font-size:.8rem;text-align:center">
+    <button onclick="_platingToggleMeshMid('${noPO_esc}')"
+      title="คลิกเพื่อปิดตะแกรงกลาง"
+      style="background:none;border:none;cursor:pointer;padding:0;font-size:.65rem;color:#94a3b8;line-height:1">✕ ปิด</button>
+  </div>`;
+}
+function _platingToggleMeshMid(noPO) {
+  if (!_platingOrderMeta[noPO]) return;
+  const m = _platingOrderMeta[noPO];
+  m.meshMid = !m.meshMid;
+  const cell = document.querySelector(`td[data-nopo-meshmid="${CSS.escape(noPO)}"]`);
+  if (cell) cell.innerHTML = _platingMeshMidCell(noPO, m);
+}
+
 // ตั้งค่า ราคา/สถานะ ของ Order แต่ละแถวใน checklist
 function _platingSetOrderMeta(noPO, field, value) {
   if (!_platingOrderMeta[noPO]) _platingOrderMeta[noPO] = { price: 0, status: 'งานใหม่' };
-  if (['price','topQty','botQty','meshOutQty','meshInQty'].includes(field)) value = parseFloat(value) || 0;
+  if (['price','topQty','botQty','meshOutQty','meshMidQty','meshInQty'].includes(field)) value = parseFloat(value) || 0;
   _platingOrderMeta[noPO][field] = value;
   if (field === 'price') _platingOrderMeta[noPO].priceFromMemory = false; // ผู้ใช้แก้ราคาเอง ไม่ใช่จากความจำแล้ว
 }
 
 // ── เปลี่ยนจำนวนที่จะส่งชุบ (ไม่กระทบ Order qty) → ส่งต่อไปยัง part qty ทุกอัน ──
 function _platingSetMainQty(noPO, val, el) {
-  const qty = parseFloat(val) || 0;
+  let qty = parseFloat(val) || 0;
+  // ตรวจสอบไม่ให้เกินยอด PO
+  const poRow = (_orderCache || []).find(r => String(r[ORDER_COLS.noPO]||'').trim() === noPO);
+  const poQty = poRow ? (parseFloat(poRow[ORDER_COLS.qty]||'')||0) : 0;
+  if (poQty > 0 && qty > poQty) {
+    qty = poQty;
+    if (el) el.value = poQty;
+    Swal.fire({
+      icon: 'warning',
+      title: `ส่งชุบได้สูงสุด ${poQty} ชิ้นตามยอด PO`,
+      html: `<div style="font-size:.84rem;color:#8b8aaa;line-height:1.6">
+        ถ้ามีชิ้นส่วนอื่นที่ต้องชุบเพิ่ม<br>
+        ให้เพิ่มในส่วน <b>"รายการเพิ่มเติม (ทั่วไป)"</b> แทน
+      </div>`,
+      background: '#0d1b2a', color: '#cce4ff', confirmButtonColor: '#f59e0b',
+      confirmButtonText: 'รับทราบ',
+    });
+  }
   _platingSetOrderMeta(noPO, 'platingQty', qty);
   // อัปเดต topQty/botQty/meshOutQty/meshInQty ทุกตัวที่ "มี" (ไม่ใช่ 0 จากการที่ไม่มีวัสดุ)
   // ดูว่า meta นั้นๆ ไม่ได้เป็น 0 เพราะ "ไม่มี" (❌) — check จาก presence ใน ORDER_COLS
   const m = _platingOrderMeta[noPO];
   if (!m) return;
-  ['topQty','botQty','meshOutQty','meshInQty'].forEach(k => {
+  ['topQty','botQty','meshOutQty','meshMidQty','meshInQty'].forEach(k => {
     if (m[k] !== undefined) _platingSetOrderMeta(noPO, k, qty);
   });
   // อัปเดต DOM inputs ในแถวเดียวกัน
@@ -405,7 +482,7 @@ function _platingSetMainQty(noPO, val, el) {
 
 // ── จัดการรายการเพิ่มเอง (ไม่ผูกกับ Order) ──
 function _platingAddExtraItem() {
-  _platingExtraItems.push({ description:'', qty:1, unit:'Set', top:false, bot:false, meshOut:false, meshIn:false, price:0, status:'งานใหม่' });
+  _platingExtraItems.push({ description:'', qty:1, unit:'Set', top:false, bot:false, meshOut:false, meshMid:false, meshIn:false, price:0, status:'งานใหม่' });
   _platingRenderExtraItems();
 }
 function _platingRemoveExtraItem(idx) {
@@ -415,7 +492,7 @@ function _platingRemoveExtraItem(idx) {
 function _platingUpdateExtraItem(idx, field, value) {
   if (!_platingExtraItems[idx]) return;
   if (field === 'qty' || field === 'price') value = parseFloat(value) || 0;
-  if (['top','bot','meshOut','meshIn'].includes(field)) value = !!value;
+  if (['top','bot','meshOut','meshMid','meshIn'].includes(field)) value = !!value;
   _platingExtraItems[idx][field] = value;
 }
 // ดึงราคาล่าสุดจากประวัติมาใส่ตามชื่อรายการที่กรอก
@@ -456,6 +533,7 @@ function _platingRenderExtraItems() {
       <td style="padding:6px 8px;text-align:center">${chkBox(idx,'top',it.top)}</td>
       <td style="padding:6px 8px;text-align:center">${chkBox(idx,'bot',it.bot)}</td>
       <td style="padding:6px 8px;text-align:center">${chkBox(idx,'meshOut',it.meshOut)}</td>
+      <td style="padding:6px 8px;text-align:center">${chkBox(idx,'meshMid',it.meshMid)}</td>
       <td style="padding:6px 8px;text-align:center">${chkBox(idx,'meshIn',it.meshIn)}</td>
       <td style="padding:6px 8px;text-align:center">
         <div style="display:flex;gap:4px;align-items:center;justify-content:center">
@@ -488,6 +566,7 @@ function _platingRenderExtraItems() {
           <th style="padding:6px 8px;text-align:center">ฝาบน</th>
           <th style="padding:6px 8px;text-align:center">ฝาล่าง</th>
           <th style="padding:6px 8px;text-align:center">ตะแกรงนอก</th>
+          <th style="padding:6px 8px;text-align:center">ตะแกรงกลาง</th>
           <th style="padding:6px 8px;text-align:center">ตะแกรงใน</th>
           <th style="padding:6px 8px;text-align:center">ราคา/หน่วย</th>
           <th style="padding:6px 8px;text-align:center">สถานะ</th>
@@ -528,7 +607,7 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
     const amount = price * qtyNum;
     grandTotal += amount;
     const hasMatRow = it.matTop || it.matBot || it.matMeshOut || it.matMeshIn ||
-      it.top || it.bot || it.meshOut || it.meshIn;
+      it.top || it.bot || it.meshOut || it.meshMid || it.meshIn;
     const matRow = hasMatRow ? `
     <tr style="border-bottom:1px solid #e8ecf2">
       <td style="padding:0 10px 7px"></td>
@@ -537,6 +616,7 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
       <td style="padding:0 10px 7px;text-align:center">${matCell(it.top, it.matTop)}</td>
       <td style="padding:0 10px 7px;text-align:center">${matCell(it.bot, it.matBot)}</td>
       <td style="padding:0 10px 7px;text-align:center">${matCell(it.meshOut, it.matMeshOut)}</td>
+      <td style="padding:0 10px 7px;text-align:center">${matCell(it.meshMid, '')}</td>
       <td style="padding:0 10px 7px;text-align:center">${matCell(it.meshIn, it.matMeshIn)}</td>
       <td style="padding:0 10px 7px"></td>
       <td style="padding:0 10px 7px"></td>
@@ -550,6 +630,7 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
       <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.top, it.topQty, it.qty)}</td>
       <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.bot, it.botQty, it.qty)}</td>
       <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.meshOut, it.meshOutQty, it.qty)}</td>
+      <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.meshMid, it.meshMidQty, it.qty)}</td>
       <td style="padding:7px 10px;text-align:center;white-space:nowrap">${qtyCell(it.meshIn, it.meshInQty, it.qty)}</td>
       <td style="padding:7px 10px;text-align:right;white-space:nowrap">${price ? fmtB(price) : '-'}</td>
       <td style="padding:7px 10px;text-align:right;white-space:nowrap">${amount ? fmtB(amount) : '-'}</td>
@@ -605,6 +686,7 @@ function _platingBuildDocHtml({ platingNo, dateStr, supplier, items }) {
           <th style="padding:8px 10px;text-align:center;width:6%">ฝาบน</th>
           <th style="padding:8px 10px;text-align:center;width:6%">ฝาล่าง</th>
           <th style="padding:8px 10px;text-align:center;width:7%">ตะแกรงนอก</th>
+          <th style="padding:8px 10px;text-align:center;width:7%">ตะแกรงกลาง</th>
           <th style="padding:8px 10px;text-align:center;width:7%">ตะแกรงใน</th>
           <th style="padding:8px 10px;text-align:center;width:10%">ราคา/หน่วย</th>
           <th style="padding:8px 10px;text-align:center;width:10%">จำนวนเงิน</th>
@@ -668,6 +750,7 @@ function _platingBuildShareCardHtml(data) {
         ${fieldRow('ฝาบน', matVal(it.top, it.matTop, it.topQty, it.qty))}
         ${fieldRow('ฝาล่าง', matVal(it.bot, it.matBot, it.botQty, it.qty))}
         ${fieldRow('ตะแกรงนอก', matVal(it.meshOut, it.matMeshOut, it.meshOutQty, it.qty))}
+        ${fieldRow('ตะแกรงกลาง', matVal(it.meshMid, '', it.meshMidQty, it.qty))}
         ${fieldRow('ตะแกรงใน', matVal(it.meshIn, it.matMeshIn, it.meshInQty, it.qty))}
         ${fieldRow('ราคา/หน่วย', price ? fmtB(price) : '-')}
         ${fieldRow('จำนวนเงิน', amount ? fmtB(amount) : '-', '#2563eb')}
@@ -873,6 +956,28 @@ function _platingGenerate() {
     return;
   }
 
+  // ตรวจสอบจำนวนส่งชุบไม่เกินยอด PO
+  const overOrders = checkedOrders.filter(r => {
+    const noPO  = String(r[ORDER_COLS.noPO]||'').trim();
+    const poQty = parseFloat(r[ORDER_COLS.qty]||'') || 0;
+    const meta  = _platingOrderMeta[noPO] || {};
+    const pQty  = meta.platingQty != null ? meta.platingQty : poQty;
+    return poQty > 0 && pQty > poQty;
+  });
+  if (overOrders.length) {
+    const list = overOrders.map(r => `• ${String(r[ORDER_COLS.noPO]||'').trim()} (ยอด PO: ${r[ORDER_COLS.qty]})`).join('<br>');
+    Swal.fire({
+      icon: 'error',
+      title: 'จำนวนส่งชุบเกินยอด PO',
+      html: `<div style="font-size:.84rem;color:#8b8aaa;line-height:1.8;text-align:left">${list}<br><br>
+        กรุณาแก้ไขจำนวนก่อนออกใบ<br>
+        ถ้ามีชิ้นส่วนอื่น ให้เพิ่มใน <b>"รายการเพิ่มเติม (ทั่วไป)"</b>
+      </div>`,
+      background: '#0d1b2a', color: '#cce4ff', confirmButtonColor: '#dc2626',
+    });
+    return;
+  }
+
   const supplier = _supplierCache.find(s => s.code === supplierCode) || {};
   const platingNo  = $('platingNo')?.value || '';
   const platingDateVal = $('platingDate')?.value || '';
@@ -887,10 +992,11 @@ function _platingGenerate() {
     return {
       source: 'order', noPO,
       description: String(r[ORDER_COLS.productList]||'').trim() || '-',
-      qty: String(r[ORDER_COLS.qty]||'').trim() || '',
+      qty: String(meta.platingQty != null ? meta.platingQty : (parseFloat(r[ORDER_COLS.qty]||'')||0)),
+      platingQty: meta.platingQty != null ? meta.platingQty : (parseFloat(r[ORDER_COLS.qty]||'') || 0),
       unit: 'Set',
-      top: !!p.top, bot: !!p.bot, meshOut: !!p.meshOut, meshIn: !!p.meshIn,
-      topQty: meta.topQty || 0, botQty: meta.botQty || 0, meshOutQty: meta.meshOutQty || 0, meshInQty: meta.meshInQty || 0,
+      top: !!p.top, bot: !!p.bot, meshOut: !!p.meshOut, meshMid: !!(meta.meshMid), meshIn: !!p.meshIn,
+      topQty: meta.topQty || 0, botQty: meta.botQty || 0, meshOutQty: meta.meshOutQty || 0, meshMidQty: meta.meshMidQty || 0, meshInQty: meta.meshInQty || 0,
       matTop: p.matTop || '', matBot: p.matBot || '', matMeshOut: p.matMeshOut || '', matMeshIn: p.matMeshIn || '',
       price: parseFloat(meta.price) || 0, status: meta.status || 'งานใหม่',
     };
@@ -1165,66 +1271,111 @@ async function _platingEdit(idx) {
     `<option value="${s.code}"${s.code===p.supplierCode?' selected':''}>${s.name}</option>`
   ).join('');
 
+  // ── helper styles (light theme) ──
+  const IS  = `width:100%;padding:5px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;color:#1e293b;font-family:Sarabun,sans-serif;font-size:.8rem`;
+  const QS  = `width:58px;padding:5px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;color:#1e293b;font-family:Sarabun,sans-serif;font-size:.8rem;text-align:center`;
+  const inp = (id, val, type='text', extra='') =>
+    `<input type="${type}" id="${id}" value="${String(val??'').replace(/"/g,'&quot;')}" ${extra}
+      style="${IS}${type==='number'?';text-align:center':''}">`;
+  const sel = (id, val, opts) =>
+    `<select id="${id}" style="${IS}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;
+
+  // ตะแกรงกลาง: ❌ ถ้า qty=0, input ถ้า qty>0 (คลิก ❌ เพื่อเปิด)
+  window._pltMmidOpen = function(el) {
+    const i = el.dataset.idx;
+    const cell = document.getElementById('plt_eq_mmid_cell_' + i);
+    if (cell) cell.innerHTML = `<input type="number" id="plt_eq_mmidqty_${i}" value="1" min="0" step="1" style="${QS}">`;
+  };
+  const meshMidCell = (i, qty) => qty > 0
+    ? `<span id="plt_eq_mmid_cell_${i}"><input type="number" id="plt_eq_mmidqty_${i}" value="${qty}" min="0" step="1" style="${QS}"></span>`
+    : `<span id="plt_eq_mmid_cell_${i}"><button type="button" data-idx="${i}" onclick="_pltMmidOpen(this)"
+        style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px" title="คลิกเพื่อใส่จำนวนตะแกรงกลาง">❌</button></span>`;
+
   const itemRows = (p.items || []).map((it, i) => `
-    <tr style="border-bottom:1px solid rgba(255,255,255,.07)">
-      <td style="padding:5px 6px;font-size:.78rem;color:#94a3b8">${it.description||'-'}</td>
-      <td style="padding:5px 4px;text-align:center">
-        <input type="number" id="plt_eq_qty_${i}" value="${parseFloat(it.qty)||0}" min="0" step="1"
-          style="width:58px;padding:4px 6px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#cce4ff;text-align:center;font-family:Sarabun,sans-serif;font-size:.8rem">
-      </td>
-      <td style="padding:5px 4px;text-align:center">
-        <input type="number" id="plt_eq_price_${i}" value="${parseFloat(it.price)||0}" min="0" step="0.01"
-          style="width:72px;padding:4px 6px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#cce4ff;text-align:center;font-family:Sarabun,sans-serif;font-size:.8rem">
-      </td>
-      <td style="padding:5px 6px;text-align:center;font-size:.75rem;color:#94a3b8">${it.status||'-'}</td>
+    <tr style="border-bottom:1px solid #e2e8f0">
+      <td style="padding:5px 5px">${inp(`plt_eq_desc_${i}`, it.description||'')}</td>
+      <td style="padding:5px 4px">${inp(`plt_eq_qty_${i}`, parseFloat(it.qty)||0, 'number', 'min="0" step="1"')}</td>
+      <td style="padding:5px 4px">${inp(`plt_eq_unit_${i}`, it.unit||'')}</td>
+      <td style="padding:5px 3px;text-align:center"><input type="number" id="plt_eq_topqty_${i}" value="${it.topQty||0}" min="0" step="1" style="${QS}"></td>
+      <td style="padding:5px 3px;text-align:center"><input type="number" id="plt_eq_botqty_${i}" value="${it.botQty||0}" min="0" step="1" style="${QS}"></td>
+      <td style="padding:5px 3px;text-align:center"><input type="number" id="plt_eq_moutqty_${i}" value="${it.meshOutQty||0}" min="0" step="1" style="${QS}"></td>
+      <td style="padding:5px 3px;text-align:center">${meshMidCell(i, it.meshMidQty||0)}</td>
+      <td style="padding:5px 3px;text-align:center"><input type="number" id="plt_eq_minqty_${i}" value="${it.meshInQty||0}" min="0" step="1" style="${QS}"></td>
+      <td style="padding:5px 4px">${inp(`plt_eq_price_${i}`, parseFloat(it.price)||0, 'number', 'min="0" step="0.01"')}</td>
+      <td style="padding:5px 4px">${sel(`plt_eq_status_${i}`, it.status||'งานใหม่', ['งานใหม่','งานเก่า'])}</td>
     </tr>`).join('');
 
+  const thStyle = 'padding:6px 4px;text-align:center;font-size:.72rem;color:#475569;font-weight:700;white-space:nowrap;border-bottom:2px solid #e2e8f0';
   const { isConfirmed, value: formData } = await Swal.fire({
     title: `✏️ แก้ไขใบส่งชุบ ${p.platingNo}`,
-    background: '#0d1b2a', color: '#cce4ff',
-    width: 'min(96vw,640px)',
+    background: '#ffffff', color: '#1e293b',
+    width: 'min(96vw, 1020px)',
     html: `
       <div style="text-align:left;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:10px">
-          <label style="flex:1;font-size:.8rem;color:#94a3b8">วันที่ออกใบ<br>
+          <label style="flex:1;font-size:.8rem;color:#475569;font-weight:600">วันที่ออกใบ<br>
             <input type="date" id="plt_eq_date" value="${dateISO}"
-              style="width:100%;margin-top:4px;padding:7px 10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#cce4ff;font-family:Sarabun,sans-serif;font-size:.85rem">
+              style="width:100%;margin-top:4px;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#1e293b;font-family:Sarabun,sans-serif;font-size:.85rem">
           </label>
-          <label style="flex:1;font-size:.8rem;color:#94a3b8">ร้านชุบ<br>
+          <label style="flex:2;font-size:.8rem;color:#475569;font-weight:600">ร้านชุบ<br>
             <select id="plt_eq_supplier"
-              style="width:100%;margin-top:4px;padding:7px 10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#cce4ff;font-family:Sarabun,sans-serif;font-size:.85rem">
+              style="width:100%;margin-top:4px;padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#1e293b;font-family:Sarabun,sans-serif;font-size:.85rem">
               ${supplierOpts}
             </select>
           </label>
         </div>
         <div>
-          <div style="font-size:.8rem;font-weight:600;color:#60a5fa;margin-bottom:6px">รายการสินค้า</div>
-          <table style="width:100%;border-collapse:collapse">
-            <thead>
-              <tr style="border-bottom:1px solid rgba(255,255,255,.1)">
-                <th style="padding:5px 6px;text-align:left;font-size:.74rem;color:#64748b">รายการ</th>
-                <th style="padding:5px 4px;text-align:center;font-size:.74rem;color:#64748b">จำนวน</th>
-                <th style="padding:5px 4px;text-align:center;font-size:.74rem;color:#64748b">ราคา/หน่วย</th>
-                <th style="padding:5px 6px;text-align:center;font-size:.74rem;color:#64748b">ประเภท</th>
-              </tr>
-            </thead>
-            <tbody>${itemRows}</tbody>
-          </table>
+          <div style="font-size:.8rem;font-weight:700;color:#0891b2;margin-bottom:6px">รายการสินค้า</div>
+          <div style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0">
+            <table style="width:100%;border-collapse:collapse;min-width:700px;background:#fff">
+              <thead style="background:#f1f5f9">
+                <tr>
+                  <th style="${thStyle};text-align:left;min-width:130px">ชื่อรายการ</th>
+                  <th style="${thStyle};min-width:66px">จำนวน</th>
+                  <th style="${thStyle};min-width:54px">หน่วย</th>
+                  <th style="${thStyle};min-width:62px">ฝาบน</th>
+                  <th style="${thStyle};min-width:62px">ฝาล่าง</th>
+                  <th style="${thStyle};min-width:66px">ตะแกรงนอก</th>
+                  <th style="${thStyle};min-width:66px">ตะแกรงกลาง</th>
+                  <th style="${thStyle};min-width:62px">ตะแกรงใน</th>
+                  <th style="${thStyle};min-width:78px">ราคา/หน่วย</th>
+                  <th style="${thStyle};min-width:80px">ประเภท</th>
+                </tr>
+              </thead>
+              <tbody>${itemRows}</tbody>
+            </table>
+          </div>
         </div>
       </div>`,
     showCancelButton: true,
     confirmButtonText: '💾 บันทึก',
     cancelButtonText: 'ยกเลิก',
     confirmButtonColor: '#0891b2',
+    cancelButtonColor: '#94a3b8',
     preConfirm: () => {
       const dateVal = document.getElementById('plt_eq_date').value;
       const supplierCode = document.getElementById('plt_eq_supplier').value;
-      const items = (p.items || []).map((it, i) => ({
-        ...it,
-        qty:   parseFloat(document.getElementById(`plt_eq_qty_${i}`)?.value)   || 0,
-        price: parseFloat(document.getElementById(`plt_eq_price_${i}`)?.value) || 0,
-      }));
-      // แปลงกลับ yyyy-MM-dd → dd/MM/yyyy
+      const items = (p.items || []).map((it, i) => {
+        const topQty     = parseFloat(document.getElementById(`plt_eq_topqty_${i}`)?.value)  || 0;
+        const botQty     = parseFloat(document.getElementById(`plt_eq_botqty_${i}`)?.value)  || 0;
+        const meshOutQty = parseFloat(document.getElementById(`plt_eq_moutqty_${i}`)?.value) || 0;
+        const meshMidQty = parseFloat(document.getElementById(`plt_eq_mmidqty_${i}`)?.value) || 0;
+        const meshInQty  = parseFloat(document.getElementById(`plt_eq_minqty_${i}`)?.value)  || 0;
+        return {
+          ...it,
+          description: document.getElementById(`plt_eq_desc_${i}`)?.value   ?? it.description,
+          qty:   parseFloat(document.getElementById(`plt_eq_qty_${i}`)?.value)   || 0,
+          unit:  document.getElementById(`plt_eq_unit_${i}`)?.value || it.unit || '',
+          top:      topQty     > 0,
+          bot:      botQty     > 0,
+          meshOut:  meshOutQty > 0,
+          meshMid:  meshMidQty > 0,
+          meshIn:   meshInQty  > 0,
+          topQty, botQty, meshOutQty, meshMidQty, meshInQty,
+          price:  parseFloat(document.getElementById(`plt_eq_price_${i}`)?.value)  || 0,
+          status: document.getElementById(`plt_eq_status_${i}`)?.value || it.status || 'งานใหม่',
+        };
+      });
       let dateStr = p.date;
       if (dateVal) {
         const [y, mo, d] = dateVal.split('-');
@@ -1377,9 +1528,9 @@ function _platingItemSpecText(it) {
   const parts = [];
   if (it.top) parts.push('ฝาบน');
   if (it.bot) parts.push('ฝาล่าง');
-  if (it.meshOut && it.meshIn) parts.push('ตะแกรงนอก+ใน');
-  else if (it.meshOut) parts.push('ตะแกรงนอก');
-  else if (it.meshIn) parts.push('ตะแกรงใน');
+  if (it.meshOut) parts.push('ตะแกรงนอก');
+  if (it.meshMid) parts.push('ตะแกรงกลาง');
+  if (it.meshIn) parts.push('ตะแกรงใน');
   return parts.join('+');
 }
 

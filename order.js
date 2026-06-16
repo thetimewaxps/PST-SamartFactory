@@ -2353,6 +2353,7 @@ function _trkApplySubTabUI() {
 const TRK_TASKLIST_GROUPS = [
   { key:'กำลังผลิต', label:'กำลังผลิต', color:'#2563eb' },
   { key:'ส่งชุป',    label:'ส่งชุปแล้ว', color:'#f59e0b' },
+  { key:'เตรียมส่ง', label:'เตรียมส่ง',  color:'#0d9488' },
 ];
 
 // รวมยอด "จำนวน" ของแต่ละ "รายการสินค้า" แยกตามสถานะ Process (กำลังผลิต / ส่งชุป)
