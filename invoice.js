@@ -22,7 +22,7 @@ async function fetchCustomers() {
 }
 
 function custAddRow() {
-  _custCache.push({ code:'', name:'', branch:'', taxId:'', address:'', phone:'', contact:'', wht: false });
+  _custCache.push({ code:'', name:'', branch:'', taxId:'', address:'', phone:'', contact:'', wht: false, credit: '' });
   _custEditIdx = _custCache.length - 1;
   renderCustomerTable();
 }
@@ -44,6 +44,7 @@ async function custSaveRow(i) {
     phone:   g('cust_phone_'+i),
     contact: g('cust_contact_'+i),
     wht:     !!(document.getElementById('cust_wht_'+i)?.checked),
+    credit:  g('cust_credit_'+i),
   };
   if (!data.name) {
     Swal.fire({icon:'warning',title:'กรุณาใส่ชื่อลูกค้า/บริษัท',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#3b82f6'});
@@ -143,13 +144,21 @@ function renderCustomerTable() {
   const rows = _custCache.map((c, i) => {
     if (i === _custEditIdx) {
       return `<tr style="background:rgba(99,102,241,.08)">
-        <td style="padding:6px 8px" colspan="7">
+        <td style="padding:6px 8px" colspan="8">
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px">
             ${_custNameInput('cust_name_'+i, c.name)}
             ${_custInput('cust_branch_'+i, c.branch, 'สาขา')}
             ${_custInput('cust_taxid_'+i, c.taxId, 'เลขผู้เสียภาษี 13 หลัก')}
             ${_custInput('cust_phone_'+i, c.phone, 'เบอร์โทร')}
             ${_custContactInput('cust_contact_'+i, c.contact)}
+            <input id="cust_credit_${i}" value="${(c.credit||'').replace(/"/g,'&quot;')}" placeholder="เงื่อนไขการชำระเงิน (เช่น เครดิต 30 วัน)"
+              list="cust_credit_list"
+              style="width:100%;padding:5px 8px;border-radius:6px;border:1px solid rgba(99,102,241,.35);
+              background:var(--bg-input);color:var(--t1);font-family:Sarabun,sans-serif;font-size:.8rem">
+            <datalist id="cust_credit_list">
+              <option value="เงินสด"><option value="เครดิต 15 วัน"><option value="เครดิต 30 วัน">
+              <option value="เครดิต 45 วัน"><option value="เครดิต 60 วัน">
+            </datalist>
           </div>
           <div style="margin-top:6px">${_custInput('cust_addr_'+i, c.address, 'ที่อยู่')}</div>
           <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
@@ -176,6 +185,7 @@ function renderCustomerTable() {
       <td style="padding:7px 10px;font-size:.78rem;color:var(--t3)">${c.taxId||'—'}</td>
       <td style="padding:7px 10px;font-size:.78rem;color:var(--t3)">${c.phone||'—'}</td>
       <td style="padding:7px 10px;font-size:.78rem;color:var(--t3)">${c.contact||'—'}</td>
+      <td style="padding:7px 10px;font-size:.75rem;color:var(--t2)">${c.credit||'—'}</td>
       <td style="padding:7px 10px;text-align:center;font-size:.8rem">
         ${c.wht ? '<span style="color:#34d399;font-size:.75rem">✓ หัก 3%</span>' : '<span style="color:var(--t3);font-size:.75rem">—</span>'}
       </td>
@@ -199,6 +209,7 @@ function renderCustomerTable() {
           <th style="padding:6px 10px;text-align:left;color:var(--t2);font-weight:600;font-size:.75rem">เลขผู้เสียภาษี</th>
           <th style="padding:6px 10px;text-align:left;color:var(--t2);font-weight:600;font-size:.75rem">เบอร์โทร</th>
           <th style="padding:6px 10px;text-align:left;color:var(--t2);font-weight:600;font-size:.75rem">ผู้ติดต่อ</th>
+          <th style="padding:6px 10px;text-align:left;color:var(--t2);font-weight:600;font-size:.75rem">เครดิต</th>
           <th style="padding:6px 10px;text-align:center;color:var(--t2);font-weight:600;font-size:.75rem">หัก ณ ที่จ่าย</th>
           <th style="padding:6px 10px;width:80px"></th>
         </tr>
@@ -483,9 +494,20 @@ async function invGeneratePreview() {
           <label style="font-size:.82rem;color:#8b8aaa;display:block;margin-bottom:4px">เลขที่ใบกำกับ — แก้ไขได้</label>
           <input id="swal_inv_no" class="swal2-input" value="${data.nextNo}" style="margin:0;width:100%">
         </div>
-        <div style="text-align:left">
+        <div style="text-align:left;margin-bottom:10px">
           <label style="font-size:.82rem;color:#8b8aaa;display:block;margin-bottom:4px">วันที่ออกใบ</label>
           <input id="swal_inv_date" type="date" class="swal2-input" value="${todayIso}" style="margin:0;width:100%;font-family:Sarabun,sans-serif">
+        </div>
+        <div style="text-align:left">
+          <label style="font-size:.82rem;color:#8b8aaa;display:block;margin-bottom:4px">เงื่อนไขการชำระเงิน</label>
+          <input id="swal_inv_credit" class="swal2-input" list="swal_inv_credit_list"
+            value="${(cust.credit||'').replace(/"/g,'&quot;')}"
+            placeholder="เช่น เครดิต 30 วัน / เงินสด"
+            style="margin:0;width:100%;font-family:Sarabun,sans-serif">
+          <datalist id="swal_inv_credit_list">
+            <option value="เงินสด"><option value="เครดิต 15 วัน"><option value="เครดิต 30 วัน">
+            <option value="เครดิต 45 วัน"><option value="เครดิต 60 วัน">
+          </datalist>
         </div>`,
       showCancelButton: true,
       confirmButtonText: 'ใช้เลขนี้',
@@ -494,17 +516,19 @@ async function invGeneratePreview() {
       background: '#0d1b2a',
       color: '#cce4ff',
       preConfirm: () => {
-        const no   = document.getElementById('swal_inv_no')?.value.trim();
-        const date = document.getElementById('swal_inv_date')?.value;
+        const no         = document.getElementById('swal_inv_no')?.value.trim();
+        const date       = document.getElementById('swal_inv_date')?.value;
+        const creditTerm = document.getElementById('swal_inv_credit')?.value.trim();
         if (!no) { Swal.showValidationMessage('กรุณากรอกเลขที่ใบกำกับ'); return false; }
-        return { no, date };
+        return { no, date, creditTerm };
       },
     });
     if (!numResult.isConfirmed) return;
-    const invoiceNo   = numResult.value.no;
+    const invoiceNo      = numResult.value.no;
     const invoiceDateIso = numResult.value.date || todayIso;
+    const creditTerm     = numResult.value.creditTerm || '';
 
-    await _invShowPreview(invoiceNo, type, cust, invoiceDateIso);
+    await _invShowPreview(invoiceNo, type, cust, invoiceDateIso, creditTerm);
   } catch (e) {
     Swal.fire({icon:'error',title:'ขอเลขที่ไม่สำเร็จ',text:e.message,background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#dc2626'});
   }
@@ -565,7 +589,7 @@ function _invRenderItemRows(itemsArr, isFull) {
 }
 
 // ── สร้าง HTML เอกสารใบกำกับภาษี (ใช้ร่วมกันทั้งออกใหม่ และพิมพ์ใบเดิม) ──
-function _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal, vat, total }) {
+function _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal, vat, total, creditTerm }) {
   const co = _companyInfoCache || {};
   return `
 <div class="doc-paper" style="overflow:hidden">
@@ -595,6 +619,8 @@ function _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal
             <td style="font-weight:700;color:#2563eb">${invoiceNo}</td></tr>
         <tr><td style="color:#666;padding:2px 6px 2px 0">วันที่ / Date:</td>
             <td>${dateStr}</td></tr>
+        ${creditTerm ? `<tr><td style="color:#666;padding:2px 6px 2px 0">เงื่อนไขการชำระเงิน:</td>
+            <td>${creditTerm}</td></tr>` : ''}
       </table>
     </div>
   </div>
@@ -657,7 +683,7 @@ function _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal
 }
 
 // ── ออกใบกำกับใหม่: แสดง preview พร้อมปุ่มยืนยันออกใบกำกับ ──
-async function _invShowPreview(invoiceNo, type, cust, invoiceDateIso) {
+async function _invShowPreview(invoiceNo, type, cust, invoiceDateIso, creditTerm) {
   const isFull = type === 'full';
   const orderRows = _orderCache.filter(r => _invSelectedPOs.has(String(r[ORDER_COLS.noPO]||'')));
   const itemsArr = _invBuildItemsFromOrders(orderRows);
@@ -667,10 +693,10 @@ async function _invShowPreview(invoiceNo, type, cust, invoiceDateIso) {
   const dateObj = invoiceDateIso ? new Date(invoiceDateIso + 'T00:00:00') : new Date();
   const dateStr = _fmtDateBE(dateObj);
 
-  const html = _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal, vat, total });
+  const html = _invBuildDocHtml({ invoiceNo, isFull, cust, dateStr, itemRows, subtotal, vat, total, creditTerm });
 
   _invPreviewMode = true;
-  _invPreviewData = { invoiceNo, date: dateStr, type, customerCode: cust.code, poList: [..._invSelectedPOs], subtotal, vat, total, items: itemsArr };
+  _invPreviewData = { invoiceNo, date: dateStr, type, customerCode: cust.code, poList: [..._invSelectedPOs], subtotal, vat, total, items: itemsArr, creditTerm };
 
   let docInv = $('docInv');
   if (!docInv) {
@@ -705,7 +731,7 @@ async function _invShowPreview(invoiceNo, type, cust, invoiceDateIso) {
   _invCurrentDocData = {
     invoiceNo, cust, dateStr, isFull,
     poText: [..._invSelectedPOs].join(', '),
-    itemsArr, subtotal, vat, total,
+    itemsArr, subtotal, vat, total, creditTerm,
   };
   _invAddOverlayButtons();
 
@@ -777,7 +803,8 @@ function _invReprintInvoice(inv, itemsArr) {
   const grand    = (inv.total !== undefined && inv.total !== '')       ? parseFloat(inv.total)||0    : total;
   const dateStr  = _invThaiDate(inv.date);
 
-  const html = _invBuildDocHtml({ invoiceNo: inv.invoiceNo, isFull, cust, dateStr, itemRows, subtotal, vat, total: grand });
+  const creditTerm = inv.creditTerm || inv.credit || '';
+  const html = _invBuildDocHtml({ invoiceNo: inv.invoiceNo, isFull, cust, dateStr, itemRows, subtotal, vat, total: grand, creditTerm });
 
   _invPreviewMode = true;
   _invPreviewData = null;
@@ -805,7 +832,7 @@ function _invReprintInvoice(inv, itemsArr) {
     : [...new Set(items.map(it => it.poNo).filter(Boolean))].join(', ');
   _invCurrentDocData = {
     invoiceNo: inv.invoiceNo, cust, dateStr, isFull,
-    poText, itemsArr: items, subtotal, vat, total: grand,
+    poText, itemsArr: items, subtotal, vat, total: grand, creditTerm,
   };
   _invAddOverlayButtons();
 
@@ -833,6 +860,7 @@ const _INV_OVERLAY_DEFAULT_POS = {
   custAddr:    {x:6,   y:71, size:10, bold:false},
   invoiceNo:   {x:160, y:55, size:10, bold:false},
   date:        {x:160, y:64, size:10, bold:false},
+  payTerm:     {x:160, y:73, size:10, bold:false},
   poNo:        {x:160, y:83, size:10, bold:false},
   itemNo:      {x:8,   y:110, size:10, bold:false},
   itemDesc:    {x:20,  y:80, size:10, bold:false},
@@ -855,7 +883,7 @@ const _INV_OVERLAY_FIELD_LABELS = {
   companyContact:'เบอร์โทร/อีเมล์บริษัทเรา',
   companyTax:'เลขประจำตัวผู้เสียภาษีอากรบริษัทเรา',
   custName:'ชื่อลูกค้า', custAddr:'ที่อยู่ลูกค้า', custTaxId:'เลขผู้เสียภาษีลูกค้า',
-  invoiceNo:'เลขที่ใบกำกับ', date:'วันที่', poNo:'เลขที่ PO/เอกสาร',
+  invoiceNo:'เลขที่ใบกำกับ', date:'วันที่', payTerm:'เงื่อนไขการชำระเงิน (Term of Payment)', poNo:'เลขที่ PO/เอกสาร',
   itemNo:'ลำดับ (แถวแรก)', itemDesc:'รายละเอียดสินค้า (แถวแรก)', itemQty:'จำนวน+หน่วย (แถวแรก)',
   itemPrice:'ราคาต่อหน่วย (แถวแรก)', itemTotal:'จำนวนเงิน (แถวแรก)', rowHeight:'ความสูงต่อแถว (มม.)',
   itemDescLineGap:'ช่องไฟระหว่างบรรทัดรายละเอียดสินค้า (มม.)',
@@ -1027,7 +1055,7 @@ function _invPdfTruncate(doc, text, maxWidthMm, sizePt) {
 
 // ── สร้างไฟล์ PDF สำหรับพิมพ์ทับฟอร์มกระดาษที่พิมพ์ไว้แล้ว (ตำแหน่งคงที่ ไม่ขยับตามจำนวนรายการ) ──
 async function _invPrintOverlay(data) {
-  const { invoiceNo, cust, dateStr, poText, itemsArr, subtotal, vat, total, isFull } = data;
+  const { invoiceNo, cust, dateStr, poText, itemsArr, subtotal, vat, total, isFull, creditTerm } = data;
   const pos = _invOverlayGetPos();
   const rowH = pos.rowHeight.x || 7;
   const PT2MM = 0.3528;
@@ -1054,7 +1082,11 @@ async function _invPrintOverlay(data) {
       doc.setFontSize(sz);
       let t = String(text);
       if (opts && opts.maxWidth) t = _invPdfTruncate(doc, t, opts.maxWidth, sz);
-      doc.text(t, p.x, p.y + sz * PT2MM * 0.8);
+      const lines = t.split('\n');
+      const lineH = sz * PT2MM * 1.35;
+      lines.forEach((line, i) => {
+        doc.text(line, p.x, p.y + sz * PT2MM * 0.8 + i * lineH);
+      });
     };
 
     const co = _companyInfoCache || {};
@@ -1085,11 +1117,14 @@ async function _invPrintOverlay(data) {
     const coContactLine = [co.phone ? ('โทร: ' + co.phone) : '', co.email ? ('อีเมล์: ' + co.email) : ''].filter(Boolean).join('  ');
     addField('companyContact', coContactLine);
 
-    addField('custName', cust.name || '');
-    addField('custAddr', cust.address || '');
+    addField('custName', cust.name ? (cust.name + (cust.branch ? ' (' + cust.branch + ')' : '')) : '');
+    // ตัดที่อยู่ตรง "จังหวัด" ให้ขึ้นบรรทัดใหม่ ป้องกันข้อความยาวเกิน
+    const custAddrStr = (cust.address || '').replace(/\s*(จังหวัด)/g, '\n$1');
+    addField('custAddr', custAddrStr);
     if (isFull && cust.taxId) addField('custTaxId', cust.taxId);
     addField('invoiceNo', invoiceNo || '');
     addField('date', dateStr || '');
+    addField('payTerm', creditTerm || '');
     addField('poNo', poText || '');
 
     let _ovY = pos.itemNo.y;

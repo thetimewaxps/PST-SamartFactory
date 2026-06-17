@@ -38,7 +38,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.92</span>
+      <span class="ph-chip ver">v8.98</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2827,15 +2827,15 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="core.js?v=8.92"></script>
-<script src="data.js?v=8.92"></script>
-<script src="formcalc.js?v=8.92"></script>
-<script src="aifeatures.js?v=8.92"></script>
-<script src="theme.js?v=8.92"></script>
-<script src="order.js?v=8.92"></script>
-<script src="purchase.js?v=8.92"></script>
-<script src="invoice.js?v=8.92"></script>
-<script src="plating.js?v=8.92"></script>
+<script src="core.js?v=8.94"></script>
+<script src="data.js?v=8.94"></script>
+<script src="formcalc.js?v=8.94"></script>
+<script src="aifeatures.js?v=8.94"></script>
+<script src="theme.js?v=8.95"></script>
+<script src="order.js?v=8.94"></script>
+<script src="purchase.js?v=8.94"></script>
+<script src="invoice.js?v=8.98"></script>
+<script src="plating.js?v=8.94"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2978,9 +2978,71 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260617-R',
+    ref: '#REV-20260617-X',
     date: '2026-06-17',
     current: true,
+    items: [
+      'invoice.js: เพิ่มฟิลด์ "เครดิต/เงื่อนไขการชำระเงิน" ในทะเบียนลูกค้า (renderCustomerTable, custSaveRow, custAddRow)',
+      'invoice.js: ตอนออกใบกำกับ — ดึง cust.credit เป็นค่าเริ่มต้น, แก้ไขได้ใน Swal ด้วย input+datalist',
+      'invoice.js: _invBuildDocHtml แสดง creditTerm ในตาราง No/Date ของ preview HTML',
+      'invoice.js: _invPrintOverlay เพิ่ม addField(payTerm) ในไฟล์ PDF overlay (y:73 ระหว่าง date และ poNo)',
+      'invoice.js: _INV_OVERLAY_DEFAULT_POS/FIELD_LABELS เพิ่ม payTerm',
+      'invoice.js: ส่ง creditTerm ผ่านทุก function — _invShowPreview, _invCurrentDocData, _invPreviewData, _invReprintInvoice',
+      '⚠️ ต้อง Redeploy Code.gs: saveCustomer และ getCustomers ต้องรองรับฟิลด์ credit ด้วย',
+    ],
+  },
+  {
+    ref: '#REV-20260617-W',
+    date: '2026-06-17',
+    current: false,
+    items: [
+      'invoice.js: addField รองรับ multi-line (\\n) โดย split + render ทีละบรรทัด',
+      'invoice.js: custAddr ตัดอัตโนมัติก่อนคำ "จังหวัด" ให้ขึ้นบรรทัดใหม่ ป้องกันที่อยู่ยาวเกิน PDF',
+    ],
+  },
+  {
+    ref: '#REV-20260617-V',
+    date: '2026-06-17',
+    current: false,
+    items: [
+      'invoice.js: แก้ PDF ชื่อลูกค้าขาด (สาขา/สำนักงานใหญ่) — addField custName ไม่ได้ append cust.branch',
+      'แก้: cust.name + (cust.branch) ให้ตรงกับ preview และทุกจุดอื่นในระบบ',
+    ],
+  },
+  {
+    ref: '#REV-20260617-U',
+    date: '2026-06-17',
+    current: false,
+    items: [
+      'printDoc(): แก้ B&W print — เพิ่ม rgb() matching เพราะ browser normalize inline hex → rgb() เมื่ออ่าน innerHTML',
+      'เพิ่ม regex background(?:-color)? + rgb() → #e0e0e0 (ตรวจ blue channel dominant)',
+      'เพิ่ม regex color + rgb() → #000 (ตรวจ isWhite || isBlue)',
+      'ผลลัพธ์: หัว/ท้ายกระดาษพิมพ์เป็นสีเทาอ่อน + text ดำ ตรงตาม spec',
+    ],
+  },
+  {
+    ref: '#REV-20260617-T',
+    date: '2026-06-17',
+    current: false,
+    items: [
+      'printDoc(): เปลี่ยนวิธี B&W — ใช้ string replace บน HTML โดยตรง แทน CSS attribute selector (ไม่น่าเชื่อถือ)',
+      'replace: background น้ำเงิน → #e0e0e0, ขอบน้ำเงิน → เทา, color:#fff → #000, color:#2563eb → #000',
+    ],
+  },
+  {
+    ref: '#REV-20260617-S',
+    date: '2026-06-17',
+    current: false,
+    items: [
+      'printDoc(): ปรับ CSS พิมพ์ขาวดำ — พื้นหลังสีน้ำเงิน (#2563eb, #1d4ed8) → เทาอ่อน (#e0e0e0)',
+      'printDoc(): ข้อความทุก element → ดำ (#000), ขอบน้ำเงิน → เทา (#888/#aaa)',
+      'ครอบคลุมทุกเอกสาร: ใบกำกับภาษี, ใบวางบิล, ใบเสนอราคา, spec sheet',
+    ],
+  },
+  {
+    ref: '#REV-20260617-R',
+    date: '2026-06-17',
+    current: false,
     items: [
       'dtCopyRow(): เปลี่ยนเป็น save โดยตรงไปยัง Sheet ทันที — ไม่ผ่านฟอร์ม',
       'คัดลอกข้อมูลทั้งหมดจากแถวต้นฉบับ เปลี่ยนแค่ No.Quo (max+1), Rev=0, RefId ใหม่',
