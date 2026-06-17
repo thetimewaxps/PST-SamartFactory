@@ -22,7 +22,7 @@ async function fetchCustomers() {
 }
 
 function custAddRow() {
-  _custCache.push({ code:'', name:'', branch:'', taxId:'', address:'', phone:'', contact:'' });
+  _custCache.push({ code:'', name:'', branch:'', taxId:'', address:'', phone:'', contact:'', wht: false });
   _custEditIdx = _custCache.length - 1;
   renderCustomerTable();
 }
@@ -43,6 +43,7 @@ async function custSaveRow(i) {
     address: g('cust_addr_'+i),
     phone:   g('cust_phone_'+i),
     contact: g('cust_contact_'+i),
+    wht:     !!(document.getElementById('cust_wht_'+i)?.checked),
   };
   if (!data.name) {
     Swal.fire({icon:'warning',title:'กรุณาใส่ชื่อลูกค้า/บริษัท',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#3b82f6'});
@@ -142,7 +143,7 @@ function renderCustomerTable() {
   const rows = _custCache.map((c, i) => {
     if (i === _custEditIdx) {
       return `<tr style="background:rgba(99,102,241,.08)">
-        <td style="padding:6px 8px" colspan="6">
+        <td style="padding:6px 8px" colspan="7">
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px">
             ${_custNameInput('cust_name_'+i, c.name)}
             ${_custInput('cust_branch_'+i, c.branch, 'สาขา')}
@@ -151,13 +152,20 @@ function renderCustomerTable() {
             ${_custContactInput('cust_contact_'+i, c.contact)}
           </div>
           <div style="margin-top:6px">${_custInput('cust_addr_'+i, c.address, 'ที่อยู่')}</div>
-          <div style="margin-top:8px;text-align:right">
-            <button onclick="guardClick(this, () => custSaveRow(${i}))"
-              style="padding:5px 14px;border-radius:6px;border:none;background:#34d399;color:#0a2e1a;
-              font-family:Sarabun,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;margin-right:6px">💾 บันทึก</button>
-            <button onclick="custCancelEdit(${i})"
-              style="padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:transparent;
-              color:var(--t3);font-family:Sarabun,sans-serif;font-size:.78rem;cursor:pointer">✕ ยกเลิก</button>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;color:var(--t2)">
+              <input type="checkbox" id="cust_wht_${i}" ${c.wht ? 'checked' : ''}
+                style="width:16px;height:16px;cursor:pointer;accent-color:#818cf8">
+              หัก ณ ที่จ่าย 3% (ค่าเริ่มต้น)
+            </label>
+            <div style="flex:1;text-align:right">
+              <button onclick="guardClick(this, () => custSaveRow(${i}))"
+                style="padding:5px 14px;border-radius:6px;border:none;background:#34d399;color:#0a2e1a;
+                font-family:Sarabun,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;margin-right:6px">💾 บันทึก</button>
+              <button onclick="custCancelEdit(${i})"
+                style="padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:transparent;
+                color:var(--t3);font-family:Sarabun,sans-serif;font-size:.78rem;cursor:pointer">✕ ยกเลิก</button>
+            </div>
           </div>
         </td>
       </tr>`;
@@ -168,6 +176,9 @@ function renderCustomerTable() {
       <td style="padding:7px 10px;font-size:.78rem;color:var(--t3)">${c.taxId||'—'}</td>
       <td style="padding:7px 10px;font-size:.78rem;color:var(--t3)">${c.phone||'—'}</td>
       <td style="padding:7px 10px;font-size:.78rem;color:var(--t3)">${c.contact||'—'}</td>
+      <td style="padding:7px 10px;text-align:center;font-size:.8rem">
+        ${c.wht ? '<span style="color:#34d399;font-size:.75rem">✓ หัก 3%</span>' : '<span style="color:var(--t3);font-size:.75rem">—</span>'}
+      </td>
       <td style="padding:7px 10px;white-space:nowrap">
         <button onclick="custEditRow(${i})"
           style="padding:3px 10px;border-radius:6px;border:1px solid rgba(99,102,241,.4);background:transparent;
@@ -188,6 +199,7 @@ function renderCustomerTable() {
           <th style="padding:6px 10px;text-align:left;color:var(--t2);font-weight:600;font-size:.75rem">เลขผู้เสียภาษี</th>
           <th style="padding:6px 10px;text-align:left;color:var(--t2);font-weight:600;font-size:.75rem">เบอร์โทร</th>
           <th style="padding:6px 10px;text-align:left;color:var(--t2);font-weight:600;font-size:.75rem">ผู้ติดต่อ</th>
+          <th style="padding:6px 10px;text-align:center;color:var(--t2);font-weight:600;font-size:.75rem">หัก ณ ที่จ่าย</th>
           <th style="padding:6px 10px;width:80px"></th>
         </tr>
       </thead>
@@ -1892,14 +1904,41 @@ function _invRepShowPreview(list, month, year) {
 // ══ ใบวางบิล — รวมใบกำกับภาษีที่ออกแล้วของลูกค้าเดียวกัน ══
 // ══════════════════════════════════════════════════════
 
-// เติม dropdown "ลูกค้า" ของใบวางบิล จาก _custCache
+// เติม dropdown "ลูกค้า" ของใบวางบิล
+// รวมจาก _custCache + customerCode ที่อยู่ใน invIssuedCache แต่ไม่อยู่ใน _custCache
 function _billRefreshCustomerSelect() {
   const sel = $('billCustomer');
   if (!sel) return;
   const cur = sel.value;
+
+  // สร้าง map จาก _custCache
+  const custMap = {};
+  (_custCache || []).forEach(c => { if (c.code) custMap[c.code] = c; });
+
+  // เพิ่ม customerCode จาก _invIssuedCache ที่ไม่อยู่ใน _custCache
+  (_invIssuedCache || []).forEach(inv => {
+    const code = String(inv.customerCode || '').trim();
+    if (code && !custMap[code]) {
+      custMap[code] = { code, name: code, branch: '' }; // ใช้ code เป็นชื่อถ้าไม่มีในฐานข้อมูล
+    }
+  });
+
+  const allCusts = Object.values(custMap).sort((a, b) => a.name.localeCompare(b.name, 'th'));
+
   sel.innerHTML = '<option value="">— เลือกลูกค้า —</option>' +
-    (_custCache || []).map(c => `<option value="${c.code}">${c.name}${c.branch ? ' (' + c.branch + ')' : ''}</option>`).join('');
+    allCusts.map(c => `<option value="${c.code}">${c.name}${c.branch ? ' (' + c.branch + ')' : ''}</option>`).join('');
   if (cur) sel.value = cur;
+}
+
+// เมื่อเลือกลูกค้าใน dropdown ใบวางบิล → ตั้งค่า WHT checkbox ตามข้อมูลลูกค้า (ยังแก้ไขเองได้)
+function _billOnCustomerChange() {
+  const sel = $('billCustomer');
+  const whtBox = $('billWht');
+  if (!sel || !whtBox) return;
+  const code = sel.value;
+  if (!code) return;
+  const cust = (_custCache || []).find(c => c.code === code);
+  if (cust) whtBox.checked = !!cust.wht;
 }
 
 // ── ค้นหาใบกำกับของลูกค้าที่เลือก ในช่วงวันที่ที่กำหนด -> แสดง checklist ──
@@ -2001,98 +2040,119 @@ function _billBuildDocHtml({ billNo, billDateStr, payTerm, cust, items, wht }) {
     const poArr  = poList.length ? poList : (inv.poList ? (Array.isArray(inv.poList) ? inv.poList : String(inv.poList).split(',').map(s=>s.trim()).filter(Boolean)) : []);
     const total = (inv.total !== undefined && inv.total !== '') ? parseFloat(inv.total)||0 : 0;
     return `<tr style="border-bottom:1px solid #e8ecf2">
-      <td style="padding:7px 10px;text-align:center">${idx + 1}</td>
-      <td style="padding:7px 10px">${inv.invoiceNo}</td>
-      <td style="padding:7px 10px;text-align:center">${inv.date}</td>
-      <td style="padding:7px 10px">${poArr.join(', ') || '-'}</td>
-      <td style="padding:7px 10px;text-align:right">${fmtB(total)}</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap">${idx + 1}</td>
+      <td style="padding:5px 8px;white-space:nowrap">${inv.invoiceNo}</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap">${inv.date}</td>
+      <td style="padding:5px 8px;word-break:break-word;overflow-wrap:break-word">${poArr.join(', ') || '-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap">${fmtB(total)}</td>
     </tr>`;
   }).join('');
 
   return `
-<div class="doc-paper" style="overflow:hidden">
+<div class="doc-paper" style="overflow:hidden;font-size:.87rem">
+  <!-- ═══ หัวเอกสาร ═══ -->
   <div style="display:flex;justify-content:space-between;align-items:flex-start;
-    padding:22px 28px 14px;border-bottom:3px solid #2563eb;gap:12px;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;overflow:hidden;
+    padding:18px 24px 12px;border-bottom:3px solid #2563eb;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:52px;height:52px;border-radius:9px;flex-shrink:0;overflow:hidden;
         display:flex;align-items:center;justify-content:center">
         <img src="${_getLogoSrc()}" alt="PTS" style="width:100%;height:100%;object-fit:contain"
-          onerror="this.parentNode.style.background='#2563eb';this.style.display='none';this.parentNode.innerHTML='<span style=color:#fff;font-weight:800;font-size:1.05rem>PT</span>'">
+          onerror="this.parentNode.style.background='#2563eb';this.style.display='none';this.parentNode.innerHTML='<span style=color:#fff;font-weight:800;font-size:1rem>PT</span>'">
       </div>
       <div>
-        <div style="font-weight:800;font-size:.95rem;color:#1a2232;padding-bottom:3px;border-bottom:1px solid #2563eb;margin-bottom:3px">${co.name||''}</div>
-        <div style="font-size:.65rem;color:#888;letter-spacing:.5px">${co.nameEn||''}</div>
-        <div style="font-size:.68rem;color:#555;margin-top:3px;line-height:1.6">
+        <div style="font-weight:800;font-size:.93rem;color:#1a2232;padding-bottom:2px;border-bottom:1px solid #2563eb;margin-bottom:2px">${co.name||''}</div>
+        <div style="font-size:.63rem;color:#888;letter-spacing:.4px">${co.nameEn||''}</div>
+        <div style="font-size:.66rem;color:#555;margin-top:2px;line-height:1.55">
           ${co.address||''}${co.addressEn ? '<br>'+co.addressEn : ''}<br>โทร: ${co.phone||''} | อีเมล์: ${co.email||''}<br>TAX ID: ${co.taxId||''}
         </div>
       </div>
     </div>
     <div style="text-align:right;flex-shrink:0">
-      <div style="font-size:1.6rem;font-weight:800;color:#2563eb;line-height:1">ใบวางบิล</div>
-      <div style="font-size:.65rem;color:#888;letter-spacing:2.5px;margin-bottom:10px">BILLING NOTE</div>
-      <table style="font-size:.78rem;margin-left:auto">
-        <tr><td style="color:#666;padding:2px 6px 2px 0">เลขที่ใบวางบิล / No:</td>
-            <td style="font-weight:700;color:#2563eb">${billNo||''}</td></tr>
-        <tr><td style="color:#666;padding:2px 6px 2px 0">วันที่ / Date:</td>
-            <td>${billDateStr}</td></tr>
-        <tr><td style="color:#666;padding:2px 6px 2px 0">เงื่อนไขการชำระเงิน:</td>
-            <td>${payTerm||''}</td></tr>
+      <div style="font-size:1.5rem;font-weight:800;color:#2563eb;line-height:1">ใบวางบิล</div>
+      <div style="font-size:.62rem;color:#888;letter-spacing:2.5px;margin-bottom:8px">BILLING NOTE</div>
+      <table style="font-size:.76rem;margin-left:auto;border-spacing:0">
+        <tr><td style="color:#666;padding:2px 6px 2px 0;white-space:nowrap">เลขที่ใบวางบิล / No:</td>
+            <td style="font-weight:700;color:#2563eb;white-space:nowrap">${billNo||''}</td></tr>
+        <tr><td style="color:#666;padding:2px 6px 2px 0;white-space:nowrap">วันที่ / Date:</td>
+            <td style="white-space:nowrap">${billDateStr}</td></tr>
+        <tr><td style="color:#666;padding:2px 6px 2px 0;white-space:nowrap">เงื่อนไขการชำระเงิน:</td>
+            <td style="white-space:nowrap">${payTerm||''}</td></tr>
       </table>
     </div>
   </div>
 
-  <div style="padding:14px 28px;border-bottom:1px solid #e8ecf2">
-    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:7px">
+  <!-- ═══ ข้อมูลลูกค้า ═══ -->
+  <div style="padding:10px 24px;border-bottom:1px solid #e8ecf2">
+    <div style="font-size:.6rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:5px">
       ลูกค้า / CUSTOMER</div>
-    <div style="font-size:.9rem;font-weight:700;margin-bottom:2px">${cust.name||''}${cust.branch?' ('+cust.branch+')':''}</div>
-    <div style="font-size:.78rem;color:#444;margin-bottom:2px">${cust.address||''}</div>
-    <div style="font-size:.78rem;color:#444">
-      ${cust.taxId ? `เลขผู้เสียภาษี: ${cust.taxId} | ` : ''}โทร: ${cust.phone||'—'}
+    <div style="font-size:.88rem;font-weight:700;margin-bottom:2px">${cust.name||''}${cust.branch?' ('+cust.branch+')':''}</div>
+    <div style="font-size:.75rem;color:#444;margin-bottom:2px">${cust.address||''}</div>
+    <div style="font-size:.75rem;color:#444">
+      ${cust.taxId ? `เลขผู้เสียภาษี: ${cust.taxId}` : ''}${cust.taxId && cust.phone ? ' | ' : ''}${cust.phone ? `โทร: ${cust.phone}` : ''}
     </div>
   </div>
 
-  <div style="padding:16px 28px">
-    <table style="width:100%;border-collapse:collapse;font-size:.79rem">
+  <!-- ═══ ตารางรายการ ═══ -->
+  <div style="padding:12px 24px">
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem;table-layout:fixed">
+      <colgroup>
+        <col style="width:5%">
+        <col style="width:17%">
+        <col style="width:15%">
+        <col style="width:42%">
+        <col style="width:21%">
+      </colgroup>
       <thead>
         <tr style="background:#2563eb;color:#fff">
-          <th style="padding:8px 10px;text-align:center;border-radius:4px 0 0 0;width:8%">ลำดับที่</th>
-          <th style="padding:8px 10px;text-align:left">เลขที่ใบกำกับภาษี</th>
-          <th style="padding:8px 10px;text-align:center;width:14%">ลงวันที่</th>
-          <th style="padding:8px 10px;text-align:left;width:22%">เลขที่ใบสั่งซื้อ</th>
-          <th style="padding:8px 10px;text-align:right;width:16%;border-radius:0 4px 0 0">จำนวนเงิน (฿)</th>
+          <th style="padding:7px 8px;text-align:center">ลำดับที่</th>
+          <th style="padding:7px 8px;text-align:left">เลขที่ใบกำกับภาษี</th>
+          <th style="padding:7px 8px;text-align:center">ลงวันที่</th>
+          <th style="padding:7px 8px;text-align:left">เลขที่ใบสั่งซื้อ</th>
+          <th style="padding:7px 8px;text-align:right">จำนวนเงิน (฿)</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
       <tfoot>
-        <tr><td colspan="4" style="padding:7px 10px;text-align:right;color:#555;border-top:1px solid #e8ecf2">
+        <tr>
+          <td colspan="4" style="padding:6px 8px;text-align:right;color:#555;border-top:2px solid #e8ecf2;font-size:.75rem">
             รวมภาษีมูลค่าเพิ่ม (รวมอยู่ในยอดแต่ละใบแล้ว)</td>
-          <td style="padding:7px 10px;text-align:right;color:#888;border-top:1px solid #e8ecf2">${fmtB(sumVat)}</td></tr>
-        <tr><td colspan="4" style="padding:5px 10px;text-align:right;color:#555">รวมเงินทั้งสิ้น</td>
-          <td style="padding:5px 10px;text-align:right;font-weight:700">${fmtB(sumTotal)}</td></tr>
+          <td style="padding:6px 8px;text-align:right;color:#888;border-top:2px solid #e8ecf2;white-space:nowrap">${fmtB(sumVat)}</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="padding:5px 8px;text-align:right;color:#333;font-weight:600">รวมเงินทั้งสิ้น</td>
+          <td style="padding:5px 8px;text-align:right;font-weight:700;white-space:nowrap">${fmtB(sumTotal)}</td>
+        </tr>
         ${wht ? `
-        <tr><td colspan="4" style="padding:5px 10px;text-align:right;color:#dc2626">หัก ณ ที่จ่าย 3%</td>
-          <td style="padding:5px 10px;text-align:right;color:#dc2626">${fmtB(whtAmount)}</td></tr>` : ''}
+        <tr>
+          <td colspan="4" style="padding:5px 8px;text-align:right;color:#dc2626">หัก ณ ที่จ่าย 3%</td>
+          <td style="padding:5px 8px;text-align:right;color:#dc2626;white-space:nowrap">${fmtB(whtAmount)}</td>
+        </tr>` : ''}
         <tr style="background:#1d4ed8;color:#fff">
-          <td colspan="4" style="padding:9px 10px;text-align:right;font-weight:700;font-size:.9rem;border-radius:0 0 0 4px">
+          <td colspan="4" style="padding:8px 8px;text-align:right;font-weight:700;font-size:.86rem">
             จำนวนเงินรับสุทธิ / NET AMOUNT</td>
-          <td style="padding:9px 10px;text-align:right;font-weight:800;font-size:.9rem;border-radius:0 0 4px 0">
+          <td style="padding:8px 8px;text-align:right;font-weight:800;font-size:.86rem;white-space:nowrap">
             ฿ ${fmtB(netAmount)}</td>
         </tr>
       </tfoot>
     </table>
   </div>
 
-  <div style="padding:0 28px 14px;font-size:.78rem;color:#444">
+  <!-- ═══ หมายเหตุ ═══ -->
+  <div style="padding:2px 24px 10px;font-size:.74rem;color:#555">
     ได้รับบิลไว้ตรวจสอบตามรายการนี้ถูกต้องแล้ว จำนวน ${items.length} ฉบับ
   </div>
 
-  <div style="display:flex;gap:12px;padding:10px 28px 28px;flex-wrap:wrap">
-    <div style="flex:1;text-align:center;min-width:160px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้รับวางบิล / Received by</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+  <!-- ═══ ลายเซ็น ═══ -->
+  <div style="display:flex;gap:0;border-top:1px solid #e8ecf2;margin:0 24px">
+    <div style="flex:1;text-align:center;padding:8px 12px 20px">
+      <div style="margin-top:38px;border-top:1px solid #aaa;padding-top:5px;font-size:.7rem;color:#444">ผู้รับวางบิล / Received by</div>
+      <div style="font-size:.63rem;color:#aaa;margin-top:8px">วันที่ ......../......../........</div>
     </div>
-    <div style="flex:1;text-align:center;min-width:160px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">
-        ผู้มีอำนาจลงนาม / Authorized signature<br>ในนาม ${co.name||''}</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+    <div style="width:1px;background:#e8ecf2;margin:8px 0"></div>
+    <div style="flex:1;text-align:center;padding:8px 12px 20px">
+      <div style="margin-top:38px;border-top:1px solid #aaa;padding-top:5px;font-size:.7rem;color:#444">
+        ผู้มีอำนาจลงนาม / Authorized signature<br>ในนาม ${co.name||''}</div>
+      <div style="font-size:.63rem;color:#aaa;margin-top:8px">วันที่ ......../......../........</div>
     </div>
   </div>
 </div>`;

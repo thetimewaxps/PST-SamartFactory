@@ -38,7 +38,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v8.79</span>
+      <span class="ph-chip ver">v8.82</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2297,7 +2297,7 @@
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 14px;margin-bottom:12px">
       <div class="field" style="grid-column:span 2"><label>ลูกค้า</label>
-        <select id="billCustomer"></select>
+        <select id="billCustomer" onchange="_billOnCustomerChange()"></select>
       </div>
       <div class="field"><label>ใบกำกับวันที่ (จาก)</label>
         <input type="date" id="billDateFrom">
@@ -2816,15 +2816,15 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="core.js?v=8.79"></script>
-<script src="data.js?v=8.79"></script>
-<script src="formcalc.js?v=8.79"></script>
-<script src="aifeatures.js?v=8.79"></script>
-<script src="theme.js?v=8.79"></script>
-<script src="order.js?v=8.79"></script>
-<script src="purchase.js?v=8.79"></script>
-<script src="invoice.js?v=8.79"></script>
-<script src="plating.js?v=8.79"></script>
+<script src="core.js?v=8.82"></script>
+<script src="data.js?v=8.82"></script>
+<script src="formcalc.js?v=8.82"></script>
+<script src="aifeatures.js?v=8.82"></script>
+<script src="theme.js?v=8.82"></script>
+<script src="order.js?v=8.82"></script>
+<script src="purchase.js?v=8.82"></script>
+<script src="invoice.js?v=8.82"></script>
+<script src="plating.js?v=8.82"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -2967,9 +2967,38 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260617-E',
+    ref: '#REV-20260617-H',
     date: '2026-06-17',
     current: true,
+    items: [
+      'ใบวางบิล: ปรับ layout ตารางให้พิมพ์สวยงาม — table-layout:fixed, colgroup กำหนดสัดส่วนคอลัมน์ชัดเจน',
+      'ใบวางบิล: white-space:nowrap บนคอลัมน์ตัวเลข/วันที่, word-break:break-word บนคอลัมน์เลข PO',
+      'ใบวางบิล: ลดขนาด padding/font ให้กระชับขึ้นเหมาะกับ A4',
+      'พิมพ์เอกสาร: ปรับ CSS ใน printDoc — ลบ font-size:1.15em ออก, จำกัด max-width:210mm ในหน้าตัวอย่าง',
+    ],
+  },
+  {
+    ref: '#REV-20260617-G',
+    date: '2026-06-17',
+    current: false,
+    items: [
+      'ลูกค้า: เพิ่มฟิล "หัก ณ ที่จ่าย 3%" (wht) ในตาราง Customers — แสดงคอลัมน์ + checkbox ตอนแก้ไข',
+      'ใบวางบิล: เลือกลูกค้าแล้วจะตั้งค่า checkbox "หัก ณ ที่จ่าย 3%" อัตโนมัติตามข้อมูลลูกค้า (ยังแก้ไขได้)',
+      'เพิ่มฟังก์ชัน _billOnCustomerChange() — onchange บน billCustomer dropdown',
+    ],
+  },
+  {
+    ref: '#REV-20260617-F',
+    date: '2026-06-17',
+    current: false,
+    items: [
+      'ใบวางบิล: dropdown ลูกค้าแสดงทั้งหมดจาก _custCache + customerCode ในประวัติใบกำกับที่ยังไม่มีในฐานข้อมูล',
+    ],
+  },
+  {
+    ref: '#REV-20260617-E',
+    date: '2026-06-17',
+    current: false,
     items: [
       'Favicon + header logo: embed base64 ตรงใน HTML ไม่ต้องพึ่งไฟล์ PTS.png บน server',
     ],
@@ -4177,7 +4206,4 @@ if ('serviceWorker' in navigator) {
   <div id="chatBody" class="chat-panel-body">
     <div class="chat-empty">ยังไม่มีข้อความ — เริ่มแชทกับทีมได้เลย</div>
   </div>
-  <div class="chat-panel-input">
-    <textarea id="chatInput" rows="1" placeholder="พิมพ์ข้อความ..." onkeydown="_chatInputKeydown(event)"></textarea>
-    <button class="chat-send-btn" onclick="_chatSend()">➤</button>
- 
+  <div cl
