@@ -38,7 +38,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v9.04</span>
+      <span class="ph-chip ver">v9.05</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2831,7 +2831,7 @@
 <script src="data.js?v=8.94"></script>
 <script src="formcalc.js?v=8.94"></script>
 <script src="aifeatures.js?v=8.94"></script>
-<script src="theme.js?v=8.95"></script>
+<script src="theme.js?v=9.05"></script>
 <script src="order.js?v=9.02"></script>
 <script src="purchase.js?v=8.94"></script>
 <script src="invoice.js?v=9.03"></script>
@@ -2978,9 +2978,18 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
+    ref: '#REV-20260617-AE',
+    date: '2026-06-18',
+    current: true,
+    items: [
+      'theme.js: printDoc() — แก้จอขาวตอนพิมพ์จากมือถือ (iOS): เพิ่ม override @media print ใน popup window เพื่อ neutralize rule body>*:not(#docExportOverlay){display:none} ที่ซ่อน content ทั้งหน้า',
+      'style.css: @media print — ปรับ #docExportOverlay เป็น position:static และ height:auto เพิ่มเติม',
+    ],
+  },
+  {
     ref: '#REV-20260617-AD',
     date: '2026-06-17',
-    current: true,
+    current: false,
     items: [
       'style.css: @media print — แก้ #docExportOverlay position: absolute → static แก้ปัญหาพิมพ์จากมือถือขึ้นจอขาว',
       'style.css: @media print — เพิ่ม height:auto และ flex:none ที่ .doc-body ป้องกัน content ถูก clip',
