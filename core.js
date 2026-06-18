@@ -191,7 +191,7 @@ const GROUP_DEFS = [
     { tab:'invoice', label:'รายงานภาษีขาย', icon:'📊', subTab:'3' },
     { tab:'invoice', label:'ใบวางบิล', icon:'📑', subTab:'4' },
     { tab:'invoice', label:'ใบเสร็จ', icon:'🧾', subTab:'5' },
-    { ph:true, label:'รายงานภาษี', icon:'📈' },
+    { tab:'invoice', label:'รายงานภาษี', icon:'📈', subTab:'3' },
     { tab:'dept_help', label:'วิธีใช้งานแผนก', icon:'📖', dept:'account' },
   ]},
   { id:'settings', icon:'⚙️', label:'ตั้งค่า', items: [

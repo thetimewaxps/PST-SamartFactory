@@ -1008,7 +1008,7 @@ function _expSave() {
     body: JSON.stringify({ action:'saveExpenseReceipt', data })
   }).then(() => {
     if (_expImgData && data.ref) localStorage.setItem('ptts_exp_img_' + data.ref, _expImgData);
-    Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1500,showConfirmButton:false,background:'var(--bg-card)',color:'var(--t1)'});
+    Swal.fire({icon:'success',title:'บันทึกใบเสร็จแล้ว ✅',timer:1400,showConfirmButton:false,toast:true,position:'top-end',background:'#0d1b2a',color:'#cce4ff'});
     _expFetchList();
   }).catch(() => Swal.fire({icon:'error',title:'บันทึกไม่สำเร็จ',background:'var(--bg-card)',color:'var(--t1)'}));
 }
@@ -1166,7 +1166,7 @@ function _expDeleteFromIdx(i) {
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'deleteExpenseReceipt', ref: data.ref })
     }).then(() => {
-      Swal.fire({icon:'success',title:'ลบแล้ว',timer:1200,showConfirmButton:false,background:'var(--bg-card)',color:'var(--t1)'});
+      Swal.fire({icon:'success',title:'ลบแล้ว 🗑️',timer:1200,showConfirmButton:false,toast:true,position:'top-end',background:'#0d1b2a',color:'#cce4ff'});
       _expFetchList();
     });
   });
@@ -1175,16 +1175,23 @@ function _expDeleteFromIdx(i) {
 function _expOpenPrint(data) {
   const win = window.open('', '_blank');
   if (!win) { Swal.fire({icon:'warning',title:'ป๊อปอัพถูกบล็อก',text:'กรุณาอนุญาต popup ของเบราว์เซอร์'}); return; }
-  win.document.write(_expBuildFullHtml(data));
-  win.document.close();
+  // ถ้า _companyInfoCache ยังไม่มีให้ fetch ก่อน แล้วค่อย build
+  const _doBuild = () => { win.document.write(_expBuildFullHtml(data)); win.document.close(); };
+  if (typeof _companyInfoCache !== 'undefined' && _companyInfoCache && _companyInfoCache.name) {
+    _doBuild();
+  } else if (typeof _fetchCompanyInfo === 'function' && SCRIPT_URL) {
+    _fetchCompanyInfo().then(_doBuild).catch(_doBuild);
+  } else {
+    _doBuild();
+  }
 }
 
 function _expBuildFullHtml(data) {
   const imgData = data.ref ? localStorage.getItem('ptts_exp_img_' + data.ref) : (_expImgData || null);
-  const _co = JSON.parse(localStorage.getItem('ptts_company_cfg') || '{}');
-  const companyName    = _co.name  || 'บริษัท พีทีทีเอส จำกัด';
-  const companyAddress = _co.addr  || '';
-  const companyTaxId   = _co.taxId || '';
+  const _co = (typeof _companyInfoCache !== 'undefined' && _companyInfoCache) || {};
+  const companyName    = _co.name    || 'บริษัท พีทีทีเอส จำกัด';
+  const companyAddress = _co.address || '';
+  const companyTaxId   = _co.taxId   || '';
 
   const dateStr = data.date ? (() => {
     const months = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
