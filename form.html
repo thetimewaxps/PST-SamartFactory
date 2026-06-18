@@ -38,7 +38,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v9.10</span>
+      <span class="ph-chip ver">v9.14</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2832,7 +2832,7 @@
 <script src="formcalc.js?v=9.06"></script>
 <script src="aifeatures.js?v=8.94"></script>
 <script src="theme.js?v=9.10"></script>
-<script src="order.js?v=9.06"></script>
+<script src="order.js?v=9.12"></script>
 <script src="purchase.js?v=9.06"></script>
 <script src="invoice.js?v=9.03"></script>
 <script src="plating.js?v=8.94"></script>
@@ -2978,12 +2978,35 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260618-C',
+    ref: '#REV-20260618-G',
     date: '2026-06-18',
     current: true,
     items: [
+      'order.js: ใบสั่งงาน — ย้ายหมายเหตุกลับใต้ SPEC (ตำแหน่งเดิม)',
+      'order.js: ใบสั่งงาน — ย่อ section ลายเซ็น (padding-top 28→14px, margin-top 35→22px) เพื่อให้ทุกอย่างอยู่ใน 1 หน้า A4',
+      'order.js: ใบสั่งงาน — ขยาย DRAWING 200→320px',
+    ],
+  },
+  {
+    ref: '#REV-20260618-F',
+    date: '2026-06-18',
+    current: false,
+    items: [
+      'order.js: ใบสั่งงาน — เปลี่ยน layout: ย้าย DRAWING ขึ้นมาเป็นแถวแรก (เต็มความกว้าง), SPEC อยู่ซ้าย + วันที่รับงาน/กำหนดส่ง อยู่ขวา (แถวเดียวกัน)',
+      'order.js: ใบสั่งงาน — ลบแถว "ขนาด OD × ID × H" ออกจาก specRows',
+      'order.js: ใบสั่งงาน — เปลี่ยน label ลูกค้าเป็น "รหัสลูกค้า / CUSTOMER CODE" + แสดง code แทนชื่อ (lookup จาก _custCache)',
+    ],
+  },
+  {
+    ref: '#REV-20260618-E',
+    date: '2026-06-18',
+    current: false,
+    items: [
       'theme.js: printDoc() v9.10 — แก้รากจริง: ไม่ embed style.css (มี "#docExportOverlay{display:none}" ที่ซ่อน content) + ไม่ wrap ด้วย #docExportOverlay',
       'theme.js: printDoc() — ใช้ CSS minimal แบบ self-contained เหมือน _renderWorkOrderHtml() เพราะ content ทุกอย่างเป็น inline style อยู่แล้ว',
+      'order.js: toggleTrackFullscreen() — เปลี่ยนจากเปิดแท็บใหม่ (?track=full) มาใช้ Fullscreen API (requestFullscreen) ที่เดิม พร้อม webkitRequestFullscreen fallback',
+      'order.js: _trkCloseFullscreen() — ใช้ exitFullscreen แทน window.close, ฟัง fullscreenchange event เพื่อ sync กับ Escape key',
+      'order.js: ใบสั่งงาน — ซ่อน "ขั้นตอนการผลิต / CHECKLIST", ย้าย "หมายเหตุ" ขึ้นมาอยู่เหนือ "วันที่รับงาน"',
     ],
   },
   {

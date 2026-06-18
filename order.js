@@ -1660,9 +1660,14 @@ async function _ordPrintWorkOrder(noPO) {
   const drawingImg = String(ord[ORDER_COLS.jobImg1]||'').trim() || String(ord[ORDER_COLS.jobImg2]||'').trim();
   const poImg = String(ord[ORDER_COLS.poFile]||'').trim();
 
+  // หา รหัสลูกค้า จาก _custCache (ใช้ contact หรือ name เพื่อจับคู่)
+  const _custVal = g('customer');
+  const _custObj = (_custCache || []).find(c => c.contact === _custVal || c.name === _custVal);
+  const custCode = (_custObj && _custObj.code) ? _custObj.code : _custVal;
+
   const html = _renderWorkOrderHtml({
     noPO, noQuo,
-    customer: g('customer'),
+    customer: custCode,
     productList: g('productList') || '—',
     workType: g('workType') || '—',
     qty: g('qty') || '—',
@@ -1735,7 +1740,6 @@ function _renderWorkOrderHtml(d) {
   const printDateStr = now.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 
   const specRows = [
-    ['ขนาด OD × ID × H (มม.)', (d.od||d.id_||d.h) ? `${d.od||'-'} × ${d.id_||'-'} × ${d.h||'-'}` : '—'],
     ['แบบงาน', d.workType || '—'],
     ['ตะแกรงนอก', d.meshOut || '—'],
     ['ตะแกรงใน', d.meshIn || '—'],
@@ -1796,7 +1800,7 @@ function _renderWorkOrderHtml(d) {
   </div>
 
   <div style="padding:14px 0;border-bottom:1px solid #e8ecf2">
-    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">ลูกค้า / CUSTOMER</div>
+    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">รหัสลูกค้า / CUSTOMER CODE</div>
     <div style="font-size:.95rem;font-weight:700">${d.customer||'—'}</div>
   </div>
 
@@ -1814,77 +1818,77 @@ function _renderWorkOrderHtml(d) {
     </div>
   </div>
 
-  <div style="padding:14px 0;border-bottom:1px solid #e8ecf2;display:flex;gap:16px;flex-wrap:wrap">
-    <div style="flex:0 0 260px">
-      <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">ข้อมูลงาน / สเปก</div>
-      <table style="font-size:.85rem">${specRows}</table>
-    </div>
-    <div style="flex:1;min-width:240px">
-      <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">แบบงาน / DRAWING</div>
-      <div style="display:flex;gap:8px;align-items:flex-start">
-        <div style="flex:1;min-width:0">
-          ${(() => {
-            if (d.drawingImg) {
-              return `<img src="${d.drawingImg}" onerror="this.style.display='none'" style="width:100%;height:260px;
-                object-fit:contain;border:1px solid #ddd;border-radius:6px;background:#fafafa;display:block">`;
-            }
-            const diagramSvg = _workTypeDiagramSvg(d.workType);
-            if (diagramSvg) {
-              return `<div style="border:1px solid #ddd;border-radius:6px;background:#fafafa;padding:8px;height:260px;display:flex;align-items:center;justify-content:center">${diagramSvg}</div>`;
-            }
-            return `<div style="border:1.5px dashed #bbb;border-radius:8px;height:260px;
-                display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.8rem;text-align:center">
-                (พื้นที่สำหรับวาด/แนบแบบงาน)</div>`;
-          })()}
-        </div>
-        <div style="flex:1;min-width:0">
-          ${d.poImg ? `
-            <img src="${d.poImg}" style="width:100%;height:260px;
-              object-fit:contain;border:1px solid #ddd;border-radius:6px;background:#fafafa;display:block">
-          ` : `
-            <div style="border:1.5px dashed #bbb;border-radius:8px;height:260px;
+  <!-- DRAWING — เต็มความกว้าง -->
+  <div style="padding:14px 0;border-bottom:1px solid #e8ecf2">
+    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">แบบงาน / DRAWING</div>
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        ${(() => {
+          if (d.drawingImg) {
+            return `<img src="${d.drawingImg}" onerror="this.style.display='none'" style="width:100%;height:320px;
+              object-fit:contain;border:1px solid #ddd;border-radius:6px;background:#fafafa;display:block">`;
+          }
+          const diagramSvg = _workTypeDiagramSvg(d.workType);
+          if (diagramSvg) {
+            return `<div style="border:1px solid #ddd;border-radius:6px;background:#fafafa;padding:8px;height:320px;display:flex;align-items:center;justify-content:center">${diagramSvg}</div>`;
+          }
+          return `<div style="border:1.5px dashed #bbb;border-radius:8px;height:320px;
               display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.8rem;text-align:center">
-              (ไม่มีไฟล์ PO แนบ)</div>
-          `}
-        </div>
+              (พื้นที่สำหรับวาด/แนบแบบงาน)</div>`;
+        })()}
+      </div>
+      <div style="flex:1;min-width:0">
+        ${d.poImg ? `
+          <img src="${d.poImg}" style="width:100%;height:320px;
+            object-fit:contain;border:1px solid #ddd;border-radius:6px;background:#fafafa;display:block">
+        ` : `
+          <div style="border:1.5px dashed #bbb;border-radius:8px;height:320px;
+            display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.8rem;text-align:center">
+            (ไม่มีไฟล์ PO แนบ)</div>
+        `}
       </div>
     </div>
   </div>
 
-  <div style="padding:14px 0;border-bottom:1px solid #e8ecf2;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-    <div>
-      <div style="font-size:.62rem;color:#666;margin-bottom:2px">วันที่รับงาน</div>
-      <div style="font-size:.9rem;font-weight:600">${d.orderDate || '—'}</div>
+  <!-- SPEC (ซ้าย) + วันที่รับงาน/กำหนดส่ง (ขวา) -->
+  <div style="padding:14px 0;border-bottom:1px solid #e8ecf2;display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">ข้อมูลงาน / สเปก</div>
+      <table style="font-size:.85rem">${specRows}</table>
     </div>
-    <div style="font-size:1.4rem;color:#e8ecf2">→</div>
-    <div style="border:3px solid #dc2626;border-radius:8px;padding:8px 20px;text-align:center;
-      background:#dc2626;print-color-adjust:exact;-webkit-print-color-adjust:exact">
-      <div style="font-size:.6rem;color:#fca5a5;font-weight:700;letter-spacing:1.5px;margin-bottom:3px;
-        print-color-adjust:exact;-webkit-print-color-adjust:exact">▶ กำหนดส่ง</div>
-      <div style="font-size:1.4rem;font-weight:900;color:#fff;letter-spacing:.5px;
-        print-color-adjust:exact;-webkit-print-color-adjust:exact">${d.wantDate || '—'}</div>
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:12px;padding-bottom:4px">
+      <div>
+        <div style="font-size:.62rem;color:#666;margin-bottom:2px">วันที่รับงาน</div>
+        <div style="font-size:.9rem;font-weight:600">${d.orderDate || '—'}</div>
+      </div>
+      <div style="font-size:1.2rem;color:#e8ecf2">→</div>
+      <div style="border:3px solid #dc2626;border-radius:8px;padding:8px 18px;text-align:center;
+        background:#dc2626;print-color-adjust:exact;-webkit-print-color-adjust:exact">
+        <div style="font-size:.6rem;color:#fca5a5;font-weight:700;letter-spacing:1.5px;margin-bottom:3px;
+          print-color-adjust:exact;-webkit-print-color-adjust:exact">▶ กำหนดส่ง</div>
+        <div style="font-size:1.4rem;font-weight:900;color:#fff;letter-spacing:.5px;
+          print-color-adjust:exact;-webkit-print-color-adjust:exact">${d.wantDate || '—'}</div>
+      </div>
     </div>
   </div>
 
-  <div style="padding:14px 0;border-bottom:1px solid #e8ecf2">
-    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">หมายเหตุ</div>
-    <div style="font-size:.85rem;min-height:36px;white-space:pre-wrap">${d.note || '—'}</div>
+  <div style="padding:10px 0;border-bottom:1px solid #e8ecf2">
+    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:4px">หมายเหตุ</div>
+    <div style="font-size:.85rem;min-height:24px;white-space:pre-wrap">${d.note || '—'}</div>
   </div>
 
-  <div style="padding:14px 0;border-bottom:1px solid #e8ecf2">
-    <div style="font-size:.62rem;font-weight:700;color:#2563eb;letter-spacing:1.2px;margin-bottom:6px">ขั้นตอนการผลิต / CHECKLIST</div>
-    <table style="font-size:.85rem">${checklistRows}</table>
-  </div>
-
-  <div style="display:flex;gap:12px;padding-top:28px;flex-wrap:wrap">
-    <div style="flex:1;text-align:center;min-width:140px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้สั่งงาน</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+  <div style="display:flex;gap:8px;padding-top:14px;flex-wrap:wrap">
+    <div style="flex:1;text-align:center;min-width:120px">
+      <div style="margin-top:22px;border-top:1px solid #bbb;padding-top:4px;font-size:.68rem;color:#555">ผู้สั่งงาน</div>
+      <div style="font-size:.62rem;color:#aaa;margin-top:4px">วันที่ ......../......../........</div>
     </div>
-    <div style="flex:1;text-align:center;min-width:140px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้ตรวจสอบ / QC</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+    <div style="flex:1;text-align:center;min-width:120px">
+      <div style="margin-top:22px;border-top:1px solid #bbb;padding-top:4px;font-size:.68rem;color:#555">ผู้ตรวจสอบ / QC</div>
+      <div style="font-size:.62rem;color:#aaa;margin-top:4px">วันที่ ......../......../........</div>
     </div>
-    <div style="flex:1;text-align:center;min-width:140px">
-      <div style="margin-top:35px;border-top:1px solid #bbb;padding-top:5px;font-size:.7rem;color:#555">ผู้อนุมัติ</div>      <div style="font-size:.65rem;color:#aaa;margin-top:10px">วันที่ ......../......../........</div>
+    <div style="flex:1;text-align:center;min-width:120px">
+      <div style="margin-top:22px;border-top:1px solid #bbb;padding-top:4px;font-size:.68rem;color:#555">ผู้อนุมัติ</div>
+      <div style="font-size:.62rem;color:#aaa;margin-top:4px">วันที่ ......../......../........</div>
     </div>
   </div>
 </body></html>`;
@@ -2513,24 +2517,49 @@ let _trkClockTimer = null;
 const TRK_REFRESH_MIN_MIN   = 1;  // ขั้นต่ำที่บังคับใช้ (นาที) — ห้ามต่ำกว่านี้
 const TRK_REFRESH_DEFAULT_MIN = 10; // ค่าเริ่มต้นแนะนำ (นาที)
 
-// เปิดแท็บติดตามงานในแท็บโครมใหม่ แบบเต็มจอ (ไม่กระทบหน้าที่กำลังทำงานอยู่)
+// สลับโหมดเต็มจอของแดชบอร์ดติดตามงาน
+// — ใช้ Fullscreen API (requestFullscreen) แทนการเปิดแท็บใหม่
+// — สไตล์ trk-fullscreen-mode ซ่อน header/tab-bar ใน style.css อยู่แล้ว
 function toggleTrackFullscreen() {
-  // ลบ track=full ออกจาก search เดิมก่อน แล้วค่อยตัดสินใจว่าจะต่อด้วย ? หรือ &
-  // (ถ้าไม่ทำแบบนี้ กรณีอยู่ในโหมดเต็มจออยู่แล้วแล้วกดซ้ำ จะได้ "?track=full" เดิม -> ตัดสินใจใส่ "&"
-  //  แต่ search ที่เหลือกลับว่าง ทำให้ URL ผิดเป็น "form.html&track=full" เปิดไม่ได้)
-  const restSearch = location.search.replace(/[?&]track=full/, '');
-  const url = location.pathname + restSearch + (restSearch ? '&' : '?') + 'track=full';
-  window.open(url, '_blank');
+  // ถ้าอยู่ในโหมดเต็มจอแล้ว → ออก
+  if (document.body.classList.contains('trk-fullscreen-mode')) {
+    _trkCloseFullscreen();
+    return;
+  }
+  // สลับไปแท็บติดตามงาน (ถ้ายังไม่อยู่ที่นั่น)
+  if (_activeTab !== 'track') switchTab('track');
+  // เปิดโหมด CSS (ซ่อน header/tabs)
+  document.body.classList.add('trk-fullscreen-mode');
+  // เรียก Fullscreen API — ต้องเรียกจาก user gesture (onclick) จึงทำงานได้ทุก browser
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if (req) req.call(el).catch(() => {});
+  // ฟัง fullscreenchange: ถ้าผู้ใช้กด Escape → ออกจากโหมดด้วย
+  document.addEventListener('fullscreenchange', _trkOnFSChange);
+  document.addEventListener('webkitfullscreenchange', _trkOnFSChange);
 }
 
-// ปิดหน้าเต็มจอ — ลองปิดแท็บ/หน้าต่างก่อน (กรณีเปิดผ่าน window.open จะปิดได้)
-// ถ้าปิดไม่ได้ (เช่นเปิดแท็บนี้เองบนมือถือ ไม่ได้เปิดผ่านสคริปต์) ให้พากลับไปหน้าติดตามงานแบบปกติแทน
+function _trkOnFSChange() {
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    document.body.classList.remove('trk-fullscreen-mode');
+    const btn = $('trkFullBtn');
+    if (btn) btn.textContent = '⛶ เปิดเต็มจอ';
+    document.removeEventListener('fullscreenchange', _trkOnFSChange);
+    document.removeEventListener('webkitfullscreenchange', _trkOnFSChange);
+  }
+}
+
+// ออกจากโหมดเต็มจอ
 function _trkCloseFullscreen() {
-  window.close();
-  setTimeout(() => {
-    const restSearch = location.search.replace(/[?&]track=full/, '');
-    location.href = location.pathname + restSearch;
-  }, 250);
+  document.body.classList.remove('trk-fullscreen-mode');
+  const btn = $('trkFullBtn');
+  if (btn) btn.textContent = '⛶ เปิดเต็มจอ';
+  document.removeEventListener('fullscreenchange', _trkOnFSChange);
+  document.removeEventListener('webkitfullscreenchange', _trkOnFSChange);
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exit) exit.call(document).catch(() => {});
+  }
 }
 
 // โหมดเต็มจอ (เปิดผ่าน toggleTrackFullscreen ด้วย ?track=full) ใช้ key การตั้งค่าแยกจากหน้าปกติ
