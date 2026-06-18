@@ -838,9 +838,7 @@ function _poSubTabSwitch(n) {
     const btn   = document.getElementById('poSubBtn'   + k);
     if (panel) panel.style.display = (k === n) ? '' : 'none';
     if (btn) {
-      btn.style.color       = k === n ? '#6366f1' : 'var(--t2)';
-      btn.style.borderBottom= k === n ? '2px solid #6366f1' : '2px solid transparent';
-      btn.style.fontWeight  = k === n ? '700' : '600';
+      btn.classList.toggle('active', k === n);
     }
   });
   if (n === '2') { _expInitForm(); _expFetchList(); }
@@ -918,6 +916,7 @@ function _expReset() {
   document.getElementById('exp_refNo').value = _expGenRef();
   document.getElementById('exp_date').value  = new Date().toISOString().slice(0,10);
   _expPopulateCatSelect();
+  _expClearImg();
   _expRenderRows();
 }
 
@@ -958,6 +957,12 @@ function _expRenderRows() {
 function _expRowChange(i, field, val) {
   if (!_expRows[i]) return;
   _expRows[i][field] = field === 'desc' ? val : parseFloat(val)||0;
+  // อัปเดต cell จำนวนเงินของแถวนี้โดยตรง
+  const rows = document.querySelectorAll('#expItemBody tr');
+  if (rows[i]) {
+    const amtCell = rows[i].querySelectorAll('td')[4];
+    if (amtCell) amtCell.textContent = ((+_expRows[i].qty||0)*(+_expRows[i].unitPrice||0)).toLocaleString('th-TH',{minimumFractionDigits:2});
+  }
   _expCalcTotal();
 }
 
@@ -984,6 +989,7 @@ function _expCollectData() {
     note:          g('exp_note'),
     items:         rows,
     total:         total,
+    imageUrl:      _expImgData || '',
   };
 }
 
@@ -1001,6 +1007,7 @@ function _expSave() {
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ action:'saveExpenseReceipt', data })
   }).then(() => {
+    if (_expImgData && data.ref) localStorage.setItem('ptts_exp_img_' + data.ref, _expImgData);
     Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1500,showConfirmButton:false,background:'var(--bg-card)',color:'var(--t1)'});
     _expFetchList();
   }).catch(() => Swal.fire({icon:'error',title:'บันทึกไม่สำเร็จ',background:'var(--bg-card)',color:'var(--t1)'}));
@@ -1019,6 +1026,36 @@ function _expFetchList() {
 }
 
 let _expListCache = [];
+let _expImgData   = null; // base64 รูปที่สั่งซื้อ (เก็บชั่วคราว)
+
+function _expImgChanged() {
+  const input = document.getElementById('exp_img');
+  const file  = input?.files?.[0];
+  const nameEl  = document.getElementById('exp_imgName');
+  const clearEl = document.getElementById('exp_imgClear');
+  const imgEl   = document.getElementById('exp_imgPreview');
+  if (!file) { _expClearImg(); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    _expImgData = e.target.result;
+    if (nameEl)  nameEl.textContent = file.name;
+    if (clearEl) clearEl.style.display = 'inline-block';
+    if (imgEl)  { imgEl.src = _expImgData; imgEl.style.display = 'block'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+function _expClearImg() {
+  _expImgData = null;
+  const input = document.getElementById('exp_img');
+  if (input)  input.value = '';
+  const nameEl  = document.getElementById('exp_imgName');
+  const clearEl = document.getElementById('exp_imgClear');
+  const imgEl   = document.getElementById('exp_imgPreview');
+  if (nameEl)  nameEl.textContent = 'ยังไม่ได้เลือก';
+  if (clearEl) clearEl.style.display = 'none';
+  if (imgEl)  { imgEl.style.display = 'none'; imgEl.removeAttribute('src'); }
+}
 
 function _expRenderList(rows) {
   const el = document.getElementById('expListBody');
@@ -1037,21 +1074,35 @@ function _expRenderList(rows) {
       <th style="padding:7px 10px;text-align:left">หมวด</th>
       <th style="padding:7px 10px;text-align:left">ผู้รับเงิน</th>
       <th style="padding:7px 10px;text-align:right">รวม</th>
+      <th style="padding:7px 10px;text-align:center">รูป</th>
       <th style="padding:7px 10px;text-align:center">ปฏิบัติการ</th>
     </tr></thead>
-    <tbody>${_expListCache.map((r,i) => `<tr style="border-bottom:1px solid var(--br)">
+    <tbody>${_expListCache.map((r,i) => {
+      const imgData = r.ref ? localStorage.getItem('ptts_exp_img_' + r.ref) : null;
+      const thumbHtml = imgData
+        ? `<img src="${imgData}" style="width:38px;height:38px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--bc-div)" onclick="_expShowImgFull('${r.ref}')" title="ดูรูปเต็ม">`
+        : `<span style="color:var(--t3);font-size:.72rem">—</span>`;
+      return `<tr style="border-bottom:1px solid var(--br)">
       <td style="padding:7px 10px;color:var(--t3)">${r.ref||''}</td>
       <td style="padding:7px 10px">${fmtDate(r.date||'')}</td>
       <td style="padding:7px 10px">${r.category||''}</td>
       <td style="padding:7px 10px">${r.vendorName||''}</td>
       <td style="padding:7px 10px;text-align:right">${(+(r.total)||0).toLocaleString('th-TH',{minimumFractionDigits:2})}</td>
+      <td style="padding:7px 10px;text-align:center">${thumbHtml}</td>
       <td style="padding:7px 10px;text-align:center;white-space:nowrap">
         <button onclick="_expEditFromIdx(${i})" style="padding:5px 10px;border-radius:7px;border:none;background:#2563eb;color:#fff;font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">✏️ แก้ไข</button>
         <button onclick="_expPrintFromIdx(${i})" style="padding:5px 10px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">🖨️ พิมพ์</button>
         <button onclick="_expDeleteFromIdx(${i})" style="padding:5px 8px;border-radius:7px;border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.1);color:#f87171;font-size:.7rem;cursor:pointer;margin:1px">🗑️</button>
       </td>
-    </tr>`).join('')}
+    </tr>`;
+    }).join('')}
     </tbody></table>`;
+}
+
+function _expShowImgFull(ref) {
+  const imgData = localStorage.getItem('ptts_exp_img_' + ref);
+  if (!imgData) return;
+  Swal.fire({ imageUrl: imgData, imageAlt: 'รูปที่สั่งซื้อ ' + ref, showConfirmButton: false, showCloseButton: true, width: 'auto', padding: '8px', background: 'var(--bg-card,#1e2130)' });
 }
 
 function _expPrintPreview() {
@@ -1083,6 +1134,18 @@ function _expEditFromIdx(i) {
   _expRows = items.map(it => ({ desc: it.desc||'', qty: +(it.qty)||1, unitPrice: +(it.unitPrice)||0 }));
   if (!_expRows.length) _expRows = [{desc:'',qty:1,unitPrice:0}];
   _expRenderRows();
+  // โหลดรูปจาก localStorage
+  _expClearImg();
+  const savedImg = data.ref ? localStorage.getItem('ptts_exp_img_' + data.ref) : null;
+  if (savedImg) {
+    _expImgData = savedImg;
+    const nameEl  = document.getElementById('exp_imgName');
+    const clearEl = document.getElementById('exp_imgClear');
+    const imgEl   = document.getElementById('exp_imgPreview');
+    if (nameEl)  nameEl.textContent = 'รูปที่บันทึกไว้';
+    if (clearEl) clearEl.style.display = 'inline-block';
+    if (imgEl)  { imgEl.src = savedImg; imgEl.style.display = 'block'; }
+  }
   _expEditRef = data.ref || null;
   document.getElementById('exp_refNo')?.scrollIntoView({ behavior:'smooth', block:'center' });
 }
@@ -1117,9 +1180,11 @@ function _expOpenPrint(data) {
 }
 
 function _expBuildFullHtml(data) {
-  const companyName    = localStorage.getItem('ptts_company_name')    || 'บริษัท พีทีทีเอส จำกัด';
-  const companyAddress = localStorage.getItem('ptts_company_address') || '';
-  const companyTaxId   = localStorage.getItem('ptts_company_taxid')   || '';
+  const imgData = data.ref ? localStorage.getItem('ptts_exp_img_' + data.ref) : (_expImgData || null);
+  const _co = JSON.parse(localStorage.getItem('ptts_company_cfg') || '{}');
+  const companyName    = _co.name  || 'บริษัท พีทีทีเอส จำกัด';
+  const companyAddress = _co.addr  || '';
+  const companyTaxId   = _co.taxId || '';
 
   const dateStr = data.date ? (() => {
     const months = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -1187,6 +1252,10 @@ function _expBuildFullHtml(data) {
     </table>
     <div style="font-size:12px;margin:8px 0">ชำระโดย ${data.payMethod||'เงินสด'}</div>
     ${data.note ? `<div style="font-size:11px;color:#555;margin-bottom:8px">หมายเหตุ: ${data.note}</div>` : ''}
+    ${imgData ? `<div style="margin:14px 0 8px">
+      <div style="font-size:11px;color:#555;margin-bottom:6px;font-weight:600">รูปที่สั่งซื้อ</div>
+      <img src="${imgData}" style="max-width:100%;max-height:260px;object-fit:contain;border:1px solid #ddd;border-radius:6px;display:block;print-color-adjust:exact;-webkit-print-color-adjust:exact">
+    </div>` : ''}
     <div style="display:flex;justify-content:space-between;margin-top:32px;font-size:12px">
       <div style="text-align:center">
         <div style="margin-bottom:32px">ผู้จ่ายเงิน ...................................</div>

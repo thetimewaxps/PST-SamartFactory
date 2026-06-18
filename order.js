@@ -244,7 +244,7 @@ function dtAddOrder(idx) {
   });
 }
 
-// เมื่อเลือกไฟล์ PO ใหม่ — แสดงชื่อไฟล์ + รูปตัวอย่าง (ถ้าเป็นรูปภาพ) + ปุ่มลบ
+// เมื่อเลือกไฟล์ PO ใหม่ — แสดงชื่อไฟล์ + รูปตัวอย่าง (ถ้าเป็นรูปภาพ) + ปุ่มลบ [Python edit OK]
 function _ordPoFileChanged(prefix) {
   const input = $(prefix + '_poFile');
   const file  = input?.files?.[0];

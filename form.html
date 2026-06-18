@@ -38,7 +38,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v9.29</span>
+      <span class="ph-chip ver">v9.32</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2042,10 +2042,10 @@
 <div style="max-width:1100px;margin:0 auto;padding:12px 8px 80px">
 
   <!-- ══ Sub-tab nav ══ -->
-  <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--br);padding-bottom:0">
-    <button id="poSubBtn1" class="sub-tab-btn active" onclick="_poSubTabSwitch('1')" style="padding:8px 16px;border:none;background:none;cursor:pointer;font-family:Sarabun,sans-serif;font-size:.88rem;font-weight:600;color:var(--t2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s">🧾 ใบสั่งซื้อ</button>
-    <button id="poSubBtn2" class="sub-tab-btn" onclick="_poSubTabSwitch('2')" style="padding:8px 16px;border:none;background:none;cursor:pointer;font-family:Sarabun,sans-serif;font-size:.88rem;font-weight:600;color:var(--t2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s">📋 ใบเสร็จรายจ่าย</button>
-    <button id="poSubBtn3" class="sub-tab-btn" onclick="_poSubTabSwitch('3')" style="padding:8px 16px;border:none;background:none;cursor:pointer;font-family:Sarabun,sans-serif;font-size:.88rem;font-weight:600;color:var(--t2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s">🗂️ หมวดค่าใช้จ่าย</button>
+  <div class="ord-subtabbar">
+    <button id="poSubBtn1" class="ord-subtab-btn active" onclick="_poSubTabSwitch('1')">🧾 ใบสั่งซื้อ</button>
+    <button id="poSubBtn2" class="ord-subtab-btn" onclick="_poSubTabSwitch('2')">📋 ใบเสร็จรายจ่าย</button>
+    <button id="poSubBtn3" class="ord-subtab-btn" onclick="_poSubTabSwitch('3')">🗂️ หมวดค่าใช้จ่าย</button>
   </div>
 
   <!-- ══ Panel 1: ใบสั่งซื้อ (เดิม) ══ -->
@@ -2271,9 +2271,25 @@
         <div style="font-size:.95rem;font-weight:700;color:var(--t1)">รวม: <span id="exp_total" style="color:#6366f1">0.00</span> บาท</div>
       </div>
       <!-- หมายเหตุ -->
-      <div class="field" style="margin-bottom:14px">
+      <div class="field" style="margin-bottom:10px">
         <label>หมายเหตุ</label>
         <input type="text" id="exp_note" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)">
+      </div>
+
+      <!-- รูปที่สั่งซื้อ -->
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.78rem;font-weight:600;color:var(--t2);margin-bottom:6px">รูปที่สั่งซื้อ <span style="font-size:.7rem;color:var(--t3);font-weight:400">(ไม่บังคับ)</span></label>
+        <input type="file" id="exp_img" accept="image/*" style="display:none" onchange="_expImgChanged()">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button type="button" onclick="document.getElementById('exp_img').click()"
+            style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:8px;background:#7c3aed;color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit">
+            📷 เลือกรูป
+          </button>
+          <span id="exp_imgName" style="font-size:.76rem;color:var(--t3)">ยังไม่ได้เลือก</span>
+          <button type="button" id="exp_imgClear" onclick="_expClearImg()" title="ลบรูป"
+            style="display:none;border:none;background:none;color:#ef4444;font-size:1rem;cursor:pointer;padding:2px 4px">✕</button>
+        </div>
+        <img id="exp_imgPreview" style="display:none;margin-top:8px;max-width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--bc-div)">
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -3144,9 +3160,35 @@ const DEV_LOGS = [
     ],
   },
   {
-    ref: '#REV-20260618-V',
+    ref: '#REV-20260618-Y',
     date: '2026-06-18',
     current: true,
+    items: [
+      'purchase.js: แก้ bug ที่อยู่/TAX ID บริษัทว่างในใบเสร็จรับเงิน — เปลี่ยนไปอ่านจาก ptts_company_cfg ให้ถูก key',
+    ],
+  },
+  {
+    ref: '#REV-20260618-X',
+    date: '2026-06-18',
+    current: false,
+    items: [
+      'purchase.js: แสดงรูปที่สั่งซื้อในเอกสาร print (ใบเสร็จรับเงิน) — วางใต้รายการก่อนลายเซ็น ทั้งพิมพ์ใหม่และพิมพ์จากประวัติ',
+    ],
+  },
+  {
+    ref: '#REV-20260618-W',
+    date: '2026-06-18',
+    current: false,
+    items: [
+      'purchase.js + form.html: เพิ่มฟีเจอร์รูปที่สั่งซื้อในใบเสร็จรายจ่าย — ปุ่ม 📷 เลือกรูป, preview ก่อนบันทึก, เก็บใน localStorage',
+      'purchase.js: รายการประวัติใบเสร็จแสดง thumbnail รูป คลิกเพื่อดูเต็มด้วย Swal',
+      'purchase.js: แก้ไขรายการ (_expEditFromIdx) โหลดรูปกลับมาจาก localStorage อัตโนมัติ',
+    ],
+  },
+  {
+    ref: '#REV-20260618-V',
+    date: '2026-06-18',
+    current: false,
     items: [
       'form.html + order.js: เปลี่ยนปุ่มอัพโหลดไฟล์ PO / Drawing (สร้าง Order) เป็น Drop Zone style — คลิกหรือลากไฟล์มาวาง, แสดง preview ภาพในกล่อง, ปุ่มลบแบบ inline',
     ],
