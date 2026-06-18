@@ -527,11 +527,18 @@ select option { background: var(--sel-bg); color: var(--t1); }
 /* ── Print ─────────────────────────────────────────────────── */
 @media print {
   body > *:not(#docExportOverlay) { display: none !important; }
-  #docExportOverlay { background: white !important; position: absolute !important;
-    top: 0; left: 0; display: block !important; overflow: visible !important; }
+  #docExportOverlay {
+    background: white !important;
+    position: static !important;   /* absolute ทำให้มือถือขึ้นจอขาว */
+    display: block !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    backdrop-filter: none !important;
+  }
   .doc-topbar, .doc-bottombar, .no-print { display: none !important; }
   .doc-body { background: white !important; padding: 0 !important;
-    overflow: visible !important; }
+    overflow: visible !important; flex: none !important; height: auto !important; }
   .doc-paper {
     box-shadow: none !important; border-radius: 0 !important;
     max-width: 100% !important; font-size: 1.15em;
