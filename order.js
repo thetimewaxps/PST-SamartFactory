@@ -1981,10 +1981,14 @@ function _ordPrintDetail(noPO) {
       <tr><td class="lbl2">Process</td><td>${g('process')}</td><td class="lbl2">สถานะส่งงาน</td><td>${g('statusDeliver')}</td></tr>
       <tr><td class="lbl2">หมายเหตุ</td><td colspan="3">${g('note')}</td></tr>
     </table>
+    <script>(function(){
+      function go(){ try{ window.focus(); window.print(); }catch(e){} }
+      if(document.fonts && document.fonts.ready){
+        document.fonts.ready.then(go).catch(function(){ setTimeout(go,700); });
+      } else { setTimeout(go,700); }
+    })();<\/script>
     </body></html>`);
   win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
 }
 
 // ── เมนู "เพิ่มเติม" ──

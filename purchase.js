@@ -808,8 +808,12 @@ function _poPrint(poNo) {
       <div class="sb-row"><div class="lab">👤 ผู้ติดต่อ (Contact)</div><div class="val">${r[PO_HEADER_COLS.createdBy]||'—'}</div></div>
     </div>
   </div>
+  <script>(function(){
+    function go(){ try{ window.focus(); window.print(); }catch(e){} }
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(go).catch(function(){ setTimeout(go,700); });
+    } else { setTimeout(go,700); }
+  })();<\/script>
   </body></html>`);
   win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
 }

@@ -810,9 +810,15 @@ function _openCuttingReport(html) {
       background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
     return;
   }
-  w.document.write(html);
+  // ฉีด print trigger ก่อน </body> — w.onload ไม่ fire บน iOS หลัง document.write
+  const htmlWithPrint = html.replace('</body>', `<script>(function(){
+    function go(){ try{ window.focus(); window.print(); }catch(e){} }
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(go).catch(function(){ setTimeout(go,700); });
+    } else { setTimeout(go,700); }
+  })();<\/script></body>`);
+  w.document.write(htmlWithPrint);
   w.document.close();
-  w.onload = () => { w.focus(); w.print(); };
 }
 
 // พิมพ์ Report ขนาดตัด จากข้อมูลในฟอร์มที่เปิดอยู่ (แท็บคำนวณตัดเหล็ก)
