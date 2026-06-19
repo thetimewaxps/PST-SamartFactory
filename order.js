@@ -2780,9 +2780,12 @@ function _trkRenderTaskList() {
         }).join('')
       : `<div class="trk-task-empty">ไม่มีงาน</div>`;
     return `
-      <div class="trk-task-col">
-        <div class="trk-task-head">${grp.label}<span class="trk-task-count">${rows.length}</span></div>
-        <div class="trk-task-body" style="color:${grp.color}">${itemsHtml}</div>
+      <div class="trk-task-col" style="--col-clr:${grp.color}">
+        <div class="trk-task-head" style="border-bottom-color:${grp.color}">
+          <span class="trk-task-count-big" style="background:${grp.color}">${rows.length}</span>
+          <span class="trk-task-head-label">${grp.label}</span>
+        </div>
+        <div class="trk-task-body">${itemsHtml}</div>
       </div>`;
   }).join('');
 }
