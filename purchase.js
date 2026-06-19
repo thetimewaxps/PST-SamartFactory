@@ -1461,7 +1461,7 @@ async function _rfqSave() {
   const payload = {
     action:   'saveRFQ',
     rfqNo,
-    date:     _rfqDateToThai($('rfq_date').value),
+    date:     $('rfq_date').value,
     supplier: $('rfq_supplier').value.trim(),
     items:    JSON.stringify(items),
     remark:   $('rfq_remark').value.trim(),
@@ -1580,7 +1580,7 @@ function _rfqPrint() {
   }
   const data = {
     rfqNo:    $('rfq_no').value || _rfqGenNo(),
-    date:     _rfqDateToThai($('rfq_date').value),
+    date:     $('rfq_date').value,
     supplier: $('rfq_supplier').value.trim(),
     items,
     remark:   $('rfq_remark').value.trim(),

@@ -38,7 +38,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v9.47</span>
+      <span class="ph-chip ver">v9.48</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -3223,8 +3223,8 @@
 <script src="formcalc.js?v=9.06"></script>
 <script src="aifeatures.js?v=8.94"></script>
 <script src="theme.js?v=9.10"></script>
-<script src="order.js?v=9.47"></script>
-<script src="purchase.js?v=9.47"></script>
+<script src="order.js?v=9.48"></script>
+<script src="purchase.js?v=9.48"></script>
 <script src="invoice.js?v=9.03"></script>
 <script src="plating.js?v=8.94"></script>
 
@@ -3369,9 +3369,18 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260619-O',
+    ref: '#REV-20260619-P',
     date: '2026-06-19',
     current: true,
+    items: [
+      'RFQ: แก้บั๊กวันที่ปี 3112 — เก็บวันที่ใน Sheets เป็น ISO (CE) เพื่อป้องกัน Sheets auto-parse → double +543',
+      'แสดงผลในแอปยังคงเป็น dd/mm/yyyy พ.ศ. ผ่าน _rfqThDate()',
+    ],
+  },
+  {
+    ref: '#REV-20260619-O',
+    date: '2026-06-19',
+    current: false,
     items: [
       'RFQ: เปลี่ยนรูปแบบวันที่เป็น dd/mm/yyyy พ.ศ. ทั้งในชีตและในรายการ',
       'purchase.js: เพิ่ม _rfqDateToThai() / _rfqThaiToIso() / ปรับ _rfqThDate()',
