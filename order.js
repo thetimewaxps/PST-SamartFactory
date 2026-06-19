@@ -18,9 +18,10 @@ const ORDER_COLS = {
   wantDate: 26, customer: 27,
   invoiceNo: 28, invoiceDate: 29,  // AC, AD = เลขที่/วันที่ใบกำกับภาษี
   meshOut: 30, meshIn: 31,         // AE, AF = ตะแกรงนอก/ตะแกรงใน
-  matTop: 32, matBot: 33           // AG, AH = ฝาบน/ฝาล่าง
+  matTop: 32, matBot: 33,          // AG, AH = ฝาบน/ฝาล่าง
+  od: 34, id_: 35, h_: 36           // AI, AJ, AK = ขนาด OD/ID/H (ตัดเหล็ก)
 };
-const ORDER_NUM_COLS = 34;
+const ORDER_NUM_COLS = 37;
 let _orderCache = [];
 const ORDER_LOAD_LIMIT = 100; // โหลดปกติ = 100 รายการล่าสุด, กด "โหลดทั้งหมด" = 0 (ทั้งหมด)
 let _itemMasterCache = []; // รายการสินค้า/บริการที่ใช้บ่อย (Item Master) — โหลดจาก fetchItemMaster()
@@ -119,6 +120,9 @@ function updateOrderPreview() {
   // ฝาบน/ฝาล่าง — ดึงจาก DATA มาให้อัตโนมัติ แต่แก้ไขเพิ่มเติมได้ (ไม่ทับค่าที่แก้เอง)
   _ordAutoFillSelect('ord_matTop', r[DT.matTop] || '');
   _ordAutoFillSelect('ord_matBot', r[DT.matBot] || '');
+  if ($('ord_od')) $('ord_od').value = r[DT.od]  || '';
+  if ($('ord_id')) $('ord_id').value = r[DT.id]  || '';
+  if ($('ord_h'))  $('ord_h').value  = r[DT.h]   || '';
 
   _ordUpdateCreateBtn();
 }
@@ -200,6 +204,9 @@ function _ordResetCard() {
   if ($('ord_meshIn'))  { $('ord_meshIn').value = '';  delete $('ord_meshIn').dataset.autoVal; }
   if ($('ord_matTop')) { $('ord_matTop').value = ''; delete $('ord_matTop').dataset.autoVal; }
   if ($('ord_matBot')) { $('ord_matBot').value = ''; delete $('ord_matBot').dataset.autoVal; }
+  if ($('ord_od')) $('ord_od').value = '';
+  if ($('ord_id')) $('ord_id').value = '';
+  if ($('ord_h'))  $('ord_h').value  = '';
   if ($('ord_qty'))   { $('ord_qty').value = '';   delete $('ord_qty').dataset.autoVal; }
   if ($('ord_price')) { $('ord_price').value = ''; delete $('ord_price').dataset.autoVal; }
   if ($('ord_workStatus')) $('ord_workStatus').value = 'ปรกติ';
@@ -436,6 +443,9 @@ async function createOrder() {
   row[ORDER_COLS.meshIn]      = $('ord_meshIn')?.value || '';
   row[ORDER_COLS.matTop]      = $('ord_matTop')?.value || '';
   row[ORDER_COLS.matBot]      = $('ord_matBot')?.value || '';
+  row[ORDER_COLS.od]          = $('ord_od')?.value  || '';
+  row[ORDER_COLS.id_]         = $('ord_id')?.value  || '';
+  row[ORDER_COLS.h_]          = $('ord_h')?.value   || '';
 
   const createBtn = $('ord_createBtn');
   const statusEl  = $('ord_createStatus');
@@ -1541,26 +1551,55 @@ async function _ordMarkDelivered(noPO) {
   }
 }
 
-// ── พิมพ์ Report ขนาดตัดเหล็ก ของ Order (ดึงข้อมูลคำนวณจาก DATA ด้วย No.Quo) ──
+// ── พิมพ์ Report ขนาดตัดเหล็ก: 1) จาก Order (OD/H) → 2) จาก DATA (No.Quo) → 3) กรอกเอง ──
 async function _ordPrintCutting(noPO) {
   const ord = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(noPO));
   if (!ord) return;
   const noQuo = String(ord[ORDER_COLS.noQuo] || '').trim();
-  // ถ้ายังไม่เคยโหลดข้อมูล DATA (ผู้ใช้ยังไม่เคยเข้าแท็บ DATA) ให้โหลดก่อน
-  if (!_dtCache || !_dtCache.length) {
-    Swal.fire({title:'⏳ กำลังโหลดข้อมูล DATA...', allowOutsideClick:false, background:'#0d1b2a', color:'#cce4ff', didOpen:()=>Swal.showLoading()});
-    await dtRefresh(false);
-    Swal.close();
-  }
-  // strip "Q-" prefix เหมือน plating.js เพื่อรองรับ No.Quo รูปแบบเก่า
-  const stripQ = s => String(s || '').replace(/^Q-/i, '').trim();
-  const dtRow = (_dtCache || []).find(row => stripQ(row[DT.noQuo]) === stripQ(noQuo) && stripQ(noQuo) !== '');
-  if (dtRow) {
-    printCuttingReportFromDataRow(dtRow, noPO);
+
+  // ── ดึง OD/ID/H จาก Order โดยตรง (Order เก็บค่าพวกนี้ไว้แล้ว) ──
+  const ordOd  = parseFloat(ord[ORDER_COLS.od]  || '') || 0;
+  const ordId  = parseFloat(ord[ORDER_COLS.id_] || '') || 0;
+  const ordH   = parseFloat(ord[ORDER_COLS.h_]  || '') || 0;
+  const ordQty = parseFloat(ord[ORDER_COLS.qty] || '') || 1;
+  const ordMatTop  = String(ord[ORDER_COLS.matTop]  || '').trim();
+  const ordMatBot  = String(ord[ORDER_COLS.matBot]  || '').trim();
+  const ordMeshOut = String(ord[ORDER_COLS.meshOut] || '').trim();
+  const ordMeshIn  = String(ord[ORDER_COLS.meshIn]  || '').trim();
+
+  if (ordOd && ordH) {
+    // มีข้อมูล OD/H ใน Order — ใช้เลย ไม่ต้องโหลด DATA
+    const matCodes = [ordMatTop, ordMatBot, ordMeshOut, ordMeshIn];
+    const res = _computeCutParts(ordOd, ordId, ordH, ordQty, matCodes, 0, [false,false,false,false]);
+    if (!res) {
+      Swal.fire({icon:'warning', title:'คำนวณไม่ได้', text:'ข้อมูล OD หรือ H ไม่ถูกต้อง',
+        background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
+      return;
+    }
+    const html = _renderCuttingReportHtml(res, {
+      od: ordOd, id_: ordId, h: ordH, unit: ordQty,
+      noQuo: noQuo || '—', noPO: noPO || ''
+    });
+    _openCuttingReport(html);
     return;
   }
 
-  // ── Fallback: ไม่มี DATA row — ให้กรอกขนาดเองได้ ──
+  // ── Fallback #2: ลองดึงจาก DATA ด้วย No.Quo (Order เก่าที่ยังไม่มี OD/H) ──
+  if (noQuo) {
+    if (!_dtCache || !_dtCache.length) {
+      Swal.fire({title:'⏳ กำลังโหลดข้อมูล...', allowOutsideClick:false, background:'#0d1b2a', color:'#cce4ff', didOpen:()=>Swal.showLoading()});
+      await dtRefresh(false);
+      Swal.close();
+    }
+    const stripQ = s => String(s || '').replace(/^Q-/i, '').trim();
+    const dtRow = (_dtCache || []).find(r => stripQ(r[DT.noQuo]) === stripQ(noQuo));
+    if (dtRow) {
+      printCuttingReportFromDataRow(dtRow, noPO);
+      return;
+    }
+  }
+
+  // ── Fallback #3: ไม่มีทั้งใน Order และ DATA — ให้กรอกขนาดเองได้ ──
   const matKeys = Object.keys(typeof specMatData !== 'undefined' ? specMatData : {});
   const matOpts = ['— ไม่มี —', ...matKeys].map(k => `<option value="${k}">${k}</option>`).join('');
   const IS = `width:100%;padding:6px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;color:#1e293b;font-family:Sarabun,sans-serif;font-size:.82rem`;
@@ -1571,7 +1610,7 @@ async function _ordPrintCutting(noPO) {
     width: 'min(92vw, 520px)',
     html: `
       <div style="text-align:left;font-size:.82rem;color:#475569;margin-bottom:6px">
-        ${noQuo ? `No.Quo: <b>${noQuo}</b> — ` : ''}ไม่พบข้อมูลคำนวณใน DATA กรุณากรอกขนาด
+        ${noQuo ? `No.Quo: <b>${noQuo}</b> — ` : ''}ยังไม่มีข้อมูล OD/H บันทึกไว้ใน Order — กรุณากรอกขนาด
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left">
         <label style="font-size:.78rem;font-weight:600;color:#475569">OD (มม.)*<br>
@@ -2050,6 +2089,9 @@ function openEditOrder(noPO) {
   $('ordEdit_meshIn').value       = r[ORDER_COLS.meshIn] || '';
   if ($('ordEdit_matTop')) $('ordEdit_matTop').value = r[ORDER_COLS.matTop] || '';
   if ($('ordEdit_matBot')) $('ordEdit_matBot').value = r[ORDER_COLS.matBot] || '';
+  if ($('ordEdit_od')) $('ordEdit_od').value = r[ORDER_COLS.od]  || '';
+  if ($('ordEdit_id')) $('ordEdit_id').value = r[ORDER_COLS.id_] || '';
+  if ($('ordEdit_h'))  $('ordEdit_h').value  = r[ORDER_COLS.h_]  || '';
   $('ordEdit_note').value        = r[ORDER_COLS.note] || '';
   if ($('ordEdit_note2')) $('ordEdit_note2').value = r[ORDER_COLS.note2] || '';
   if ($('ordEdit_workStatus')) $('ordEdit_workStatus').value = r[ORDER_COLS.status] || 'ปรกติ';
@@ -2093,6 +2135,9 @@ async function saveOrderEdit() {
   row[ORDER_COLS.meshIn]      = $('ordEdit_meshIn').value;
   row[ORDER_COLS.matTop]      = $('ordEdit_matTop')?.value ?? row[ORDER_COLS.matTop] ?? '';
   row[ORDER_COLS.matBot]      = $('ordEdit_matBot')?.value ?? row[ORDER_COLS.matBot] ?? '';
+  row[ORDER_COLS.od]          = $('ordEdit_od')?.value  ?? row[ORDER_COLS.od]  ?? '';
+  row[ORDER_COLS.id_]         = $('ordEdit_id')?.value  ?? row[ORDER_COLS.id_] ?? '';
+  row[ORDER_COLS.h_]          = $('ordEdit_h')?.value   ?? row[ORDER_COLS.h_]  ?? '';
   row[ORDER_COLS.note]        = $('ordEdit_note').value;
   row[ORDER_COLS.note2]       = $('ordEdit_note2')?.value || '';
   row[ORDER_COLS.poFile]      = r[ORDER_COLS.poFile] || '';

@@ -865,6 +865,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load data & calc
   if (SCRIPT_URL) loadAllData();
+  // Init chat widget (แชททีม)
+  if (typeof _chatInit === 'function') _chatInit();
+  if (typeof _renderDeptHelp === 'function') _renderDeptHelp();
   calcAll();
   renderPartFormulas();
   renderSpecMatTable();
@@ -1015,55 +1018,90 @@ function switchDocTab(tab) {
   $('dtabCost').className = 'doc-tab-btn' + (tab==='cost' ? ' dact-green' : '');
 }
 // ── พิมพ์/บันทึก PDF: เปิดเอกสารที่กำลังแสดงอยู่เป็นแท็บใหม่แยกเฉพาะ ──
-// (แทนการ window.print() หน้าเว็บทั้งหน้า เพื่อให้จัดหน้ากระดาษ/ขนาดได้อิสระต่อเอกสาร และไม่มีโครง UI ติดไปด้วย)
-// ใช้ Blob URL + ฝัง CSS ของ style.css ทั้งไฟล์ลงไปตรงๆ (กัน path/CORS ของ external stylesheet ในแท็บใหม่)
+// content ทุกอย่างมี inline style ครบ ไม่จำเป็นต้อง fetch style.css
+// (การ fetch แบบ async ทำให้ document.write ถูกเรียกหลัง Promise → iOS Safari ไม่ render)
 function printDoc() {
   const el = _getActiveDocEl();
   if (!el || !el.innerHTML.trim()) { window.print(); return; }
 
   // เปิดหน้าต่างใหม่ทันที (sync) ขณะที่ยังอยู่ใน user-gesture ของปุ่มที่กด
-  // — เป็น about:blank ที่ยังอยู่ origin เดียวกับหน้าหลัก จึงเรียก document.write/print ได้โดยไม่ติด cross-origin
   const w = window.open('', '_blank');
   if (!w) {
     Swal.fire({icon:'error', title:'เปิดหน้าต่างไม่ได้', text:'กรุณาอนุญาต popup สำหรับเว็บไซต์นี้',
       background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#1d65cc'});
     return;
   }
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Sarabun,sans-serif;color:#888;padding:20px">กำลังโหลดเอกสาร...</body></html>');
-  w.document.close();
 
   const fontHref = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap';
-  const innerHtml = el.innerHTML;
 
-  const render = (cssText) => {
-    const html = `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
+  // ── แปลงสีใน HTML โดยตรง ก่อนส่งหน้าพิมพ์ ──
+  // หมายเหตุ: browser normalize inline hex → rgb() เมื่ออ่าน innerHTML
+  // จึงต้อง match ทั้ง hex (fallback) และ rgb() (กรณีปกติที่ browser normalize แล้ว)
+  const bwHtml = (el.innerHTML || '')
+    // ── พื้นหลัง hex (fallback) → เทาอ่อน ──
+    .replace(/background\s*:\s*#2563eb/gi, 'background:#e0e0e0')
+    .replace(/background\s*:\s*#1d4ed8/gi, 'background:#e0e0e0')
+    .replace(/background\s*:\s*#1e3a5f/gi, 'background:#e0e0e0')
+    // ── พื้นหลัง rgb() / background-color: rgb() ที่ browser normalize มา → เทาอ่อน (ถ้าโทนน้ำเงิน) ──
+    .replace(/background(?:-color)?\s*:\s*rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/gi,
+      (m, r, g, b) => {
+        r=+r; g=+g; b=+b;
+        if (b > 80 && b > r*1.3 && b > g*1.1)
+          return m.startsWith('background-color') ? 'background-color:#e0e0e0' : 'background:#e0e0e0';
+        return m;
+      })
+    // ── ขอบน้ำเงิน → เทา ──
+    .replace(/border-bottom\s*:\s*3px solid #2563eb/gi, 'border-bottom:3px solid #888')
+    .replace(/border-bottom\s*:\s*1px solid #2563eb/gi, 'border-bottom:1px solid #aaa')
+    .replace(/border\s*:\s*1px solid #2563eb/gi, 'border:1px solid #aaa')
+    // ── ข้อความ hex → ดำ ──
+    .replace(/(?<=[;"\s])color\s*:\s*#2563eb/gi, 'color:#000')
+    .replace(/(?<=[;"\s])color\s*:\s*#1d65cc/gi, 'color:#000')
+    .replace(/(?<=[;"\s])color\s*:\s*#fff(?=[;"\s])/gi, 'color:#000')
+    .replace(/(?<=[;"\s])color\s*:\s*#ffffff(?=[;"\s])/gi, 'color:#000')
+    // ── ข้อความ rgb() สีขาว/น้ำเงิน → ดำ ──
+    .replace(/color\s*:\s*rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/gi,
+      (m, r, g, b) => {
+        r=+r; g=+g; b=+b;
+        const isWhite = r > 200 && g > 200 && b > 200;
+        const isBlue  = b > 80 && b > r*1.3 && b > g*1.1;
+        return (isWhite || isBlue) ? 'color:#000' : m;
+      });
+
+  // เขียนหน้าพิมพ์ทันที (sync) — ไม่ต้องการ style.css เพราะ content ใช้ inline style ทั้งหมด
+  // ไม่ wrap ด้วย #docExportOverlay เพราะ style.css มี "#docExportOverlay { display:none }"
+  // ซึ่งจะซ่อน content เมื่อฝัง style.css เข้าไปด้วย
+  const html = `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>เอกสาร</title>
 <link rel="stylesheet" href="${fontHref}">
-<style>${cssText}</style>
 <style>
-  body{margin:0;padding:16px;background:#fff;font-family:'Sarabun',sans-serif}
-  .doc-paper{max-width:100% !important;margin:0 auto !important;box-shadow:none !important;border-radius:0 !important;font-size:1.15em}
+  @page{size:A4;margin:12mm}
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  body{margin:0;padding:12px;background:#fff;font-family:'Sarabun',sans-serif;color:#1a2232}
+  .doc-paper{max-width:210mm;margin:0 auto;background:#fff;overflow:visible !important}
+  .doc-paper *{overflow:visible !important}
   .doc-paper,.doc-paper *{color:#000 !important}
-  .doc-paper th{color:#fff !important}
+  .doc-paper table{border-collapse:collapse;width:100%}
   .no-print,.dp-hidden{display:none !important}
-  @media print{ body{padding:0} }
+  @media print{
+    body{padding:0}
+    .doc-paper{max-width:100% !important;overflow:visible !important}
+  }
 </style>
-</head><body>${innerHtml}</body></html>`;
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 300);
-  };
+</head><body>${bwHtml}
+<script>
+(function(){
+  function go(){ try{ window.focus(); window.print(); }catch(e){} }
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(go).catch(function(){ setTimeout(go,700); });
+  } else { setTimeout(go,700); }
+})();
+<\/script>
+</body></html>`;
+  w.document.write(html);
+  w.document.close();
 
-  try {
-    const styleLink = document.querySelector('link[rel="stylesheet"][href*="style.css"]');
-    if (styleLink) {
-      fetch(styleLink.href).then(r => r.text()).then(render).catch(() => render(''));
-    } else {
-      render('');
-    }
-  } catch (e) { render(''); }
 }
 
 // ── หาเอกสารที่กำลังแสดงอยู่ใน docExportOverlay (สำหรับบันทึก/แชร์ภาพ) ──
