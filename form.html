@@ -38,7 +38,7 @@
       <div class="ph-sub">Manufacturing Cost Management System</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v9.48</span>
+      <span class="ph-chip ver">v9.58</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -1764,9 +1764,9 @@
       <div class="icon ic-ext">📋</div>
       <h2>สร้างใบเสนอราคาทั่วไป (กรอกหลายรายการเอง)</h2>
       <button type="button" onclick="_toggleCardBody('gquoCardBody',this)" style="margin-left:auto;padding:6px 12px;border-radius:8px;
-        border:1px solid var(--bc-div);background:transparent;color:var(--t2);font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">▼ แสดง</button>
+        border:1px solid var(--bc-div);background:transparent;color:var(--t2);font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif">▲ ซ่อน</button>
     </div>
-    <div id="gquoCardBody" style="display:none">
+    <div id="gquoCardBody" style="display:block">
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;margin-bottom:12px">
       <div class="field"><label>ลูกค้า</label>
         <input type="text" id="gquo_customer" list="gord_customerList" placeholder="ชื่อลูกค้า"
@@ -2325,12 +2325,18 @@
     <div id="poSupplierItemChips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
 
     <!-- ตารางรายการสินค้า -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
       <div style="font-size:.82rem;font-weight:700;color:var(--c1)">📋 รายการสินค้า/วัตถุดิบ</div>
-      <button type="button" class="btn-fx" onclick="_poAddItemRow()"
-        style="padding:5px 14px;border-radius:8px;border:1px solid rgba(52,211,153,.4);
-        background:rgba(52,211,153,.1);color:#34d399;font-family:'Sarabun',sans-serif;
-        font-size:.8rem;cursor:pointer">➕ เพิ่มรายการ</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="btn-fx" onclick="_poImportFromRFQ()"
+          style="padding:5px 14px;border-radius:8px;border:1px solid rgba(167,139,250,.4);
+          background:rgba(167,139,250,.1);color:#a78bfa;font-family:'Sarabun',sans-serif;
+          font-size:.8rem;cursor:pointer">📨 นำเข้าจากใบขอราคา</button>
+        <button type="button" class="btn-fx" onclick="_poAddItemRow()"
+          style="padding:5px 14px;border-radius:8px;border:1px solid rgba(52,211,153,.4);
+          background:rgba(52,211,153,.1);color:#34d399;font-family:'Sarabun',sans-serif;
+          font-size:.8rem;cursor:pointer">➕ เพิ่มรายการ</button>
+      </div>
     </div>
     <div style="overflow-x:auto;margin-bottom:12px">
       <table style="width:100%;border-collapse:collapse;min-width:760px">
@@ -2386,6 +2392,7 @@
 
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px">
       <button class="btn btn-primary" id="po_saveBtn" onclick="_poSave()" style="padding:10px 18px;font-size:.88rem">💾 บันทึกใบสั่งซื้อ</button>
+      <button class="btn" onclick="_poPreview()" style="padding:10px 18px;font-size:.88rem;border:1px solid rgba(99,102,241,.5);background:rgba(99,102,241,.12);color:#a78bfa">👁️ พรีวิว</button>
       <button class="btn" onclick="_poNewForm()" style="padding:10px 18px;font-size:.88rem">📄 ใบใหม่</button>
     </div>
   </div>
@@ -3223,8 +3230,8 @@
 <script src="formcalc.js?v=9.06"></script>
 <script src="aifeatures.js?v=8.94"></script>
 <script src="theme.js?v=9.10"></script>
-<script src="order.js?v=9.48"></script>
-<script src="purchase.js?v=9.48"></script>
+<script src="order.js?v=9.58"></script>
+<script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
 <script src="plating.js?v=8.94"></script>
 
@@ -3369,9 +3376,82 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260619-P',
+    ref: '#REV-20260619-X',
     date: '2026-06-19',
     current: true,
+    items: [
+      'ใบเสนอราคาทั่วไป: บันทึกวันที่ใน Sheets เป็น dd/mm/yyyy พ.ศ. (เช่น 19/06/2569)',
+      'order.js: _gquoSave() แปลงวันที่ด้วย _gquoDateToThai() ก่อนส่ง',
+      'Code.gs: saveGeneralQuotation() ใช้ setNumberFormat("@STRING@") บังคับ cell วันที่เป็น text ป้องกัน Sheets auto-parse',
+    ],
+  },
+  {
+    ref: '#REV-20260619-W',
+    date: '2026-06-19',
+    current: false,
+    items: [
+      'ใบเสนอราคาทั่วไป: แสดงวันที่เป็น dd/mm/yyyy พ.ศ. ในรายการ',
+      'order.js: เพิ่ม _gquoDateToThai() / _gquoThaiToIso(), แก้ _gquoRenderList() และ _gquoLoadFromList()',
+      'Code.gs: getGeneralQuotations() format Date object → ISO ก่อน return (ป้องกัน double +543)',
+    ],
+  },
+  {
+    ref: '#REV-20260619-V',
+    date: '2026-06-19',
+    current: false,
+    items: [
+      'การ์ด "สร้างใบเสนอราคาทั่วไป": เปลี่ยนค่าเริ่มต้นให้แสดงเปิดอยู่ (ไม่ซ่อน)',
+    ],
+  },
+  {
+    ref: '#REV-20260619-U',
+    date: '2026-06-19',
+    current: false,
+    items: [
+      'รายการใบเสนอราคาทั่วไป: เพิ่มปุ่ม "✏️ แก้ไข" — โหลดข้อมูลกลับเข้าฟอร์มพร้อม scroll ขึ้น',
+      'order.js: เพิ่ม _gquoLoadFromList(i) — map items, แปลงวันที่ ISO → input date, ขยายการ์ดถ้าซ่อนอยู่',
+    ],
+  },
+  {
+    ref: '#REV-20260619-T',
+    date: '2026-06-19',
+    current: false,
+    items: [
+      'PO: เพิ่มปุ่ม "👁️ พรีวิว" — เปิดหน้าพิมพ์จากข้อมูลในฟอร์มปัจจุบันโดยไม่ต้องบันทึกก่อน',
+      'purchase.js: เพิ่ม _poPreview() — แสดง banner "DRAFT PREVIEW", คำนวณยอดรวม, แสดงรูปภาพรายการ',
+    ],
+  },
+  {
+    ref: '#REV-20260619-S',
+    date: '2026-06-19',
+    current: false,
+    items: [
+      'RFQ picker: เพิ่ม search bar กรอง real-time ตามเลขที่/ซัพพลายเออร์',
+      'thead sticky ติดด้านบนตาราง, แสดงข้อความ "ไม่พบ" เมื่อกรองแล้วไม่มีผล',
+    ],
+  },
+  {
+    ref: '#REV-20260619-R',
+    date: '2026-06-19',
+    current: false,
+    items: [
+      'RFQ รายการ: เพิ่มปุ่ม "🧾 สร้าง PO" ในแต่ละแถว',
+      'purchase.js: เพิ่ม _rfqCreatePO(i) — ยืนยัน Swal → สลับแท็บ PO → _poNewForm() → _poApplyRFQ() อัตโนมัติ',
+    ],
+  },
+  {
+    ref: '#REV-20260619-Q',
+    date: '2026-06-19',
+    current: false,
+    items: [
+      'ใบสั่งซื้อ (PO): เพิ่มปุ่ม "📨 นำเข้าจากใบขอราคา" ในฟอร์มสร้าง/แก้ไข PO',
+      'purchase.js: เพิ่ม _poImportFromRFQ() — แสดง Swal ตารางเลือก RFQ, จับคู่ซัพพลายเออร์อัตโนมัติ, ใส่เลข RFQ ที่ช่องอ้างอิง, append รายการเข้า PO items',
+    ],
+  },
+  {
+    ref: '#REV-20260619-P',
+    date: '2026-06-19',
+    current: false,
     items: [
       'RFQ: แก้บั๊กวันที่ปี 3112 — เก็บวันที่ใน Sheets เป็น ISO (CE) เพื่อป้องกัน Sheets auto-parse → double +543',
       'แสดงผลในแอปยังคงเป็น dd/mm/yyyy พ.ศ. ผ่าน _rfqThDate()',

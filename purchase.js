@@ -501,6 +501,156 @@ async function _poNewForm() {
   }
 }
 
+
+// ── นำเข้ารายการจากใบขอราคา → ฟอร์ม PO ──────────────────────
+async function _poImportFromRFQ() {
+  // โหลด RFQ list ถ้ายังไม่มี
+  if (!_rfqListCache.length) {
+    if (!SCRIPT_URL) {
+      Swal.fire({ icon:'warning', title:'ยังไม่ได้ตั้งค่า Script URL', background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1' });
+      return;
+    }
+    Swal.fire({ title:'กำลังโหลดใบขอราคา…', allowOutsideClick:false, showConfirmButton:false,
+      background:'#0d1b2a', color:'#cce4ff', didOpen:()=>Swal.showLoading() });
+    try {
+      const res  = await fetch(SCRIPT_URL + '?action=getRFQList', {mode:'cors'});
+      const data = await res.json();
+      _rfqListCache = (data.data || []).reverse();
+      Swal.close();
+    } catch(err) {
+      Swal.fire({ icon:'error', title:'โหลดไม่สำเร็จ', text:String(err), background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1' });
+      return;
+    }
+  }
+
+  if (!_rfqListCache.length) {
+    Swal.fire({ icon:'info', title:'ยังไม่มีใบขอราคา', text:'กรุณาสร้างใบขอราคาก่อนครับ', background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1' });
+    return;
+  }
+
+  // helper สร้าง row HTML
+  function _rfqPickRowHtml(q, i) {
+    const items = Array.isArray(q.items) ? q.items : [];
+    return `<tr data-idx="${i}" data-rfqno="${_escH((q.rfqNo||'').toLowerCase())}" data-supplier="${_escH((q.supplier||'').toLowerCase())}"
+              onclick="_poPickRFQ(${i})"
+              style="cursor:pointer;border-bottom:1px solid rgba(255,255,255,.08);transition:background .15s"
+              onmouseover="this.style.background='rgba(99,102,241,.15)'" onmouseout="this.style.background=''">
+      <td style="padding:8px 12px;font-weight:600;color:#a78bfa;font-size:.82rem;white-space:nowrap">${_escH(q.rfqNo||'')}</td>
+      <td style="padding:8px 12px;color:#94a3b8;font-size:.78rem;white-space:nowrap">${_escH(_rfqThDate(q.date||''))}</td>
+      <td style="padding:8px 12px;color:#e2e8f0;font-size:.82rem">${_escH(q.supplier||'—')}</td>
+      <td style="padding:8px 12px;text-align:center;color:#94a3b8;font-size:.78rem">${items.length} รายการ</td>
+    </tr>`;
+  }
+
+  const allRows = _rfqListCache.map((q, i) => _rfqPickRowHtml(q, i)).join('');
+
+  await Swal.fire({
+    title: '📨 เลือกใบขอราคา',
+    html: `
+      <div style="margin-bottom:10px">
+        <input id="rfqPickSearch" type="text" placeholder="🔍 ค้นหาเลขที่ / ซัพพลายเออร์…"
+          style="width:100%;box-sizing:border-box;padding:8px 12px;border-radius:8px;
+                 border:1px solid rgba(99,102,241,.4);background:rgba(15,23,42,.8);
+                 color:#e2e8f0;font-size:.82rem;font-family:Sarabun,sans-serif;outline:none"
+          oninput="_rfqPickFilter(this.value)">
+      </div>
+      <div style="text-align:left;max-height:320px;overflow-y:auto;border-radius:6px;border:1px solid rgba(99,102,241,.2)">
+        <table style="width:100%;border-collapse:collapse">
+          <thead style="position:sticky;top:0;z-index:1">
+            <tr style="background:#0f1729">
+              <th style="padding:7px 12px;font-size:.75rem;color:#a78bfa;text-align:left;border-bottom:1px solid rgba(99,102,241,.3)">เลขที่</th>
+              <th style="padding:7px 12px;font-size:.75rem;color:#a78bfa;text-align:left;border-bottom:1px solid rgba(99,102,241,.3)">วันที่</th>
+              <th style="padding:7px 12px;font-size:.75rem;color:#a78bfa;text-align:left;border-bottom:1px solid rgba(99,102,241,.3)">ซัพพลายเออร์</th>
+              <th style="padding:7px 12px;font-size:.75rem;color:#a78bfa;text-align:center;border-bottom:1px solid rgba(99,102,241,.3)">รายการ</th>
+            </tr>
+          </thead>
+          <tbody id="rfqPickBody">${allRows}</tbody>
+        </table>
+        <div id="rfqPickEmpty" style="display:none;padding:24px;text-align:center;color:#64748b;font-size:.82rem">ไม่พบรายการที่ตรงกัน</div>
+      </div>`,
+    background: '#0d1b2a',
+    color: '#cce4ff',
+    showConfirmButton: false,
+    showCloseButton: true,
+    width: 640,
+    didOpen: () => {
+      window._poPickRFQ = (i) => {
+        Swal.close();
+        setTimeout(() => _poApplyRFQ(i), 100);
+      };
+      window._rfqPickFilter = (val) => {
+        const kw = val.trim().toLowerCase();
+        const tbody = document.getElementById('rfqPickBody');
+        const empty = document.getElementById('rfqPickEmpty');
+        if (!tbody) return;
+        let visible = 0;
+        tbody.querySelectorAll('tr').forEach(tr => {
+          const match = !kw
+            || tr.dataset.rfqno.includes(kw)
+            || tr.dataset.supplier.includes(kw);
+          tr.style.display = match ? '' : 'none';
+          if (match) visible++;
+        });
+        if (empty) empty.style.display = visible ? 'none' : 'block';
+      };
+      // focus search
+      setTimeout(() => {
+        const el = document.getElementById('rfqPickSearch');
+        if (el) el.focus();
+      }, 100);
+    }
+  });
+}
+
+function _poApplyRFQ(i) {
+  const q = _rfqListCache[i];
+  if (!q) return;
+  const items = Array.isArray(q.items) ? q.items : [];
+
+  // ── จับคู่ supplier name → supplier code ──
+  const matchedSupplier = _supplierCache.find(s =>
+    String(s.name||'').trim().toLowerCase() === String(q.supplier||'').trim().toLowerCase()
+  );
+  if (matchedSupplier) {
+    $('po_supplier').value = matchedSupplier.code;
+    _poRenderSupplierItemChips();
+  }
+
+  // ── ใส่เลข RFQ ที่ช่อง อ้างอิง ──
+  const refEl = $('po_refOrders');
+  if (refEl) {
+    const existing = refEl.value.trim();
+    refEl.value = existing ? existing + ', ' + q.rfqNo : q.rfqNo;
+  }
+
+  // ── นำรายการ RFQ ใส่ _poItems ──
+  const newRows = items
+    .filter(r => String(r.name||'').trim())
+    .map(r => ({
+      name:      String(r.name||''),
+      spec:      String(r.remark||''),
+      qty:       String(r.qty||'1'),
+      unit:      String(r.unit||'ชิ้น'),
+      unitPrice: '',
+      imageUrl:  r.img || '',
+    }));
+
+  if (newRows.length) {
+    _poItems = _poItems.filter(r => r.name.trim()); // ลบแถวว่างออกก่อน
+    _poItems = _poItems.concat(newRows);
+    _poRenderItemsEditor();
+    _poRecalcTotals();
+  }
+
+  // scroll ขึ้นไปหัวฟอร์ม
+  const title = $('po_formTitle');
+  if (title) title.scrollIntoView({ behavior:'smooth', block:'start' });
+
+  Swal.fire({ toast:true, position:'top-end', icon:'success',
+    title:`นำเข้า ${newRows.length} รายการจาก ${q.rfqNo} แล้ว`,
+    showConfirmButton:false, timer:2000, timerProgressBar:true });
+}
+
 // ── โหลด PO มาแก้ไข ──
 function _poEdit(poNo) {
   const r = _poCache.find(row => String(row[PO_HEADER_COLS.poNo]) === String(poNo));
@@ -626,6 +776,190 @@ async function _poDelete(poNo) {
 }
 
 // ── พิมพ์ใบสั่งซื้อ A4 ──
+// ── พรีวิว PO จากฟอร์มปัจจุบัน (ไม่ต้องบันทึกก่อน) ────────────
+function _poPreview() {
+  const items = _poItems.filter(r => String(r.name||'').trim());
+  if (!items.length) {
+    Swal.fire({ icon:'warning', title:'กรุณากรอกรายการสินค้าก่อน', background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1' });
+    return;
+  }
+  const poNo       = $('po_poNo').value || '(ร่าง)';
+  const issueDate  = $('po_issueDate').value || '';
+  const wantDate   = $('po_wantDate').value || '';
+  const supCode    = $('po_supplier').value || '';
+  const refOrders  = $('po_refOrders').value || '';
+  const payTerm    = $('po_payTerm').value || '';
+  const deliverTerm= $('po_deliverTerm').value || '';
+  const createdBy  = $('po_createdBy').value || '';
+  const note       = $('po_note').value || '';
+  const supplier   = _supplierCache.find(s => s.code === supCode) || { name: supCode };
+
+  const fmt = n => (parseFloat(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2});
+  let subtotal = 0;
+  const itemRows = items.map((it, idx) => {
+    const qty  = parseFloat(it.qty)||0;
+    const up   = parseFloat(it.unitPrice)||0;
+    const line = qty * up;
+    subtotal  += line;
+    const imgHtml = it.imageUrl
+      ? `<img src="${it.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:4px">`
+      : '';
+    return `<tr>
+      <td class="c">${idx+1}</td>
+      <td>${imgHtml}${it.name||''}</td>
+      <td class="c">${it.qty||''}</td>
+      <td class="c">${it.unit||''}</td>
+      <td class="r">${up ? fmt(up) : '—'}</td>
+      <td class="r">${line ? fmt(line) : '—'}</td>
+    </tr>`;
+  }).join('');
+  const vat   = subtotal * 0.07;
+  const total = subtotal + vat;
+
+  const itemsWithImage = items.filter(it => it.imageUrl);
+  const itemImagesHtml = itemsWithImage.length ? `
+    <div class="item-images">
+      ${itemsWithImage.map((it,idx) => `
+        <div class="item-img-box">
+          <img class="item-img" src="${it.imageUrl}">
+          <div class="item-img-cap">${idx+1}. ${it.name||''}</div>
+        </div>`).join('')}
+    </div>` : '';
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('กรุณาอนุญาต popup'); return; }
+  win.document.write(`
+  <html><head><title>พรีวิว PO ${poNo}</title>
+  <style>
+    @page{size:A4;margin:12mm}
+    *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{font-family:'Sarabun',Tahoma,sans-serif;color:#1e293b;font-size:12px;margin:0;background:#e2e8f0}
+    .wrap{display:flex;gap:16px;align-items:flex-start;max-width:1000px;margin:0 auto;
+      background:#fff;padding:16px;box-shadow:0 0 12px rgba(0,0,0,.08)}
+    @media print{body{background:#fff}.wrap{max-width:none;margin:0;padding:0;box-shadow:none}}
+    .draft-banner{background:#fef3c7;border:1.5px dashed #f59e0b;border-radius:8px;padding:7px 14px;
+      font-size:11px;color:#92400e;font-weight:600;text-align:center;margin-bottom:12px}
+    .main{flex:1;min-width:0}
+    .sidebar{width:190px;flex-shrink:0;background:#fff;color:#1e293b;border:1.5px solid #1e293b;border-radius:14px;padding:14px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #16335c}
+    .brand{display:flex;gap:12px;align-items:flex-start}
+    .brand .logo-box{width:56px;height:56px;flex-shrink:0;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .brand .logo-box img{width:100%;height:100%;object-fit:contain}
+    .brand .name-th{font-weight:700;font-size:14px;color:#16335c}
+    .brand .name-en{font-size:10.5px;color:#2563eb;font-weight:700;margin:2px 0 4px}
+    .brand .info div{font-size:10px;color:#475569;margin-top:2px}
+    .title{text-align:right}
+    .title h1{margin:0;font-size:24px;color:#16335c;font-weight:800}
+    .title .en{color:#2563eb;font-weight:700;font-size:12px;letter-spacing:2px}
+    .boxes{display:flex;gap:10px;margin-bottom:12px}
+    .box{flex:1;border:1px solid #dbe3ee;border-radius:10px;padding:8px 10px}
+    .box h3{margin:0 0 5px;font-size:11px;color:#16335c}
+    .box .ln{font-size:10.5px;color:#475569;margin-top:2px}
+    table{width:100%;border-collapse:collapse;margin-bottom:10px}
+    th{background:#16335c;color:#fff;font-size:10.5px;padding:7px 5px;font-weight:600}
+    td{border-bottom:1px solid #e5e9f0;padding:6px 5px;font-size:10.5px}
+    td.c,th.c{text-align:center} td.r,th.r{text-align:right}
+    .totals{display:flex;justify-content:flex-end;margin-bottom:12px}
+    .totals table{width:230px}
+    .totals td{border:none;padding:3px 6px;font-size:11px}
+    .totals tr.grand td{font-weight:700;font-size:12.5px;color:#16335c;border-top:2px solid #16335c}
+    .note{border:1px solid #dbe3ee;border-radius:10px;padding:8px 10px;margin-bottom:36px;font-size:10.5px;min-height:30px}
+    .sign{display:flex;justify-content:space-around;text-align:center;margin-bottom:14px}
+    .sign .s{width:180px}
+    .sign .ln{border-top:1px solid #94a3b8;margin-top:30px;padding-top:4px;font-size:10.5px}
+    .sign .lab{display:inline-block;background:#eef2ff;color:#16335c;border-radius:14px;padding:2px 12px;font-size:10px;font-weight:600;margin-bottom:4px}
+    .sb-pono{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:10px;padding:9px 10px;margin-bottom:10px}
+    .sb-pono .lab{font-size:9.5px;color:#64748b}
+    .sb-pono .val{font-size:15px;font-weight:700;color:#1e293b;margin-top:2px}
+    .sb-row{margin-bottom:9px}
+    .sb-row .lab{font-size:9.5px;color:#64748b}
+    .sb-row .val{font-size:11px;font-weight:600;color:#1e293b;margin-top:2px;word-break:break-word}
+    .sb-hr{border:none;border-top:1px solid #cbd5e1;margin:10px 0}
+    .item-images{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+    .item-img-box{width:150px;text-align:center}
+    .item-img-box .item-img{width:150px;height:150px;object-fit:contain;border:1px solid #dbe3ee;border-radius:8px;background:#f8fafc}
+    .item-img-box .item-img-cap{font-size:10px;color:#475569;margin-top:4px;word-break:break-word}
+  </style></head><body>
+  <div class="wrap">
+    <div class="main">
+      <div class="draft-banner">⚠️ พรีวิว — ยังไม่ได้บันทึก (DRAFT PREVIEW)</div>
+      <div class="header">
+        <div class="brand">
+          <div class="logo-box"><img src="${_getLogoSrc ? _getLogoSrc() : (typeof PTS_LOGO_B64!=='undefined'?PTS_LOGO_B64:'')}"></div>
+          <div>
+            <div class="name-th">${typeof PTS_COMPANY!=='undefined'?PTS_COMPANY.nameTh:''}</div>
+            <div class="name-en">${typeof PTS_COMPANY!=='undefined'?PTS_COMPANY.nameEn:''}</div>
+            <div class="info">
+              <div>📍 ${typeof PTS_COMPANY!=='undefined'?PTS_COMPANY.address:''}</div>
+              <div>📞 ${typeof PTS_COMPANY!=='undefined'?PTS_COMPANY.phone:''}</div>
+              <div>เลขประจำตัวผู้เสียภาษี: ${typeof PTS_COMPANY!=='undefined'?PTS_COMPANY.taxId:''}</div>
+            </div>
+          </div>
+        </div>
+        <div class="title"><h1>ใบสั่งซื้อ</h1><div class="en">PURCHASE ORDER</div></div>
+      </div>
+      <div class="boxes">
+        <div class="box">
+          <h3>👤 ผู้จำหน่าย (Supplier)</h3>
+          <div class="ln"><b>${supplier.name||supCode||'—'}</b></div>
+          <div class="ln">${supplier.address||''}</div>
+          <div class="ln">เลขประจำตัวผู้เสียภาษี: ${supplier.taxId||'—'}</div>
+          <div class="ln">ติดต่อ: ${supplier.contact||'—'}</div>
+        </div>
+        <div class="box">
+          <h3>📋 เงื่อนไข (Terms)</h3>
+          <div class="ln">การชำระเงิน : ${payTerm||'—'}</div>
+          <div class="ln">การส่งมอบ : ${deliverTerm||'—'}</div>
+          <div class="ln">อ้างอิง No.PO/Quo : ${refOrders||'—'}</div>
+        </div>
+      </div>
+      <table>
+        <thead><tr>
+          <th class="c" style="width:5%">ลำดับ</th>
+          <th>รายการ</th>
+          <th class="c" style="width:8%">จำนวน</th>
+          <th class="c" style="width:7%">หน่วย</th>
+          <th class="r" style="width:14%">ราคา/หน่วย (THB)</th>
+          <th class="r" style="width:14%">จำนวนเงิน (THB)</th>
+        </tr></thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+      ${itemImagesHtml}
+      <div class="totals">
+        <table>
+          <tr><td>รวมเป็นเงิน</td><td class="r">${fmt(subtotal)} บาท</td></tr>
+          <tr><td>ภาษีมูลค่าเพิ่ม 7%</td><td class="r">${fmt(vat)} บาท</td></tr>
+          <tr class="grand"><td>รวมสุทธิ</td><td class="r">${fmt(total)} บาท</td></tr>
+        </table>
+      </div>
+      <div class="note"><b>หมายเหตุ</b><br>${note||'—'}</div>
+      <div class="sign">
+        <div class="s"><div class="lab">ผู้จัดทำ</div><div class="ln">${createdBy||''}<br>${issueDate||''}</div></div>
+        <div class="s"><div class="lab">ผู้อนุมัติ</div><div class="ln">&nbsp;</div></div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="sb-pono"><div class="lab">เลขที่ PO</div><div class="val">${poNo}</div></div>
+      <div class="sb-row"><div class="lab">วันที่สั่งซื้อ</div><div class="val">${issueDate||'—'}</div></div>
+      <div class="sb-row"><div class="lab">วันที่ต้องการรับ</div><div class="val">${wantDate||'—'}</div></div>
+      <hr class="sb-hr">
+      <div class="sb-row"><div class="lab">🚚 การจัดส่ง</div><div class="val">${deliverTerm||'—'}</div></div>
+      <div class="sb-row"><div class="lab">💳 การชำระเงิน</div><div class="val">${payTerm||'—'}</div></div>
+      <div class="sb-row"><div class="lab">📄 อ้างอิง</div><div class="val">${refOrders||'—'}</div></div>
+      <hr class="sb-hr">
+      <div class="sb-row"><div class="lab">👤 ผู้ติดต่อ</div><div class="val">${createdBy||'—'}</div></div>
+    </div>
+  </div>
+  <script>(function(){
+    function go(){ try{ window.focus(); window.print(); }catch(e){} }
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(go).catch(function(){ setTimeout(go,700); });
+    } else { setTimeout(go,700); }
+  })();<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
 function _poPrint(poNo) {
   const r = _poCache.find(row => String(row[PO_HEADER_COLS.poNo]) === String(poNo));
   if (!r) return;
@@ -1534,7 +1868,7 @@ function _rfqRenderList() {
       <td style="padding:8px 10px;text-align:center">${items.length} รายการ</td>
       <td style="padding:8px 10px;color:var(--t3);font-size:.75rem">${_escH(String(q.remark||'—'))}</td>
       <td style="padding:8px 10px;text-align:center;white-space:nowrap">
-        <button onclick="_rfqLoadFromList(${ci})" style="padding:4px 9px;border-radius:6px;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#a78bfa;font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:4px">✏️ แก้ไข</button><button onclick="_rfqPrintFromList(${ci})" style="padding:4px 9px;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg-card);color:var(--t1);font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:4px">🖨️ พิมพ์</button>
+        <button onclick="_rfqCreatePO(${ci})" style="padding:4px 9px;border-radius:6px;border:1px solid rgba(52,211,153,.4);background:rgba(52,211,153,.1);color:#34d399;font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:4px">🧾 สร้าง PO</button><button onclick="_rfqLoadFromList(${ci})" style="padding:4px 9px;border-radius:6px;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#a78bfa;font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:4px">✏️ แก้ไข</button><button onclick="_rfqPrintFromList(${ci})" style="padding:4px 9px;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg-card);color:var(--t1);font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:4px">🖨️ พิมพ์</button>
         <button onclick="_rfqDeleteFromList(${ci})" style="padding:4px 9px;border-radius:6px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#f87171;font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif">🗑️ ลบ</button>
       </td>
     </tr>`;
@@ -1549,6 +1883,33 @@ function _rfqResetFilters() {
 }
 
 // ── ลบ ────────────────────────────────────────────────────────
+// ── สร้าง PO จาก RFQ โดยตรง ─────────────────────────────────
+async function _rfqCreatePO(i) {
+  const q = _rfqListCache[i];
+  if (!q) return;
+  // ยืนยันก่อนสร้าง
+  const { isConfirmed } = await Swal.fire({
+    title: 'สร้างใบสั่งซื้อจากใบขอราคา?',
+    html: `<b>${_escH(q.rfqNo||'')}</b><br><span style="font-size:.85rem;color:#94a3b8">${_escH(q.supplier||'')} · ${Array.isArray(q.items)?q.items.length:0} รายการ</span>`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: '🧾 สร้าง PO',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#16a34a',
+    cancelButtonColor: '#6366f1',
+    background: '#0d1b2a', color: '#cce4ff',
+  });
+  if (!isConfirmed) return;
+  // สลับไปแท็บ PO
+  if (typeof switchTab === 'function') switchTab('po');
+  else if (typeof showTab === 'function') showTab('po');
+  // รอ DOM พร้อม แล้วสร้างฟอร์มใหม่ + apply RFQ
+  await new Promise(r => setTimeout(r, 150));
+  if (typeof _poNewForm === 'function') await _poNewForm();
+  await new Promise(r => setTimeout(r, 200));
+  _poApplyRFQ(i);
+}
+
 async function _rfqDeleteFromList(i) {
   const q = _rfqListCache[i];
   if (!q) return;

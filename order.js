@@ -784,6 +784,23 @@ function _gquoRemoveRow(i) {
   _gquoRenderItems();
 }
 
+// ── date helpers สำหรับ gquo ──────────────────────────────────
+function _gquoDateToThai(iso) {
+  if (!iso) return '';
+  if (String(iso).includes('/')) return String(iso); // already Thai
+  const s = String(iso).substring(0,10);
+  const p = s.split('-');
+  if (p.length !== 3) return s;
+  return `${p[2]}/${p[1]}/${parseInt(p[0])+543}`;
+}
+function _gquoThaiToIso(thai) {
+  if (!thai) return '';
+  if (!String(thai).includes('/')) return String(thai).substring(0,10);
+  const p = String(thai).split('/');
+  if (p.length !== 3) return thai;
+  return `${parseInt(p[2])-543}-${p[1]}-${p[0]}`;
+}
+
 function _gquoResetCard() {
   if ($('gquo_customer')) $('gquo_customer').value = '';
   if ($('gquo_refNo'))    $('gquo_refNo').value = '';
@@ -825,7 +842,7 @@ async function _gquoSave() {
   const refNoEl  = $('gquo_refNo');
   const refNo    = (refNoEl?.value || '').trim() || generateRefId();
   if (refNoEl && !refNoEl.value.trim()) refNoEl.value = refNo; // แสดงเลขที่ที่สร้างอัตโนมัติ
-  const dateVal  = $('gquo_date')?.value || _todayStr();
+  const dateVal  = $('gquo_date')?.value || _todayStr();  // ส่ง ISO ไป Sheets, แปลง Thai BE แค่ตอนแสดงผล
   const remark   = ($('gquo_remark')?.value || '').trim();
 
   const subtotal = items.reduce((s, it) => s + (parseFloat(it.qty)||0) * (parseFloat(it.price)||0), 0);
@@ -842,6 +859,8 @@ async function _gquoSave() {
     });
     Swal.fire({ toast:true, position:'top-end', icon:'success', title:'บันทึกแล้ว ✅ ' + refNo,
       showConfirmButton:false, timer:2000, timerProgressBar:true });
+    _gquoFetchList();   // รีเฟรชรายการอัตโนมัติหลังบันทึก
+    _gquoResetCard();   // เคลียร์การ์ดอัตโนมัติหลังบันทึก
   } catch(err) {
     Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text: String(err),
       background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#6366f1' });
@@ -883,9 +902,8 @@ function _gquoRenderList() {
       const hay = (String(q.refNo||'') + ' ' + String(q.customer||'')).toLowerCase();
       if (!hay.includes(srch)) return false;
     }
-    // วันที่: q.date เก็บเป็น ISO string เช่น "2026-06-18T17:00:00.000Z" หรือ "dd/MM/yyyy"
     const rawDate = String(q.date||'');
-    const isoDate = rawDate.length >= 10 ? rawDate.substring(0,10) : rawDate;
+    const isoDate = _gquoThaiToIso(rawDate);
     if (fromVal && isoDate < fromVal) return false;
     if (toVal   && isoDate > toVal)   return false;
     return true;
@@ -898,7 +916,7 @@ function _gquoRenderList() {
   tbody.innerHTML = filtered.map((q) => {
     const i     = _gquoListCache.indexOf(q); // index จริงใน cache (สำหรับ preview/delete)
     const refNo = _escH(String(q.refNo||''));
-    const date  = _escH(String(q.date||''));
+    const date  = _escH(_gquoDateToThai(String(q.date||'')));
     const cust  = _escH(String(q.customer||'—'));
     const grand = fmtNum(q.grand);
     return `<tr style="border-bottom:1px solid var(--bc-div);font-size:.8rem">
@@ -907,6 +925,7 @@ function _gquoRenderList() {
       <td style="padding:8px 10px">${cust}</td>
       <td style="padding:8px 10px;text-align:right;font-weight:600">${grand} ฿</td>
       <td style="padding:8px 10px;text-align:center;white-space:nowrap">
+        <button onclick="_gquoLoadFromList(${i})" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#a78bfa;font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:4px">✏️ แก้ไข</button>
         <button onclick="_gquoPreviewFromList(${i})" style="padding:4px 10px;border-radius:6px;border:1px solid var(--bc-div);background:var(--bg-card);color:var(--t1);font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif;margin-right:4px">🖨️ พิมพ์</button>
         <button onclick="_gquoDeleteFromList(${i})" style="padding:4px 10px;border-radius:6px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#f87171;font-size:.72rem;cursor:pointer;font-family:Sarabun,sans-serif">🗑️ ลบ</button>
       </td>
@@ -919,6 +938,42 @@ function _gquoResetFilters() {
   const f = $('gquoFilterFrom');  if (f) f.value = '';
   const t = $('gquoFilterTo');    if (t) t.value = '';
   _gquoRenderList();
+}
+
+function _gquoLoadFromList(i) {
+  const q = _gquoListCache[i];
+  if (!q) return;
+  // ขยายการ์ดฟอร์มถ้าซ่อนอยู่
+  const body = $('gquoFormBody');
+  if (body && body.style.display === 'none') {
+    const toggle = body.closest('.card')?.querySelector('[onclick*="gquoFormBody"]');
+    if (toggle) toggle.click();
+  }
+  // ใส่ค่าในฟอร์ม
+  if ($('gquo_customer')) $('gquo_customer').value = q.customer || '';
+  if ($('gquo_refNo'))    $('gquo_refNo').value    = q.refNo    || '';
+  if ($('gquo_remark'))   $('gquo_remark').value   = q.remark   || '';
+  // date: แปลง ISO → yyyy-MM-dd สำหรับ input type=date
+  if ($('gquo_date')) {
+    $('gquo_date').value = _gquoThaiToIso(String(q.date||''));
+  }
+  // รายการ
+  const srcItems = Array.isArray(q.items) ? q.items : [];
+  _gquoItems = srcItems.length
+    ? srcItems.map(it => ({
+        desc:  it.desc  || it.name  || '',
+        qty:   parseFloat(it.qty)   || 1,
+        unit:  it.unit  || 'ชิ้น',
+        price: parseFloat(it.price) || 0,
+      }))
+    : [{ desc:'', qty:1, unit:'ชิ้น', price:0 }];
+  _gquoRenderItems();
+  // scroll ขึ้นไปฟอร์ม
+  const card = $('gquo_customer');
+  if (card) card.closest('.card')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  Swal.fire({ toast:true, position:'top-end', icon:'info',
+    title:`โหลด ${_escH(q.refNo||'')} ลงฟอร์มแล้ว`,
+    showConfirmButton:false, timer:1600, timerProgressBar:true });
 }
 
 function _gquoPreviewFromList(i) {
