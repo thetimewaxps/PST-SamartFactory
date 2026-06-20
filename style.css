@@ -156,7 +156,9 @@ body.trk-fullscreen-mode #trkCloseBtn { display: inline-flex !important; }
 /* Logo badge */
 .ph-logo {
   width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
-  background: transparent;
+  background: #ffffff;
+  border: 1.5px solid rgba(0,0,0,.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
   overflow: hidden; display: flex; align-items: center; justify-content: center;
 }
 .ph-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
