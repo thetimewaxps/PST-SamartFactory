@@ -431,6 +431,7 @@ async function createOrder() {
   const customer = ($('ord_customer')?.value || $('ord_previewCustomer')?.textContent || '').trim().replace(/^—$/, '') || '';
 
   const row = new Array(ORDER_NUM_COLS).fill('');
+  row[ORDER_COLS.statusDeliver] = false; // P = FALSE (default)
   row[ORDER_COLS.noQuo]       = noQuo;
   row[ORDER_COLS.noPO]        = noPO;
   row[ORDER_COLS.orderDate]   = _ordDateToSheet($('ord_orderDate').value || _todayStr());
@@ -443,6 +444,7 @@ async function createOrder() {
   row[ORDER_COLS.note]        = $('ord_note').value || '';
   row[ORDER_COLS.note2]       = $('ord_note2')?.value || '';
   row[ORDER_COLS.process]     = $('ord_status').value || 'กำลังผลิต';
+  row[ORDER_COLS.statusDeliver] = (row[ORDER_COLS.process] === 'เรียบร้อย'); // P sync
   row[ORDER_COLS.status]      = $('ord_workStatus')?.value || 'ปรกติ';
   row[ORDER_COLS.wantDate]    = _ordDateToSheet($('ord_wantDate').value || '');
   row[ORDER_COLS.customer]    = customer;
@@ -663,6 +665,7 @@ async function createGeneralOrder() {
   const unit = ($('gord_unit')?.value || 'ชิ้น').trim() || 'ชิ้น';
 
   const row = new Array(ORDER_NUM_COLS).fill('');
+  row[ORDER_COLS.statusDeliver] = false; // P = FALSE (default)
   row[ORDER_COLS.noQuo]       = noQuo;
   row[ORDER_COLS.noPO]        = noPO;
   row[ORDER_COLS.orderDate]   = _ordDateToSheet($('gord_orderDate').value || _todayStr());
@@ -672,6 +675,7 @@ async function createGeneralOrder() {
   row[ORDER_COLS.price]       = price;
   row[ORDER_COLS.note]        = $('gord_note')?.value || '';
   row[ORDER_COLS.process]     = $('gord_status')?.value || 'กำลังผลิต';
+  row[ORDER_COLS.statusDeliver] = (row[ORDER_COLS.process] === 'เรียบร้อย'); // P sync
   row[ORDER_COLS.status]      = 'ปรกติ';
   row[ORDER_COLS.wantDate]    = _ordDateToSheet($('gord_wantDate').value || '');
   row[ORDER_COLS.customer]    = _custDisplayToContact(($('gord_customer')?.value || '').trim());
@@ -2302,6 +2306,7 @@ async function _ordQuickChangeProcess(noPO) {
   const row = r.slice();
   while (row.length < ORDER_NUM_COLS) row.push('');
   row[ORDER_COLS.process] = newProcess;
+  row[ORDER_COLS.statusDeliver] = (newProcess === 'เรียบร้อย'); // P sync กับ AppSheet
 
   showOrderDetail(noPO);
   const toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500, timerProgressBar:true });
@@ -2332,7 +2337,7 @@ async function _ordMarkDelivered(noPO) {
 
   const row = r.slice();
   while (row.length < ORDER_NUM_COLS) row.push('');
-  row[ORDER_COLS.statusDeliver] = 'ส่งแล้ว';
+  row[ORDER_COLS.statusDeliver] = true;   // P = TRUE (AppSheet)
   row[ORDER_COLS.process] = 'เรียบร้อย';
   row[ORDER_COLS.update] = _ordDateToSheet(_todayStr());
 
@@ -2925,6 +2930,7 @@ async function saveOrderEdit() {
   row[ORDER_COLS.orderDate]   = _ordDateToSheet($('ordEdit_orderDate').value);
   row[ORDER_COLS.wantDate]    = _ordDateToSheet($('ordEdit_wantDate').value);
   row[ORDER_COLS.process]     = $('ordEdit_status').value;
+  row[ORDER_COLS.statusDeliver] = (row[ORDER_COLS.process] === 'เรียบร้อย'); // P sync
   row[ORDER_COLS.status]      = $('ordEdit_workStatus')?.value || row[ORDER_COLS.status] || 'ปรกติ';
   row[ORDER_COLS.qty]         = $('ordEdit_qty').value;
   row[ORDER_COLS.price]       = $('ordEdit_price').value;
