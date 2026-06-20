@@ -22,7 +22,7 @@ async function _dbInit() {
 // ── HTML shell ───────────────────────────────────────────
 function _dbShell() {
   return `
-<div id="_dbWrap" style="max-width:960px;margin:0 auto;padding:12px 8px 40px">
+<div id="_dbWrap" style="padding:12px 16px 40px">
   <!-- topbar -->
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
     <div style="font-size:1rem;font-weight:700;color:var(--c1)">📊 แดชบอร์ดยอดขาย</div>
@@ -65,7 +65,7 @@ function _dbShell() {
     <div class="db-card">
       <div class="db-sec">สินค้าขายดี Top 5</div>
       <table id="_dbProdTable" class="db-tbl">
-        <thead><tr><th style="width:24px">#</th><th>รายการ</th><th style="text-align:right">ยอด (฿)</th><th style="text-align:right">Order</th></tr></thead>
+        <thead><tr><th style="width:24px">#</th><th>รายการ</th><th>สเปก</th><th style="text-align:right">ยอด (฿)</th><th style="text-align:right">Order</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -300,14 +300,18 @@ function _dbRenderDonut(topProducts) {
 function _dbRenderTable(tableId, rows, nameKey) {
   const tbody = document.querySelector('#' + tableId + ' tbody');
   if (!tbody) return;
-  if (!rows || !rows.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--t3);padding:12px">ไม่มีข้อมูล</td></tr>'; return; }
+  const isProduct = nameKey === 'workType';
+  const colSpan   = isProduct ? 5 : 4;
+  if (!rows || !rows.length) { tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;color:var(--t3);padding:12px">ไม่มีข้อมูล</td></tr>`; return; }
   const maxRev = rows[0].revenue || 1;
   tbody.innerHTML = rows.map((r, i) => {
     const rankCls = i === 0 ? 'db-rank-1' : i === 1 ? 'db-rank-2' : i === 2 ? 'db-rank-3' : '';
     const barW    = Math.round(r.revenue / maxRev * 36);
+    const specCell = isProduct ? `<td style="font-size:.7rem;color:var(--t3);white-space:nowrap">${r.specText || '—'}</td>` : '';
     return `<tr>
       <td><span class="db-rank ${rankCls}">${i+1}</span></td>
-      <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[nameKey] || '(ไม่ระบุ)'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[nameKey] || '(ไม่ระบุ)'}</td>
+      ${specCell}
       <td style="text-align:right">${_dbFmtBaht(r.revenue)}</td>
       <td style="text-align:right">
         <span style="display:inline-block;width:${barW}px;height:5px;border-radius:3px;background:var(--c1);opacity:.7;vertical-align:middle;margin-right:4px"></span>
