@@ -1361,11 +1361,23 @@ async function _wiDelete(wiId) {
 
 // ── โหลดรายการ WI ──
 async function _wiLoadList() {
-  if (!SCRIPT_URL) return;
+  const body = $('wiListBody');
+  if (!SCRIPT_URL) {
+    if (body) body.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px">⚠️ ยังไม่ได้ตั้งค่า Script URL — ไปที่แท็บ ตั้งค่า</div>';
+    return;
+  }
+  if (body) body.innerHTML = '<div style="text-align:center;color:var(--t3);padding:20px">⏳ กำลังโหลด...</div>';
   try {
-    const res = await fetch(SCRIPT_URL + '?action=getWIList').then(r=>r.json());
-    if (res.status === 'ok') { _wiCache = res.data || []; _wiRenderList(); }
-  } catch(e) {}
+    const res = await fetch(SCRIPT_URL + '?action=getWIList').then(r => r.json());
+    if (res.status === 'ok') {
+      _wiCache = res.data || [];
+      _wiRenderList();
+    } else {
+      if (body) body.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px">❌ ' + (res.message || 'โหลด WI ไม่ได้') + '</div>';
+    }
+  } catch(e) {
+    if (body) body.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px">❌ เชื่อมต่อ Code.gs ไม่ได้: ' + e.message + '</div>';
+  }
 }
 
 // ── render ตาราง WI ──
