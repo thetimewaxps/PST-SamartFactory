@@ -398,12 +398,22 @@ function _invGoToOrder(noPO) {
       ${field('หมายเหตุ',    v(ORDER_COLS.note))}
       ${field('Note',        v(ORDER_COLS.note2))}
       ${imgsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">${imgsHtml}</div>` : ''}
+      <div style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)">
+        <button id="_invEditBtn" style="width:100%;padding:9px;border-radius:8px;border:none;background:#6366f1;color:#fff;font-size:.84rem;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif">✏️ แก้ไข Order</button>
+      </div>
     </div>`,
     background: '#0d1b2a',
     color: '#cce4ff',
     width: 'min(96vw,480px)',
     confirmButtonText: 'ปิด',
     confirmButtonColor: '#374151',
+    didOpen: () => {
+      const btn = document.getElementById('_invEditBtn');
+      if (btn) btn.addEventListener('click', () => {
+        Swal.close();
+        setTimeout(() => { if (typeof openEditOrder === 'function') openEditOrder(noPO); }, 150);
+      });
+    },
   });
 }
 
