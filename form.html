@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v9.67</span>
+      <span class="ph-chip ver">v9.72</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -2058,6 +2058,11 @@
   <!-- rendered by dashboard.js _dbInit() -->
 </div><!-- end tab-dashboard -->
 
+<!-- ══ TAB: INSPECT ════════════════════════════════════ -->
+<div id="tab-inspect" class="tab-content">
+  <!-- rendered by inspect.js _inspInit() -->
+</div><!-- end tab-inspect -->
+
 <!-- ══ TAB: MAT ════════════════════════════════════ -->
 <div id="tab-mat" class="tab-content">
 <div style="max-width:620px;margin:0 auto;padding:12px 8px 100px">
@@ -3309,6 +3314,7 @@
 <script src="theme.js?v=9.10"></script>
 <script src="order.js?v=9.66"></script>
 <script src="dashboard.js?v=9.66"></script>
+<script src="inspect.js?v=9.72"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
 <script src="plating.js?v=8.94"></script>
@@ -3452,13 +3458,67 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260620-C',
+    ref: '#REV-20260620-H',
     date: '2026-06-20',
     current: true,
     items: [
+      'inspect.js: จัดปุ่ม ดู/แก้ไข/ลบ เรียงแนวนอนใน flex row (gap:4px) — ไม่เรียงแนวตั้งอีกต่อไป',
+      'inspect.js: ปรับขนาด action column → 155px รองรับ 3 ปุ่ม',
+    ],
+  },
+  {
+    ref: '#REV-20260620-G',
+    date: '2026-06-20',
+    current: false,
+    items: [
+      'inspect.js: เพิ่มปุ่มชัดเจน — 🔍 ดู (น้ำเงิน) / ✏️ แก้ไข (ส้ม) / 🗑 ลบ (แดง) แต่ละแถว',
+      'inspect.js: _inspDelete() — ยืนยันลบด้วย Swal แล้วอัปเดต list ทันที (ไม่ reload)',
+      'inspect.js: _inspEditLoad() — โหลดข้อมูลเดิมเข้าฟอร์ม prefill ทุก field + check points',
+      'Code.gs: เพิ่ม deleteInspection (Inspections + Insp_Items) + updateInspection (header + items)',
+    ],
+  },
+  {
+    ref: '#REV-20260620-F',
+    date: '2026-06-20',
+    current: false,
+    items: [
+      'Code.gs getInspections: แก้แสดง header row เป็น data — เพิ่ม skip String(r[0])==="inspId"',
+      'Code.gs getInspections/getInspectionDetail: แก้ date แสดงเป็น Date object → Utilities.formatDate dd/MM/yyyy',
+      'inspect.js _inspViewDetail: เปิด panel ทันทีจาก cache _inspList ก่อน (ไม่ต้องรอ fetch) — แก้โหลดช้า',
+      'inspect.js: แก้ qtyCheck/qtyPass แสดง "—" แม้ค่าเป็น 0 → ใช้ != null check',
+    ],
+  },
+  {
+    ref: '#REV-20260620-E',
+    date: '2026-06-20',
+    current: false,
+    items: [
+      'inspect.js: แก้ panel โปร่งใส → solid bg (#fff), position:fixed, z-index:9000',
+      'inspect.js: เปลี่ยน Pass→OK / Fail→NG ทั้งปุ่ม, badge, stats, ใบพิมพ์',
+      'inspect.js: แก้ window.open บล็อก popup — เปิด win ก่อน fetch ทั้ง printById และ save+print',
+      'Code.gs: restore getSalesDashboard() parseRow() ที่ถูกตัดกลาง (customer col 27)',
+    ],
+  },
+  {
+    ref: '#REV-20260620-D',
+    date: '2026-06-20',
+    current: false,
+    items: [
+      'เพิ่มระบบ Inspection: IPQC (ระหว่างผลิต) + OQC (ก่อนส่งมอบ)',
+      'สร้าง inspect.js — list view, stats, create panel, view detail, พิมพ์ใบตรวจ A4',
+      'Default check points OQC: OD/ID/H/ผิวชุบ/สีชุบ–ไม่มีคราบน้ำไหล/ความหนาชุบ',
+      'Code.gs: เพิ่ม getInspections, getInspectionDetail, saveInspection (sheet: Inspections + Insp_Items)',
+      'core.js: เพิ่ม tab inspect ใน TAB_DEFS + GROUP_DEFS ฝ่ายผลิต (แทน placeholder)',
+    ],
+  },
+  {
+    ref: '#REV-20260620-C',
+    date: '2026-06-20',
+    current: false,
+    items: [
       'เปลี่ยนชื่อแอป: "PTS Cost Breakdown" → "PTS Smart Factory"',
       'เปลี่ยน subtitle: "Manufacturing Cost Management System" → "Smart Manufacturing & Business Platform"',
-      'ปรับ logo box เป็นพื้นหลังสีเข้ม (#1a2235) + box-shadow (Option B design)',
+      'ปรับ logo box เป็นพื้นขาว + border + shadow',
     ],
   },
   {
@@ -4892,68 +4952,4 @@ const DEV_LOGS = [
     date: '2026-06-14',
     current: false,
     items: [
-      'แก้ "รายงานภาษีขาย" คอลัมสรุปยอดท้ายตารางไม่ตรงกับหัวตาราง — ลบเซลล์ "สรุปยอดขาย ณ สิ้นเดือน" ที่ซ้ำกัน 2 อันออก 1 อัน ทำให้แถวสรุปรวม colspan ตรงกับ 9 คอลัมในหัวตารางแล้ว',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BZ',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'แก้ปุ่ม "🖨 พิมพ์ / บันทึกเป็น PDF" ยังไม่เด้งหน้าต่างพิมพ์อัตโนมัติ — เปลี่ยนกลับมาเปิด window.open("","_blank") แบบ sync ทันทีตอนกดปุ่ม (อยู่ origin เดียวกับหน้าหลัก) แล้วค่อยโหลด CSS + เขียนเนื้อหาเอกสาร + เรียก print() ทีหลัง',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BY',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'แก้ปุ่ม "🖨 พิมพ์ / บันทึกเป็น PDF" ที่เปิดแท็บใหม่ถูกต้องแล้วแต่ไม่เด้งหน้าต่างพิมพ์อัตโนมัติ — w.addEventListener("load") ใช้ไม่ได้กับ blob: URL (cross-origin) เปลี่ยนเป็นเรียก w.print() ด้วย setTimeout สำรองเสมอ',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BX',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'แก้ปุ่ม "🖨 พิมพ์ / บันทึกเป็น PDF" ที่เปิดแท็บใหม่แล้วเป็นหน้าขาวเปล่า (ทุกเอกสารยกเว้นใบสั่งซื้อ) — เปลี่ยนวิธีสร้างแท็บใหม่เป็น Blob URL และฝัง CSS ของ style.css ลงในเอกสารโดยตรง แก้ปัญหา external stylesheet/document.write ไม่ทำงานในแท็บใหม่',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BW',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ปุ่ม "🖨 พิมพ์ / บันทึกเป็น PDF" ในเอกสารทุกประเภท (ใบเสนอราคา, Costing, ใบกำกับภาษี, ใบวางบิล, ใบส่งชุบ, รายงานส่งชุบ, ใบเสนอราคาทั่วไป) เปลี่ยนจากพิมพ์หน้าเว็บทั้งหน้า เป็นเปิดแท็บใหม่เฉพาะเอกสารนั้น — จัดหน้ากระดาษ/พิมพ์ PDF ได้สะดวกและเป็นเอกสารเดี่ยวๆ ไม่มีโครง UI ติดมา',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BV',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบกำกับ: แก้แถวตัวกรอง "ใบกำกับที่ออกแล้ว" (ค้นหา/ประเภท/วันที่/ล้างการกรอง) ล้นจอในโหมดมือถือ — ปรับเป็น grid 2 คอลัมน์ และปุ่มเต็มความกว้างเมื่อหน้าจอ ≤720px',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BU',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ส่งชุบ: แก้แถวปุ่ม "ออกรายงาน" (สรุป/รายละเอียดย่อย) ล้นจอในโหมดมือถือ — ปรับเป็น grid 2 คอลัมน์ และปุ่มเต็มความกว้างเมื่อหน้าจอ ≤720px',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BT',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ตรวจสอบ responsive โหมดคอม/มือถือ: ตาราง MAT (ฝา/ตะแกรง) เพิ่ม overflow-x:auto ป้องกันล้นจอมือถือ — ยืนยันการ์ด Supplier/ตารางอื่นๆ แสดงผลเหมาะสมทั้งสองโหมด',
-    ],
-  },
-  {
-    ref: '#REV-20260614-BS',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'แก้ช่องกรอกข้อมูล (input) พื้นสีดำอ่านไม่เห็นในตารางจัดการ Supplier/ลูกค้า/MAT/Item Master — เ
+      'แก้ "รายงานภาษีขาย" คอลัมสรุปยอดท้ายตารางไม่

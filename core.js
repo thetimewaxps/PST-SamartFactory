@@ -149,6 +149,7 @@ const TAB_DEFS = [
   { id:'wi',        icon:'📄', label:'WI' },
   { id:'dept_help', icon:'📖', label:'วิธีใช้งานแผนก' },
   { id:'dashboard', icon:'📊', label:'แดชบอร์ด' },
+  { id:'inspect',   icon:'🔍', label:'ตรวจสอบ' },
 ];
 
 // ── Sidebar Group Menu (เดสก์ท็อป ≥1024px) ─────────────
@@ -185,7 +186,7 @@ const GROUP_DEFS = [
     { tab:'calc', label:'คำนวณตัดเหล็ก' },
     { tab:'mold' },
     { tab:'track', view:'reduced' },
-    { ph:true, label:'Inspection', icon:'🔍' },
+    { tab:'inspect' },
     { tab:'wi' },
     { tab:'dept_help', label:'วิธีใช้งานแผนก', icon:'📖', dept:'production' },
   ]},
@@ -469,7 +470,8 @@ function switchTab(name) {
   if (name === 'cust')       { fetchCustomers(); fetchOrders(); }
   if (name === 'invoice')    { fetchCustomers(); fetchOrders(); invInit(); }
   if (name === 'plating')    { fetchSuppliers(); fetchOrders(); platingInit(); }
-  if (name === 'dashboard')  { if (typeof _dbInit === 'function') _dbInit(); }
+  if (name === 'dashboard')  { if (typeof _dbInit    === 'function') _dbInit(); }
+  if (name === 'inspect')    { if (typeof _inspInit  === 'function') _inspInit(); }
 }
 
 // ── Tab Manager UI ───────────────────────────────────
@@ -1539,7 +1541,7 @@ function _chatInit() {
   _chatFetch(false);
   if (_chatPollTimer) clearInterval(_chatPollTimer);
   _chatPollTimer = setInterval(() => _chatFetch(false), CHAT_POLL_MS);
-  $('chatInput')?.addEventListener('input', (e) => {
+  $('chatInput')?.addEventListener('input',  (e) => {
     e.target.style.height = 'auto';
     e.target.style.height = Math.min(e.target.scrollHeight, 70) + 'px';
   });
