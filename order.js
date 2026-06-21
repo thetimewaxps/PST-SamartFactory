@@ -489,6 +489,16 @@ async function createOrder() {
       row[ORDER_COLS.jobImg1] = up.url;
     }
 
+
+    // ── ตรวจ Stock ก่อน save ────────────────────────────────
+    if (typeof stockCheckBeforeOrder === 'function') {
+      var _matCodesToCheck = [
+        row[ORDER_COLS.matTop], row[ORDER_COLS.matBot],
+        row[ORDER_COLS.meshOut], row[ORDER_COLS.meshIn]
+      ].filter(function(c){ return !!c && c.trim(); });
+      var _stockOk = await stockCheckBeforeOrder(_matCodesToCheck);
+      if (!_stockOk) { if (createBtn) createBtn.disabled = false; return; }
+    }
     _ordSetProgress('⏳ กำลังบันทึก Order...');
     await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
@@ -700,6 +710,16 @@ async function createGeneralOrder() {
       row[ORDER_COLS.jobImg1] = up.url;
     }
 
+
+    // ── ตรวจ Stock ก่อน save ────────────────────────────────
+    if (typeof stockCheckBeforeOrder === 'function') {
+      var _matCodesToCheck = [
+        row[ORDER_COLS.matTop], row[ORDER_COLS.matBot],
+        row[ORDER_COLS.meshOut], row[ORDER_COLS.meshIn]
+      ].filter(function(c){ return !!c && c.trim(); });
+      var _stockOk = await stockCheckBeforeOrder(_matCodesToCheck);
+      if (!_stockOk) { if (createBtn) createBtn.disabled = false; return; }
+    }
     if (statusEl) statusEl.textContent = '⏳ กำลังบันทึก...';
     await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},

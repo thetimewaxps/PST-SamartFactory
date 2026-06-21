@@ -30,6 +30,19 @@ function _stockLeadDate(suppCode) {
 }
 
 // ── Load ──────────────────────────────────────────────────────
+// ── Background load (ไม่ render table — แค่อัป badge) ───────
+async function _stockBgLoad() {
+  var url = _stockUrl();
+  if (!url) return;
+  try {
+    var res = await fetch(url + '?action=getMatStock', { mode:'cors' });
+    var d   = await res.json();
+    _stockRows = d.rows || [];
+    _stockUpdateBadge();
+  } catch(e) { console.warn('_stockBgLoad', e); }
+}
+
+
 async function stockLoad() {
   var url = _stockUrl();
   if (!url) { _stockRenderDash(); return; }
@@ -84,6 +97,7 @@ function _stockRenderDash() {
       }).join('') + '</div>';
   }
 
+  _stockUpdateBadge();
   el.innerHTML =
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px">' +
       _stockStatChip('🔴', 'วิกฤต', critical.length, '#dc2626', 'rgba(220,38,38,.1)', 'rgba(220,38,38,.3)') +
@@ -695,6 +709,94 @@ async function stockOrderNow(matCode) {
     _poRenderItemsEditor();
     if (typeof _poRecalcTotals === 'function') _poRecalcTotals();
   }
+}
+
+
+// ── Badge แดงบน sidebar ──────────────────────────────────────
+function _stockUpdateBadge() {
+  var n = _stockRows.filter(function(r){ return _stockStatus(r) === 'critical'; }).length;
+
+  // helper: ใส่/ลบ badge จากปุ่ม
+  function _applyBadge(btn, show) {
+    var old = btn.querySelector('.stock-crit-badge');
+    if (old) old.remove();
+    if (show && n > 0) {
+      var b = document.createElement('span');
+      b.className = 'stock-crit-badge';
+      b.textContent = n;
+      // แทรกก่อน .sb-caret ถ้ามี (สำหรับ group header)
+      var caret = btn.querySelector('.sb-caret');
+      if (caret) btn.insertBefore(b, caret); else btn.appendChild(b);
+    }
+  }
+
+  // 1) ปุ่ม Stock MAT โดยตรง (desktop tbtn-stock + mobile data-tab=stock)
+  document.querySelectorAll('#tbtn-stock, [data-tab="stock"]').forEach(function(btn) {
+    _applyBadge(btn, true);
+  });
+
+  // 2) group header ฝ่ายจัดซื้อ (หรือกลุ่มใดก็ตามที่มี tbtn-stock อยู่ข้างใน)
+  //    แสดงเฉพาะตอน group ยังปิดอยู่ — พอ open แล้วให้ badge อยู่แค่ที่ปุ่ม Stock MAT เท่านั้น
+  var stockBtn = document.querySelector('#tbtn-stock');
+  if (stockBtn) {
+    var groupEl = stockBtn.closest('.sb-group');
+    if (groupEl) {
+      var hdr = groupEl.querySelector('.sb-group-header');
+      if (hdr) {
+        var isOpen = groupEl.classList.contains('open');
+        _applyBadge(hdr, !isOpen); // แสดงบน header เฉพาะตอนกลุ่มปิด
+      }
+    }
+  }
+}
+
+// ── ตรวจ Stock ก่อน save Order (เรียกจาก order.js) ───────────
+// คืน true = ผ่าน / false = ผู้ใช้กดยกเลิก
+async function stockCheckBeforeOrder(matCodes) {
+  if (!_stockRows || !_stockRows.length) return true; // ยังไม่มีข้อมูล → ผ่านไปก่อน
+
+  var codes = (matCodes || []).filter(function(c){ return !!c; });
+  if (!codes.length) return true;
+
+  // MAT ที่อยู่ในระบบ stock และถึง reorder point แล้ว (stockQty <= minStock)
+  var warn = codes.reduce(function(acc, code) {
+    var row = _stockRows.find(function(r){ return r.matCode === code; });
+    if (!row) return acc;
+    if (row.minStock > 0 && row.stockQty <= row.minStock) {
+      var status = _stockStatus(row);
+      acc.push({ code:code, name:row.matName||'', qty:row.stockQty, min:row.minStock, unit:row.unit, status:status });
+    }
+    return acc;
+  }, []);
+
+  if (!warn.length) return true;
+
+  var listHtml = warn.map(function(w) {
+    var color = w.status === 'critical' ? '#f87171' : '#fbbf24';
+    var icon  = w.status === 'critical' ? '🔴' : '🟡';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;' +
+      'background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);border-radius:8px;margin-bottom:6px">' +
+      '<span>' + icon + '</span>' +
+      '<div style="flex:1;text-align:left">' +
+        '<div style="font-weight:700;font-size:.82rem;color:' + color + '">' + w.code + (w.name ? ' — ' + w.name : '') + '</div>' +
+        '<div style="font-size:.73rem;color:var(--t3)">คงเหลือ <strong style="color:' + color + '">' + w.qty + '</strong> ' + w.unit + ' (ขั้นต่ำ ' + w.min + ' ' + w.unit + ')</div>' +
+      '</div></div>';
+  }).join('');
+
+  var result = await Swal.fire({
+    title: '⚠️ MAT ถึง Reorder Point แล้ว!',
+    html: '<div style="font-size:.8rem;color:var(--t3);margin-bottom:10px">' +
+        'วัสดุต่อไปนี้มีของน้อยกว่าขั้นต่ำ — ควรสั่งซื้อก่อนผลิต' +
+      '</div>' + listHtml,
+    background:'var(--bg-card)', color:'var(--t1)', width:420,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '✅ ยืนยัน บันทึก Order ต่อ',
+    cancelButtonText: '↩ กลับไปแก้ไข',
+    confirmButtonColor: '#d97706',
+    cancelButtonColor: '#6366f1',
+  });
+  return result.isConfirmed;
 }
 
 

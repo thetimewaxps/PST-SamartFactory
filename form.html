@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v10.18</span>
+      <span class="ph-chip ver">v10.21</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
     </div>
@@ -3353,7 +3353,7 @@
 <script src="order.js?v=9.75"></script>
 <script src="dashboard.js?v=9.73"></script>
 <script src="inspect.js?v=10.08"></script>
-  <script src="stock.js?v=10.17"></script>
+  <script src="stock.js?v=10.19"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
 <script src="plating.js?v=8.94"></script>
@@ -3497,9 +3497,38 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260621-AN',
+    ref: '#REV-20260621-AQ',
     date: '21/06/2568',
     current: true,
+    items: [
+      'stock.js: _stockUpdateBadge() — badge แสดงบน group header ฝ่ายจัดซื้อด้วยตอนกลุ่มปิด / หายเมื่อขยาย',
+      'core.js: renderTabBar() → เรียก _stockUpdateBadge() หลัง render ทุกครั้ง (toggle group / switchTab)',
+    ],
+  },
+  {
+    ref: '#REV-20260621-AP',
+    date: '21/06/2568',
+    current: false,
+    items: [
+      'stock.js: เพิ่ม _stockBgLoad() — fetch stock เงียบๆ ไม่ render table แค่อัป _stockRows + badge',
+      'core.js: window.load → setTimeout 2.5s เรียก _stockBgLoad() อัตโนมัติทุกครั้งที่เปิดแอป',
+    ],
+  },
+  {
+    ref: '#REV-20260621-AO',
+    date: '21/06/2568',
+    current: false,
+    items: [
+      'stock.js: _stockUpdateBadge() — แสดง badge 🔴 จำนวนวิกฤตบนปุ่ม Stock MAT ทุก sidebar (desktop+mobile)',
+      'style.css: .stock-crit-badge — pulse animation สีแดง ติดปุ่มเมนู',
+      'stock.js: stockCheckBeforeOrder() — ตรวจ reorder point ก่อน save Order แสดง warning popup ถ้า MAT ต่ำกว่าขั้นต่ำ',
+      'order.js: เพิ่ม stockCheckBeforeOrder ก่อน fetch addOrder ทั้งสองจุด (Order จาก DATA + Order ทั่วไป)',
+    ],
+  },
+  {
+    ref: '#REV-20260621-AN',
+    date: '21/06/2568',
+    current: false,
     items: [
       'purchase.js: แท็บ Supplier — เพิ่มช่อง Lead Time (วัน) และ MAT Codes ในฟอร์มแก้ไข',
       'purchase.js: supplierSaveRow — ส่ง leadTimeDays + matCodes ไป saveSupplier (Code.gs คอลัมน์ G-H)',

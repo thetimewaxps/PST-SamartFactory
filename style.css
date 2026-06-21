@@ -906,6 +906,23 @@ select option { background: var(--sel-bg); color: var(--t1); }
 }
 
 /* ── "NEW" badge (กระพริบ) สำหรับแถวที่เพิ่งเพิ่มใหม่ ────── */
+
+/* ── Stock critical badge บน sidebar ──────────────────── */
+.stock-crit-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 9px; font-size: .65rem; font-weight: 900;
+  color: #fff; background: #dc2626;
+  margin-left: 5px; line-height: 1;
+  box-shadow: 0 0 0 2px rgba(220,38,38,.3);
+  animation: stockBadgePulse 2s ease-in-out infinite;
+  vertical-align: middle;
+}
+@keyframes stockBadgePulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(220,38,38,.3); }
+  50%      { box-shadow: 0 0 0 5px rgba(220,38,38,.0); }
+}
+
 .new-badge {
   display: inline-block; padding: 1px 5px; border-radius: 4px;
   font-size: .6rem; font-weight: 800; letter-spacing: .5px;

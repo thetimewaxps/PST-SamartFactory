@@ -268,7 +268,11 @@ let _activeTab = 'breakdown';
 // แท็บย่อยที่ถูกรวมไว้ใต้ปุ่ม "เพิ่มเติม" (ลดจำนวนปุ่มในแถบแท็บ)
 const SUB_TAB_IDS = ['labor', 'mold', 'api', 'mat', 'po', 'cust', 'invoice', 'supplier'];
 
-function renderTabBar() { try { _renderTabBarInner(); } catch(e) { console.error('[renderTabBar]', e); } }
+function renderTabBar() {
+  try { _renderTabBarInner(); } catch(e) { console.error('[renderTabBar]', e); }
+  // อัป stock badge หลัง render ทุกครั้ง (group toggle / switchTab / หลัง bgLoad)
+  if (typeof _stockUpdateBadge === 'function') try { _stockUpdateBadge(); } catch(e) {}
+}
 function _renderTabBarInner() {
   const bar = $('mainTabBar');
   if (!bar) return;
@@ -386,6 +390,10 @@ window.addEventListener('resize', () => {
 window.addEventListener('load', () => {
   const bar = document.getElementById('mainTabBar');
   if (bar && !bar.querySelector('.tab-btn, .sb-group, .sb-top-item')) renderTabBar();
+  // โหลด Stock ใน background เพื่ออัป badge แดงบน sidebar — ไม่รอให้ผู้ใช้เปิดแท็บ
+  setTimeout(function() {
+    if (typeof _stockBgLoad === 'function') _stockBgLoad();
+  }, 2500);
 });
 
 function _toggleMoreMenu(e) {
