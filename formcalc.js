@@ -1748,29 +1748,29 @@ function renderMoldTable() {
     const hasNoMold = ids.some(v => v.includes('ไม่มีพิมพ์'));
     const idBadges = ids.map(v => {
       const isMeta = isNaN(parseFloat(v));
-      return `<span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;margin:2px;
-        background:${isMeta ? 'rgba(201,168,92,.15)' : 'rgba(110,207,173,.12)'};
-        border:1px solid ${isMeta ? 'rgba(201,168,92,.3)' : 'rgba(110,207,173,.25)'};
-        color:${isMeta ? '#c9a85c' : '#6ecfad'}">${v}</span>`;
+      return `<span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:600;margin:2px;
+        background:${isMeta ? '#fef3c7' : '#d1fae5'};
+        border:1px solid ${isMeta ? '#fbbf24' : '#34d399'};
+        color:${isMeta ? '#92400e' : '#065f46'}">${v}</span>`;
     }).join('');
-    return `<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
-      border-radius:11px;padding:12px 14px;margin-bottom:8px">
+    return `<div style="background:#fff;border:1px solid #e2e8f0;
+      border-radius:11px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:${ids.length ? '8px' : '0'}">
-        <div style="background:rgba(90,82,184,.2);border-radius:8px;padding:4px 12px;
-          font-size:.95rem;font-weight:700;color:#b09fff;min-width:64px;text-align:center">
+        <div style="background:#7c3aed;border-radius:8px;padding:4px 14px;
+          font-size:.95rem;font-weight:700;color:#fff;min-width:72px;text-align:center">
           OD ${m.od}
         </div>
-        <div style="flex:1;font-size:.75rem;color:#7c7a9a">${ids.length} ID${ids.length !== 1 ? 's' : ''}</div>
-        <button onclick="moldEdit(${i})" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(110,180,247,.3);
-          background:rgba(110,180,247,.1);color:#7eb8f7;font-size:.78rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        <div style="flex:1;font-size:.75rem;color:#94a3b8">${ids.length} ID${ids.length !== 1 ? 's' : ''}</div>
+        <button onclick="moldEdit(${i})" style="padding:5px 12px;border-radius:7px;border:1px solid #bfdbfe;
+          background:#eff6ff;color:#1d4ed8;font-size:.78rem;cursor:pointer;font-family:Sarabun,sans-serif;font-weight:600">
           ✏️ แก้ไข
         </button>
-        <button onclick="moldDelete(${i})" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(224,128,128,.3);
-          background:rgba(224,128,128,.1);color:#e08080;font-size:.78rem;cursor:pointer;font-family:Sarabun,sans-serif">
+        <button onclick="moldDelete(${i})" style="padding:5px 12px;border-radius:7px;border:1px solid #fecaca;
+          background:#fff1f2;color:#dc2626;font-size:.78rem;cursor:pointer;font-family:Sarabun,sans-serif;font-weight:600">
           🗑️ ลบ
         </button>
       </div>
-      ${ids.length ? '<div style="padding-left:2px">' + idBadges + '</div>' : '<div style="font-size:.75rem;color:#55536a;padding-left:2px">— ยังไม่มี ID</div>'}
+      ${ids.length ? '<div style="padding-left:2px">' + idBadges + '</div>' : '<div style="font-size:.75rem;color:#94a3b8;padding-left:2px">— ยังไม่มี ID</div>'}
     </div>`;
   }).join('');
 
