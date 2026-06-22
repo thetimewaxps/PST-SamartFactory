@@ -1099,8 +1099,9 @@ body{font-family:'Sarabun',sans-serif;font-size:11.5px;color:#1e293b;background:
 .order-block{flex:1;border:1.5px solid #cbd5e1;border-radius:8px;padding:10px 12px}
 .ob-label{font-size:.58rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
 .ob-no{font-size:1.9rem;font-weight:900;line-height:1.05;margin:1px 0 3px}
-.ob-spec{font-size:.78rem;color:#334155;font-weight:600;margin-bottom:7px;
-  border-bottom:1px solid #e2e8f0;padding-bottom:6px}
+.ob-spec{display:inline-block;font-size:.82rem;color:#1e40af;font-weight:800;
+  background:#dbeafe;border:1.5px solid #93c5fd;border-radius:6px;
+  padding:3px 10px;margin-bottom:8px;letter-spacing:.01em}
 .dims-row{display:flex;gap:7px;margin-bottom:6px}
 .dim-box{border:1.5px solid #e2e8f0;border-radius:6px;padding:3px 10px;
   display:flex;flex-direction:column;align-items:center;background:#f8fafc;min-width:52px}

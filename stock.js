@@ -6,6 +6,8 @@ let _stockRows      = [];   // [{ matCode, matName, unit, stockQty, minStock, or
 let _stockMovement  = [];   // [{ date, matCode, type, qty, stockAfter, ref, note, by }]
 let _stockEditCode  = null; // matCode กำลัง edit อยู่ (null = new)
 let _stockViewCode  = null; // matCode ที่กำลังดู movement
+let _stockMovMonths = [];   // ['YYYY-MM', ...] sorted desc
+let _stockMovPageIdx = 0;   // index ใน _stockMovMonths ที่กำลังแสดง
 
 // ── utils ─────────────────────────────────────────────────────
 function _stockUrl() { return typeof SCRIPT_URL !== 'undefined' ? SCRIPT_URL : (localStorage.getItem('ptts_script_url') || ''); }
@@ -526,6 +528,27 @@ async function _stockCommitMovements(movements, by) {
   }
 }
 
+// ── date helper (แปลงเป็น dd/mm/พ.ศ.) ──────────────────────────
+function _stockFmtDate(s) {
+  if (!s) return '—';
+  var d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    var dd = String(d.getDate()).padStart(2,'0');
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var yyyy = d.getFullYear() + 543;
+    var hh = String(d.getHours()).padStart(2,'0');
+    var mi = String(d.getMinutes()).padStart(2,'0');
+    return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi;
+  }
+  // dd/MM/yyyy ที่ยังไม่แปลง
+  var m = String(s).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) {
+    var y = parseInt(m[3]);
+    return m[1].padStart(2,'0') + '/' + m[2].padStart(2,'0') + '/' + (y > 2500 ? y : y + 543);
+  }
+  return String(s);
+}
+
 // ── Movement log ──────────────────────────────────────────────
 async function stockViewMovement(matCode) {
   _stockViewCode = matCode;
@@ -543,26 +566,64 @@ async function stockViewMovement(matCode) {
 }
 
 function _stockShowMovementSwal(matCode) {
-  var rows = _stockMovement.slice(0, 50).map(function(r) {
-    var typeColor = r.type === 'IN' ? '#16a34a' : r.type === 'OUT' ? '#dc2626' : '#7c3aed';
-    var typeLabel = r.type === 'IN' ? '⬆ IN' : r.type === 'OUT' ? '⬇ OUT' : '⚙ ADJUST';
-    var sign = r.type === 'IN' ? '+' : r.type === 'OUT' ? '−' : '=';
-    return '<tr style="border-bottom:1px solid var(--bc-div)">' +
-      '<td style="padding:5px 8px;font-size:.72rem;color:var(--t3)">' + r.date + '</td>' +
-      '<td style="padding:5px 8px"><span style="font-size:.72rem;font-weight:700;color:' + typeColor + ';background:' + typeColor.replace('#','rgba(') + ',.1);padding:2px 7px;border-radius:5px">' + typeLabel + '</span></td>' +
-      '<td style="padding:5px 8px;font-weight:700;font-size:.82rem;color:' + typeColor + '">' + sign + r.qty + '</td>' +
-      '<td style="padding:5px 8px;font-size:.75rem;color:var(--t1)">' + r.stockAfter + '</td>' +
-      '<td style="padding:5px 8px;font-size:.72rem;color:var(--t2)">' + (r.ref || '—') + '</td>' +
-      '<td style="padding:5px 8px;font-size:.72rem;color:var(--t3)">' + (r.note || '') + '</td>' +
-    '</tr>';
-  }).join('');
+  // สร้าง list เดือนที่มีข้อมูล (desc)
+  var monthSet = {};
+  _stockMovement.forEach(function(r) {
+    if (!r.date) return;
+    var d = new Date(r.date);
+    if (isNaN(d.getTime())) return;
+    var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    monthSet[key] = true;
+  });
+  _stockMovMonths = Object.keys(monthSet).sort().reverse();
+  _stockMovPageIdx = 0;
 
-  Swal.fire({
-    title: '📋 ประวัติ: ' + matCode,
-    background:'var(--bg-card)', color:'var(--t1)', width:660,
-    html: _stockMovement.length
-      ? '<div style="overflow-x:auto;max-height:360px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:.79rem">' +
-          '<thead><tr style="background:rgba(37,99,235,.08)">' +
+  var MO_TH = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+  function _movPageHtml(idx) {
+    if (!_stockMovMonths.length) return '<div style="padding:32px;text-align:center;color:var(--t3)">ยังไม่มีประวัติการเคลื่อนไหว</div>';
+    var key   = _stockMovMonths[idx];
+    var parts = key.split('-');
+    var thYr  = parseInt(parts[0]) + 543;
+    var moLbl = MO_TH[parseInt(parts[1])] + ' ' + thYr;
+
+    var filtered = _stockMovement.filter(function(r) {
+      if (!r.date) return false;
+      var d = new Date(r.date);
+      if (isNaN(d.getTime())) return false;
+      return (d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')) === key;
+    });
+
+    var rows = filtered.map(function(r) {
+      var tc = r.type==='IN'?'#16a34a':r.type==='OUT'?'#dc2626':'#7c3aed';
+      var tl = r.type==='IN'?'⬆ IN':r.type==='OUT'?'⬇ OUT':r.type==='COUNT'?'🔢 COUNT':'⚙ ADJUST';
+      var sg = r.type==='IN'?'+':r.type==='OUT'?'−':'=';
+      return '<tr style="border-bottom:1px solid var(--bc-div)">' +
+        '<td style="padding:5px 8px;font-size:.72rem;color:var(--t3);white-space:nowrap">'+_stockFmtDate(r.date)+'</td>' +
+        '<td style="padding:5px 8px"><span style="font-size:.72rem;font-weight:700;color:'+tc+';background:'+tc.replace('#','rgba(')+',.1);padding:2px 7px;border-radius:5px">'+tl+'</span></td>' +
+        '<td style="padding:5px 8px;font-weight:700;font-size:.82rem;color:'+tc+'">'+sg+r.qty+'</td>' +
+        '<td style="padding:5px 8px;font-size:.75rem;color:var(--t1)">'+r.stockAfter+'</td>' +
+        '<td style="padding:5px 8px;font-size:.72rem;color:var(--t2)">'+(r.ref||'—')+'</td>' +
+        '<td style="padding:5px 8px;font-size:.72rem;color:var(--t3)">'+(r.note||'')+'</td>' +
+      '</tr>';
+    }).join('');
+
+    var canPrev = idx < _stockMovMonths.length - 1;
+    var canNext = idx > 0;
+    var btnOn  = 'border:none;border-radius:8px;padding:5px 14px;font-size:.85rem;font-family:Sarabun,sans-serif;font-weight:700;cursor:pointer;background:var(--c1-10);color:var(--c1)';
+    var btnOff = 'border:none;border-radius:8px;padding:5px 14px;font-size:.85rem;font-family:Sarabun,sans-serif;font-weight:700;cursor:not-allowed;background:var(--bg-div);color:var(--t3)';
+
+    return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+      '<button onclick="_stockMovNav(1)" style="'+(canPrev?btnOn:btnOff)+'" '+(canPrev?'':'disabled')+'>← ก่อนหน้า</button>' +
+      '<div style="text-align:center">' +
+        '<div style="font-size:1rem;font-weight:700;color:var(--t1)">'+moLbl+'</div>' +
+        '<div style="font-size:.68rem;color:var(--t3)">'+filtered.length+' รายการ &nbsp;·&nbsp; '+(idx+1)+' / '+_stockMovMonths.length+' เดือน</div>' +
+      '</div>' +
+      '<button onclick="_stockMovNav(-1)" style="'+(canNext?btnOn:btnOff)+'" '+(canNext?'':'disabled')+'>ถัดไป →</button>' +
+    '</div>' +
+    (filtered.length
+      ? '<div style="overflow-x:auto;max-height:340px;overflow-y:auto"><table style="width:100%;border-collapse:collapse;font-size:.79rem">' +
+          '<thead><tr style="background:rgba(37,99,235,.08);position:sticky;top:0">' +
             '<th style="padding:6px 8px;text-align:left;font-size:.68rem;color:var(--t3);border-bottom:2px solid var(--bc-div)">วันที่</th>' +
             '<th style="padding:6px 8px;text-align:left;font-size:.68rem;color:var(--t3);border-bottom:2px solid var(--bc-div)">ประเภท</th>' +
             '<th style="padding:6px 8px;text-align:left;font-size:.68rem;color:var(--t3);border-bottom:2px solid var(--bc-div)">จำนวน</th>' +
@@ -570,10 +631,122 @@ function _stockShowMovementSwal(matCode) {
             '<th style="padding:6px 8px;text-align:left;font-size:.68rem;color:var(--t3);border-bottom:2px solid var(--bc-div)">อ้างอิง</th>' +
             '<th style="padding:6px 8px;text-align:left;font-size:.68rem;color:var(--t3);border-bottom:2px solid var(--bc-div)">หมายเหตุ</th>' +
           '</tr></thead><tbody>' + rows + '</tbody></table></div>'
+      : '<div style="padding:24px;text-align:center;color:var(--t3)">ไม่มีรายการในเดือนนี้</div>');
+  }
+
+  window._stockMovNav = function(dir) {
+    var ni = _stockMovPageIdx + dir;
+    if (ni < 0 || ni >= _stockMovMonths.length) return;
+    _stockMovPageIdx = ni;
+    var c = Swal.getHtmlContainer();
+    if (c) c.innerHTML = _movPageHtml(ni);
+  };
+
+  Swal.fire({
+    title: '📋 ประวัติ: ' + matCode,
+    background:'var(--bg-card)', color:'var(--t1)', width:700,
+    html: _stockMovMonths.length
+      ? _movPageHtml(0)
       : '<div style="padding:32px;text-align:center;color:var(--t3)">ยังไม่มีประวัติการเคลื่อนไหว</div>',
-    confirmButtonText:'ปิด',
-    confirmButtonColor:'#2563eb'
+    showCancelButton: _stockMovement.length > 0,
+    cancelButtonText: '🖨 พิมพ์เดือนนี้',
+    cancelButtonColor: '#0369a1',
+    confirmButtonText: 'ปิด',
+    confirmButtonColor: '#2563eb',
+    reverseButtons: true,
+  }).then(function(res) {
+    delete window._stockMovNav;
+    if (res.dismiss === Swal.DismissReason.cancel) {
+      _stockPrintMovement(matCode, _stockMovMonths[_stockMovPageIdx]);
+    }
   });
+}
+
+function _stockPrintMovement(matCode, monthKey) {
+  var matInfo = (_stockRows || []).find(function(r){ return r.matCode === matCode; });
+  var matName = matInfo ? (matInfo.name || matInfo.matName || '') : '';
+  var unit    = matInfo ? (matInfo.unit || '') : '';
+  var now     = _stockFmtDate(new Date().toString());
+
+  // กรองตามเดือนถ้าระบุ monthKey ('YYYY-MM')
+  var data = monthKey
+    ? _stockMovement.filter(function(r) {
+        if (!r.date) return false;
+        var d = new Date(r.date);
+        if (isNaN(d.getTime())) return false;
+        return (d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')) === monthKey;
+      })
+    : _stockMovement;
+
+  // label เดือน (พ.ศ.)
+  var monthLabel = '';
+  if (monthKey) {
+    var MO_TH = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var pts = monthKey.split('-');
+    monthLabel = MO_TH[parseInt(pts[1])] + ' ' + (parseInt(pts[0]) + 543);
+  }
+
+  var cpRows = data.map(function(r, i) {
+    var tc = r.type==='IN'?'#16a34a':r.type==='OUT'?'#dc2626':'#7c3aed';
+    var tl = r.type==='IN'?'⬆ IN':r.type==='OUT'?'⬇ OUT':r.type==='COUNT'?'🔢 COUNT':'⚙ ADJUST';
+    var sg = r.type==='IN'?'+':r.type==='OUT'?'−':'=';
+    var bg = i % 2 === 0 ? '#f8fafc' : '#fff';
+    return '<tr style="background:' + bg + '">' +
+      '<td class="tc" style="color:#64748b">' + (i+1) + '</td>' +
+      '<td style="white-space:nowrap">' + _stockFmtDate(r.date) + '</td>' +
+      '<td><span style="font-weight:700;color:'+tc+';background:'+tc.replace('#','rgba(')+',.12);padding:2px 8px;border-radius:5px;font-size:.78rem">'+tl+'</span></td>' +
+      '<td class="tc" style="font-weight:700;color:'+tc+'">'+sg+r.qty+'</td>' +
+      '<td class="tc" style="font-weight:700">'+r.stockAfter+'</td>' +
+      '<td>'+(r.ref||'—')+'</td>' +
+      '<td style="color:#64748b">'+(r.note||'')+'</td>' +
+    '</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html lang="th"><head>' +
+    '<meta charset="UTF-8"><title>ประวัติ ' + matCode + (monthLabel?' '+monthLabel:'') + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">' +
+    '<style>' +
+      '*{box-sizing:border-box;margin:0;padding:0}' +
+      'body{font-family:Sarabun,sans-serif;font-size:11.5px;color:#1e293b;padding:14px 18px}' +
+      '.hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1e293b;padding-bottom:8px;margin-bottom:12px}' +
+      '.hdr-title{font-size:1.1rem;font-weight:900}' +
+      '.hdr-code{font-size:1.5rem;font-weight:900;color:#1d4ed8}' +
+      '.hdr-sub{font-size:.8rem;font-weight:700;color:#7c3aed;margin-top:2px}' +
+      '.hdr-right{text-align:right;font-size:.7rem;color:#64748b;line-height:1.7}' +
+      'table{width:100%;border-collapse:collapse;font-size:.8rem}' +
+      'thead tr{background:#1e293b}' +
+      'th{color:#fff;padding:6px 8px;font-size:.68rem;font-weight:700;text-align:left}' +
+      'th.tc{text-align:center}' +
+      'td{padding:5px 8px;border-bottom:1px solid #e2e8f0;vertical-align:middle}' +
+      'td.tc{text-align:center}' +
+      '.footer{margin-top:16px;font-size:.7rem;color:#94a3b8;text-align:right}' +
+      '@media print{body{padding:6px 10px}@page{size:A4 portrait;margin:10mm}}' +
+    '</style></head><body>' +
+    '<div class="hdr">' +
+      '<div><div class="hdr-title">รายงานประวัติการเคลื่อนไหววัตถุดิบ</div>' +
+        '<div class="hdr-code">' + matCode + (matName ? ' — ' + matName : '') + '</div>' +
+        (monthLabel ? '<div class="hdr-sub">📅 เดือน ' + monthLabel + '</div>' : '') +
+        (unit ? '<div style="font-size:.75rem;color:#64748b;margin-top:2px">หน่วย: ' + unit + '</div>' : '') +
+      '</div>' +
+      '<div class="hdr-right">พิมพ์เมื่อ: ' + now + '<br>' + data.length + ' รายการ' + (monthKey ? ' (กรองตามเดือน)' : ' (ทั้งหมด)') + '</div>' +
+    '</div>' +
+    '<table><thead><tr>' +
+      '<th class="tc" style="width:32px">#</th>' +
+      '<th style="width:130px">วันที่</th>' +
+      '<th style="width:80px">ประเภท</th>' +
+      '<th class="tc" style="width:60px">จำนวน</th>' +
+      '<th class="tc" style="width:60px">คงเหลือ</th>' +
+      '<th style="width:100px">อ้างอิง</th>' +
+      '<th>หมายเหตุ</th>' +
+    '</tr></thead><tbody>' + cpRows + '</tbody></table>' +
+    '<div class="footer">รายงานนี้สร้างโดยระบบ PTTS Cost Breakdown</div>' +
+    '<script>(function(){if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){window.print()}).catch(function(){setTimeout(function(){window.print()},700)})}else{setTimeout(function(){window.print()},700)}})()\x3c/script>' +
+    '</body></html>';
+
+  var win = window.open('', '_blank');
+  if (!win) { alert('กรุณาอนุญาต popup'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 
 // ── helper สำหรับ order.js / purchase.js เรียก ──────────────

@@ -151,6 +151,7 @@ const TAB_DEFS = [
   { id:'dashboard', icon:'📊', label:'แดชบอร์ด' },
   { id:'inspect',   icon:'🔍', label:'ตรวจสอบ' },
   { id:'stock',     icon:'📦', label:'Stock MAT' },
+  { id:'report',    icon:'📊', label:'Report'    },
 ];
 
 // ── Sidebar Group Menu (เดสก์ท็อป ≥1024px) ─────────────
@@ -202,6 +203,12 @@ const GROUP_DEFS = [
     { tab:'invoice', label:'ใบวางบิล', icon:'📑', subTab:'4' },
     { tab:'invoice', label:'ใบเสร็จ', icon:'🧾', subTab:'5' },
     { tab:'dept_help', label:'วิธีใช้งานแผนก', icon:'📖', dept:'account' },
+  ]},
+  { id:'report', icon:'📊', label:'Report', items: [
+    { tab:'report', label:'ยอดขายรายเดือน', icon:'💰' },
+    { tab:'report', label:'ใบวางบิลทั้งหมด', icon:'🧾', view:'outstanding' },
+    { tab:'report', label:'ยอดซื้อ PO', icon:'🛒', view:'po' },
+    { tab:'report', label:'ค่าชุบแยกโรงชุบ', icon:'🧪', view:'plating' },
   ]},
   { id:'settings', icon:'⚙️', label:'ตั้งค่า', items: [
     { tab:'api' },
@@ -263,6 +270,14 @@ function _sbGoto(tab, subTab, view) {
     }
   }
   if (tab === 'track' && typeof renderTrackDashboard === 'function') renderTrackDashboard();
+  if (tab === 'report' && view) {
+    setTimeout(function() {
+      if (view === 'outstanding' && typeof rptOutstanding === 'function') rptOutstanding();
+      else if (view === 'po'          && typeof rptPO          === 'function') rptPO();
+      else if (view === 'plating'     && typeof rptPlating     === 'function') rptPlating();
+      else if (view === 'sales'       && typeof rptSales       === 'function') rptSales();
+    }, 80);
+  }
   renderTabBar();
 }
 

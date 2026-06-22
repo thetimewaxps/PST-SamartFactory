@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v10.37</span>
+      <span class="ph-chip ver">v10.39</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -628,7 +628,7 @@
   <button class="btn btn-clear" onclick="location.reload()" style="justify-content:center;padding:11px 8px">↺ คืนค่าฟอร์ม</button>
   <button class="btn btn-primary" onclick="submitForm()" style="justify-content:center;padding:11px 8px"><span id="saveBtnLabel">💾 บันทึกลง Sheets</span></button>
   <button id="btnReshowCard" class="btn btn-pdf" onclick="reshowShareCard()" style="justify-content:center;padding:11px 8px;opacity:.4;cursor:not-allowed" disabled title="ยังไม่มีข้อมูลที่บันทึก">📤 แชร์/รูป</button>
-  <button class="btn btn-pdf" onclick="showDocExport()" style="justify-content:center;padding:11px 8px">🖨 ดูแบบเสนอราคา</button>
+  <button class="btn btn-pdf" onclick="showDocExport()" style="justify-content:center;padding:11px 8px">🖨 พิมพ์แบบเสนอราคา</button>
 </div>
 
 <!-- ── แบบร่าง (รองานที่ยังไม่พร้อมบันทึก) ── -->
@@ -2119,6 +2119,58 @@
   </div>
 </div><!-- end tab-stock -->
 
+<!-- ══ TAB: REPORT ══════════════════════════════════ -->
+<div id="tab-report" class="tab-content">
+<div style="max-width:680px;margin:0 auto;padding:20px 12px 100px">
+  <div class="tab-title" style="padding-top:16px">📊 Report</div>
+  <p style="color:var(--t3);font-size:.82rem;margin-bottom:20px">สรุปข้อมูลงานขายและงานซื้อ — เลือกรายงานที่ต้องการ</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+    <!-- R1: ยอดขายรายเดือน -->
+    <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow .15s" onclick="rptSales()"
+         onmouseenter="this.style.boxShadow='0 4px 16px rgba(37,99,235,.18)'" onmouseleave="this.style.boxShadow=''">
+      <div style="font-size:2rem;margin-bottom:8px">💰</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--t1);margin-bottom:4px">ยอดขายรายเดือน</div>
+      <div style="font-size:.78rem;color:var(--t3);line-height:1.5">สรุปใบกำกับภาษีแยกตามเดือน<br>ยอดก่อน VAT · VAT · รวม</div>
+      <div style="margin-top:12px;font-size:.72rem;font-weight:700;color:#1d4ed8;background:#eff6ff;border-radius:6px;padding:3px 8px;display:inline-block">Invoices sheet</div>
+    </div>
+
+    <!-- R2: ค้างชำระ -->
+    <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow .15s" onclick="rptOutstanding()"
+         onmouseenter="this.style.boxShadow='0 4px 16px rgba(220,38,38,.15)'" onmouseleave="this.style.boxShadow=''">
+      <div style="font-size:2rem;margin-bottom:8px">🧾</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--t1);margin-bottom:4px">ใบวางบิลทั้งหมด</div>
+      <div style="font-size:.78rem;color:var(--t3);line-height:1.5">ใบวางบิลแสดงวันครบกำหนด<br>เรียงตามสถานะเกินกำหนด</div>
+      <div style="margin-top:12px;font-size:.72rem;font-weight:700;color:#dc2626;background:#fff1f2;border-radius:6px;padding:3px 8px;display:inline-block">BillingNote sheet</div>
+    </div>
+
+    <!-- R3: ยอดซื้อ PO -->
+    <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow .15s" onclick="rptPO()"
+         onmouseenter="this.style.boxShadow='0 4px 16px rgba(22,163,74,.15)'" onmouseleave="this.style.boxShadow=''">
+      <div style="font-size:2rem;margin-bottom:8px">🛒</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--t1);margin-bottom:4px">ยอดซื้อ PO รายเดือน</div>
+      <div style="font-size:.78rem;color:var(--t3);line-height:1.5">สรุปใบสั่งซื้อแยกตามเดือน<br>แยกตามซัพพลายเออร์ · สถานะ</div>
+      <div style="margin-top:12px;font-size:.72rem;font-weight:700;color:#16a34a;background:#f0fdf4;border-radius:6px;padding:3px 8px;display:inline-block">PurchaseOrders sheet</div>
+    </div>
+
+    <!-- R4: ค่าชุบแยกโรงชุบ -->
+    <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow .15s" onclick="rptPlating()"
+         onmouseenter="this.style.boxShadow='0 4px 16px rgba(124,58,237,.15)'" onmouseleave="this.style.boxShadow=''">
+      <div style="font-size:2rem;margin-bottom:8px">🧪</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--t1);margin-bottom:4px">ค่าชุบแยกโรงชุบ</div>
+      <div style="font-size:.78rem;color:var(--t3);line-height:1.5">ยอดค่าชุบสะสมต่อโรงชุบ<br>แยกตามเดือน · สัดส่วน%</div>
+      <div style="margin-top:12px;font-size:.72rem;font-weight:700;color:#7c3aed;background:#f5f3ff;border-radius:6px;padding:3px 8px;display:inline-block">PlatingNote sheet</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:18px;padding:10px 14px;background:var(--c1-05);border-radius:8px;border:1px solid var(--bc-div)">
+    <span style="font-size:.75rem;color:var(--t3)">💡 ข้อมูลโหลดจาก Google Sheets ทุกครั้งที่เปิด report (cache ภายใน session) — กด <strong>🔄</strong> รีเฟรชหน้าเพื่อล้าง cache</span>
+  </div>
+</div>
+</div><!-- end tab-report -->
+
 <!-- ══ TAB: MAT ════════════════════════════════════ -->
 <div id="tab-mat" class="tab-content">
 <div style="max-width:620px;margin:0 auto;padding:12px 8px 100px">
@@ -2532,6 +2584,8 @@
       <button class="btn btn-primary" id="po_saveBtn" onclick="_poSave()" style="padding:10px 18px;font-size:.88rem">💾 บันทึกใบสั่งซื้อ</button>
       <button class="btn" onclick="_poPreview()" style="padding:10px 18px;font-size:.88rem;border:1px solid rgba(99,102,241,.5);background:rgba(99,102,241,.12);color:#a78bfa">👁️ พรีวิว</button>
       <button class="btn" onclick="_poNewForm()" style="padding:10px 18px;font-size:.88rem">📄 ใบใหม่</button>
+      <button class="btn" onclick="Swal.fire({title:'เคลียร์ข้อมูลทั้งหมด?',text:'ข้อมูลในฟอร์มจะถูกล้าง',icon:'warning',showCancelButton:true,confirmButtonText:'เคลียร์',cancelButtonText:'ยกเลิก',confirmButtonColor:'#ef4444',background:'var(--bg1,#fff)',color:'var(--t1)'}).then(r=>{if(r.isConfirmed)_poNewForm()})" style="padding:10px 18px;font-size:.88rem;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#dc2626">🗑️ เคลียร์</button>
+      <button class="btn" onclick="switchTab('data')" style="padding:10px 18px;font-size:.88rem;border:1px solid rgba(99,162,241,.4);background:rgba(99,162,241,.08);color:#2563eb">📋 ดูใบเสนอราคาเก่า</button>
     </div>
   </div>
 
@@ -3348,7 +3402,8 @@
     <button class="sp-action-btn btn-primary" onclick="submitForm()">
       <span id="saveBtnLabelSP">💾 บันทึกลง Sheets</span>
     </button>
-    <button class="sp-action-btn btn-pdf" onclick="showDocExport()">🖨 ดูแบบเสนอราคา</button>
+    <button class="sp-action-btn" onclick="switchTab('data')" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.35);color:#059669">📋 ดูใบเสนอราคาเก่า</button>
+    <button class="sp-action-btn btn-pdf" onclick="showDocExport()">🖨 พิมพ์แบบเสนอราคา</button>
     <button id="btnReshowCardSP" class="sp-action-btn btn-pdf" onclick="reshowShareCard()"
       style="opacity:.4;cursor:not-allowed" disabled title="ยังไม่มีข้อมูลที่บันทึก">📤 แชร์/รูป</button>
     <button id="btnReloadLaborSP" class="sp-action-btn btn-calc" onclick="recalcBtn()">🔄 รีโหลดค่าแรง</button>
@@ -3370,8 +3425,9 @@
 <script src="theme.js?v=9.10"></script>
 <script src="order.js?v=9.77"></script>
 <script src="dashboard.js?v=9.73"></script>
-<script src="inspect.js?v=10.08"></script>
-  <script src="stock.js?v=10.30"></script>
+<script src="inspect.js?v=10.09"></script>
+  <script src="stock.js?v=10.32"></script>
+  <script src="report.js?v=1.0"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
@@ -3516,9 +3572,29 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
   {
-    ref: '#REV-20260622-D',
+    ref: '#REV-20260622-F',
     date: '22/06/2568',
     current: true,
+    items: [
+      'report.js: ไฟล์ใหม่ v1.0 — Report Hub 4 รายงาน (ยอดขาย/ใบวางบิล/ยอดซื้อ PO/ค่าชุบ)',
+      'form.html: เพิ่ม #tab-report — 4 report cards เปิด Swal + พิมพ์ A4',
+      'core.js: เพิ่ม tab-report ใน TAB_DEFS, GROUP_DEFS sidebar group 📊 Report, _sbGoto report handler',
+    ],
+  },
+  {
+    ref: '#REV-20260622-E',
+    date: '22/06/2568',
+    current: false,
+    items: [
+      'stock.js: ประวัติ Movement เปลี่ยนเป็นแสดงหน้าละเดือน (← ก่อนหน้า / ถัดไป →)',
+      'stock.js: ปุ่ม "พิมพ์เดือนนี้" กรองพิมพ์เฉพาะเดือนที่กำลังดู',
+      'stock.js: เพิ่ม _stockMovMonths, _stockMovPageIdx, _stockMovNav()',
+    ],
+  },
+  {
+    ref: '#REV-20260622-D',
+    date: '22/06/2568',
+    current: false,
     items: [
       'style.css: Sidebar Style B — Section header solid blue, sub-tab inactive light blue, active darker blue',
       'imageEditor.js: Redact default สีขาว (เปลี่ยนจากดำ)',
