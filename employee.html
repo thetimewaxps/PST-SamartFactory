@@ -513,26 +513,17 @@ function _empCheckOnline() {
 
 // ── SAVE SCRIPT URL ──────────────────────────────────────────
 function empAskUrl() {
-  if (document.activeElement) document.activeElement.blur();
-  Swal.fire({
-    title: 'ตั้งค่า Script URL',
-    input: 'url',
-    inputLabel: 'Apps Script URL',
-    inputPlaceholder: 'https://script.google.com/macros/s/...',
-    inputValue: localStorage.getItem('ptts_script_url') || '',
-    showCancelButton: true,
-    confirmButtonText: 'บันทึก',
-    cancelButtonText: 'ยกเลิก',
-    inputValidator: function(v) {
-      if (!v || !v.startsWith('http')) return 'กรุณาใส่ URL ที่ถูกต้อง';
-    }
-  }).then(function(r) {
-    if (r.isConfirmed && r.value) {
-      localStorage.setItem('ptts_script_url', r.value.trim());
-      document.getElementById('empUrlNote').style.display = 'none';
-      Swal.fire({ icon: 'success', title: 'บันทึก URL แล้ว', timer: 1200, showConfirmButton: false });
-    }
-  });
+  var cur = localStorage.getItem('ptts_script_url') || '';
+  var v = window.prompt('ใส่ Apps Script URL:\n(คัดลอกจากหน้า Deploy ใน Google Apps Script)', cur);
+  if (v === null) return; // กด Cancel
+  v = v.trim();
+  if (!v || !v.startsWith('http')) {
+    alert('URL ไม่ถูกต้อง กรุณาใส่ URL ที่ขึ้นต้นด้วย https://');
+    return;
+  }
+  localStorage.setItem('ptts_script_url', v);
+  document.getElementById('empUrlNote').style.display = 'none';
+  alert('✅ บันทึก URL แล้ว! กรุณาเข้าสู่ระบบ');
 }
 function empSaveUrl() { empAskUrl(); }
 
