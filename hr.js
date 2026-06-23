@@ -3456,10 +3456,19 @@ function _hrRenderLoanContracts() {
   var panel = document.getElementById('hrPanel8');
   if (!panel) return;
   panel.innerHTML = '<div style="padding:8px 4px;color:var(--t3);font-size:.85rem">⏳ กำลังโหลด...</div>';
-  _hrLoanContractsLoad(null, function() {
-    _hrLoanContractPaymentsLoad(null, null, function() {
-      panel.innerHTML = _hrLoanContractsPanelHtml();
-    });
+  // โหลดพนักงาน + สัญญา + ประวัติพร้อมกัน
+  var calls = [
+    _hrGET('getHRLoanContracts', {}),
+    _hrGET('getHRLoanPayments', {})
+  ];
+  if (!_hrEmps || !_hrEmps.length) calls.push(_hrGET('getHREmployees'));
+  Promise.all(calls).then(function(results) {
+    _hrLoanContracts = (results[0] && results[0].data) || [];
+    _hrLoanContractPayments = (results[1] && results[1].data) || [];
+    if (results[2] && results[2].data) _hrEmps = results[2].data;
+    panel.innerHTML = _hrLoanContractsPanelHtml();
+  }).catch(function(e) {
+    panel.innerHTML = '<div style="padding:20px;color:#dc2626">โหลดไม่สำเร็จ: ' + e.message + '</div>';
   });
 }
 
