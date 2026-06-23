@@ -805,12 +805,16 @@ function _hrSumTableHtml(rows) {
     const e = emp[id];
     const isManager = !_hrSession || _hrSession.role === 'manager';
     const ac = e.type === 'daily' ? '#0891b2' : '#4f46e5';
+    const empRec = _hrEmps.find(function(x) { return String(x.empId) === id; }) || null;
+    const initials = e.name ? e.name.charAt(0) : '?';
+    const thumbUrl = _hrDriveThumb(empRec && empRec.profileUrl);
+    const avatarHtml = thumbUrl
+      ? '<img src="' + thumbUrl + '" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid ' + ac + ';flex-shrink:0" onerror="this.style.display=\'none\'">'
+      : '<div style="width:36px;height:36px;border-radius:50%;background:' + ac + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;flex-shrink:0">' + initials + '</div>';
 
     return '<div style="background:var(--bg-card);border:1.5px solid var(--bc-card);border-radius:14px;overflow:hidden">' +
       '<div style="background:' + ac + '18;padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1.5px solid ' + ac + '30">' +
-        '<div style="width:36px;height:36px;border-radius:50%;background:' + ac + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;flex-shrink:0">' +
-          (e.name ? e.name.charAt(0) : '?') +
-        '</div>' +
+        avatarHtml +
         '<div style="flex:1;min-width:0">' +
           '<div style="font-weight:700;font-size:.93rem;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e.name + '</div>' +
           '<div style="font-size:.7rem;color:' + ac + ';font-weight:600;margin-top:1px">' +
@@ -1016,6 +1020,11 @@ function _hrPayTableHtml(rows) {
     const empRec = _hrEmps.find(function(x) { return String(x.empId) === id; }) || null;
     const ps = _hrCalcPayslip(empRec, attByEmp[id] || [], _hrSumMon, _hrSumPeriod);
     const phone = (empRec && empRec.phone) ? empRec.phone.replace(/[^0-9]/g,'') : '';
+    const initials = e.name ? e.name.charAt(0) : '?';
+    const thumbUrl = _hrDriveThumb(empRec && empRec.profileUrl);
+    const avatarHtml = thumbUrl
+      ? '<img src="' + thumbUrl + '" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid ' + ac + ';flex-shrink:0" onerror="this.style.display=\'none\'">'
+      : '<div style="width:36px;height:36px;border-radius:50%;background:' + ac + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;flex-shrink:0">' + initials + '</div>';
 
     var payRows = '';
     var baseLabel = ps.type === 'daily'
@@ -1034,9 +1043,7 @@ function _hrPayTableHtml(rows) {
 
     return '<div style="background:var(--bg-card);border:1.5px solid var(--bc-card);border-radius:14px;overflow:hidden">' +
       '<div style="background:' + ac + '18;padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1.5px solid ' + ac + '30">' +
-        '<div style="width:36px;height:36px;border-radius:50%;background:' + ac + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;flex-shrink:0">' +
-          (e.name ? e.name.charAt(0) : '?') +
-        '</div>' +
+        avatarHtml +
         '<div style="flex:1;min-width:0">' +
           '<div style="font-weight:700;font-size:.93rem;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e.name + '</div>' +
           '<div style="font-size:.7rem;color:' + ac + ';font-weight:600;margin-top:1px">' +
