@@ -382,7 +382,7 @@
       <div class="ph-text" style="flex:1;display:flex;flex-direction:column;gap:2px">
         <div style="display:flex;align-items:center;gap:6px">
           <div class="ph-title" style="margin:0">PTS Smart Factory</div>
-          <span class="ph-chip ver">v2.7</span>
+          <span class="ph-chip ver">v2.8</span>
           <span class="ph-chip" id="empConnChip" style="display:none">✓ Online</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
@@ -1070,6 +1070,12 @@ function _empLoadSlipPreview() {
 
     // banner โอนแล้ว
     var latestPay = thisPays[0];
+    // ใช้ deductItems ที่บันทึกจริงตอน confirm (ไม่ recalculate) — ให้ตรงกับสลิป admin
+    if (latestPay && latestPay.deductItems && latestPay.deductItems.length) {
+      ps.loanDeductItems = latestPay.deductItems;
+      ps.loanDeductTotal = latestPay.deductItems.reduce(function(s, x) { return s + (x.amount || 0); }, 0);
+      ps.net = ps.gross - (ps.absentDeduct || 0) - (ps.offDeduct || 0) - ps.loanDeductTotal;
+    }
     var fmt = (typeof _hrFmt === 'function') ? _hrFmt : function(v) { return parseFloat(v).toLocaleString('th-TH', {minimumFractionDigits:2}); };
     var bannerHtml =
       '<div style="background:linear-gradient(135deg,#059669,#10b981);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">' +
