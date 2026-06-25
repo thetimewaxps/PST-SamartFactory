@@ -3653,12 +3653,16 @@ function _hrLoanTableHtml(filter) {
           + '🗑️ ลบใบเบิกนี้</button>'
       : '';
 
-    var _wmStyle = l.deducted
-      ? 'position:relative;overflow:hidden;'
-      : '';
-    var _wmHtml = l.deducted
+    var _isClosed   = l.status === 'closed' && !l.deducted;
+    var _isDeducted = !!l.deducted;
+    var _wmStyle = (_isClosed || _isDeducted) ? 'position:relative;overflow:hidden;' : '';
+    var _wmHtml  = _isDeducted
       ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2">'
           + '<span style="transform:rotate(-30deg);font-size:1.1rem;font-weight:900;color:rgba(30,64,175,.18);white-space:nowrap;letter-spacing:2px;border:3px solid rgba(30,64,175,.18);border-radius:8px;padding:6px 18px">💰 หักจากสลิปแล้ว</span>'
+        + '</div>'
+      : _isClosed
+      ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2">'
+          + '<span style="transform:rotate(-30deg);font-size:1.1rem;font-weight:900;color:rgba(5,150,105,.18);white-space:nowrap;letter-spacing:2px;border:3px solid rgba(5,150,105,.18);border-radius:8px;padding:6px 18px">✅ โอนแล้ว</span>'
         + '</div>'
       : '';
     return '<div style="background:var(--bg-card);border:1px solid var(--bc-card);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;' + _wmStyle + '">' +
