@@ -5257,35 +5257,35 @@ function hrViewLoanContract(loanId) {
   var paid = lc.originalAmount - lc.outstanding;
   var pct = lc.originalAmount > 0 ? Math.min(100, Math.round(paid / lc.originalAmount * 100)) : 0;
 
-  // สร้างตารางงวด (คาดการณ์)
+  // สร้างตารางงวด — actual payments ก่อน แล้ว forecast ที่เหลือ
   var scheduleRows = '';
+  var paidSorted = empPayments.slice().sort(function(a,b){ return (a.payDate||'').localeCompare(b.payDate||''); });
+  // แถวที่จ่ายจริงแล้ว (ข้อมูลจริงจาก HR_LoanPayments)
+  paidSorted.forEach(function(pp, idx) {
+    scheduleRows += '<tr style="background:#d1fae5">' +
+      '<td style="padding:5px 8px;text-align:center;font-size:.78rem;color:#166534;font-weight:700">' + (idx+1) + '</td>' +
+      '<td style="padding:5px 8px;font-size:.78rem;color:#166534">' + (pp.payDate||'—') + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;font-size:.78rem;color:#166534;font-weight:700">฿' + _hrFmt(pp.amount) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;font-size:.78rem;color:#166534">฿' + _hrFmt(pp.outstandingAfter) + '</td>' +
+      '<td style="padding:5px 8px;text-align:center"><span style="background:#d1fae5;color:#065f46;border-radius:99px;padding:1px 8px;font-size:.72rem;border:1px solid #6ee7b7">✅ จ่ายแล้ว</span></td>' +
+    '</tr>';
+  });
+  // แถวประมาณการที่เหลือ (forecast จาก outstanding ปัจจุบัน)
   var remaining = lc.outstanding;
   var installAmt = lc.installmentAmt;
-  var startDate = new Date();
-  // หาวันหักถัดไป
-  var payDaysArr = String(lc.payDays||'1,16').split(',').map(function(d){ return parseInt(d)||1; });
-  var nextDay = payDaysArr[0];
-  var d = new Date(); d.setDate(1);
-  // สร้างตาราง forecast
-  var periodIdx = 1;
-  var maxRows = 24; // max 24 งวด
-  while (remaining > 0 && periodIdx <= maxRows) {
+  var futureIdx = paidSorted.length + 1;
+  var maxRows = 24;
+  while (remaining > 0 && futureIdx <= paidSorted.length + maxRows) {
     var amt = Math.min(remaining, installAmt);
     remaining = Math.round((remaining - amt) * 100) / 100;
-    var matchPay = empPayments.find(function(p){ return p.periodLabel && p.periodLabel.includes && periodIdx === empPayments.indexOf(p)+1; });
-    var found = empPayments[periodIdx-1];
-    var statusHtml = found
-      ? '<span style="background:#d1fae5;color:#065f46;border-radius:99px;padding:1px 8px;font-size:.72rem">✅ จ่ายแล้ว</span>'
-      : '<span style="background:#fef3c7;color:#92400e;border-radius:99px;padding:1px 8px;font-size:.72rem">รอจ่าย</span>';
-    var periodLabel = found ? (found.periodLabel || 'งวด '+periodIdx) : 'งวด '+periodIdx;
-    scheduleRows += '<tr style="' + (remaining===0?'background:#f0fdf4':periodIdx%2?'':'background:var(--bg2)') + '">' +
-      '<td style="padding:5px 8px;text-align:center;font-size:.78rem">' + periodIdx + '</td>' +
-      '<td style="padding:5px 8px;font-size:.78rem">' + periodLabel + '</td>' +
-      '<td style="padding:5px 8px;text-align:right;font-size:.78rem">฿' + _hrFmt(amt) + '</td>' +
-      '<td style="padding:5px 8px;text-align:right;font-size:.78rem">฿' + _hrFmt(remaining) + '</td>' +
-      '<td style="padding:5px 8px;text-align:center">' + statusHtml + '</td>' +
+    scheduleRows += '<tr style="' + (futureIdx%2===0?'background:var(--bg2)':'') + '">' +
+      '<td style="padding:5px 8px;text-align:center;font-size:.78rem;color:#64748b">' + futureIdx + '</td>' +
+      '<td style="padding:5px 8px;font-size:.78rem;color:#64748b">วันที่ ' + (lc.payDays||'—') + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;font-size:.78rem;color:#475569">฿' + _hrFmt(amt) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;font-size:.78rem;color:#475569">฿' + _hrFmt(remaining) + '</td>' +
+      '<td style="padding:5px 8px;text-align:center"><span style="background:#fef3c7;color:#92400e;border-radius:99px;padding:1px 8px;font-size:.72rem">📅 ประมาณการ</span></td>' +
     '</tr>';
-    periodIdx++;
+    futureIdx++;
   }
 
   var html =

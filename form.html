@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.02</span>
+      <span class="ph-chip ver">v12.03</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3629,6 +3629,16 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260625-AP',
+          date: '2026-06-25',
+          items: [
+            'Code.gs: getHRLoanPayments — แก้ _fmtDateStr (ไม่มีอยู่จริง) → inline Date-safe formatter ป้องกัน crash เงียบ ทำให้ตารางผ่อนชำระแสดง 0 งวดจ่ายแล้ว',
+            'Code.gs: recordSalaryPayment note เปลี่ยนจาก "หักเงินเดือนงวด..." → "หักจากเงินเดือน"',
+            'employee.html: แถวที่จ่ายแล้วในตารางผ่อนชำระ — สีเขียวเข้มขึ้น (#dcfce7) + เส้นซ้าย + badge "✓ หักจากเงินเดือน"',
+            'hr.js: hrViewLoanContract — แก้ตารางใน popup ให้แสดง actual payments ก่อน (ข้อมูลจริง) แล้วค่อย forecast ที่เหลือ (เหมือนการ์ดหลัก)',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260625-AO',
           date: '2026-06-25',
           items: [
