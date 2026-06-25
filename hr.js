@@ -126,7 +126,8 @@ function _hrUrl() {
 function _hrGET(action, params) {
   const url = _hrUrl();
   if (!url) return Promise.reject('ไม่พบ Script URL — กรุณาตั้งค่าใน ⚙️ ตั้งค่า');
-  const p = Object.assign({ action }, params || {});
+  // เพิ่ม _t เพื่อป้องกัน browser cache GET responses
+  const p = Object.assign({ action, _t: Date.now() }, params || {});
   return fetch(url + '?' + new URLSearchParams(p)).then(function(r) { return r.json(); });
 }
 function _hrPOST(action, body) {
@@ -4565,6 +4566,20 @@ async function hrConfirmPayroll(id, nameEnc, net, month, period, loanEnc) {
     }
   });
   if (!isConfirmed || !v) return;
+
+  // เตือนถ้าไม่แนบสลิป (ไม่บังคับ แต่ต้องยืนยัน)
+  if (!v.slipFile) {
+    var { isConfirmed: slipOk } = await Swal.fire({
+      icon: 'warning',
+      title: '⚠️ ไม่มีสลิปโอนเงิน',
+      text: 'ยืนยันบันทึกการโอนโดยไม่แนบสลิป?',
+      showCancelButton: true,
+      confirmButtonText: 'ยืนยัน ไม่มีสลิป',
+      cancelButtonText: '↩ กลับไปแนบสลิป',
+      confirmButtonColor: '#f97316'
+    });
+    if (!slipOk) return;
+  }
 
   Swal.fire({ title: '\u23f3 กำลังบันทึก...', allowOutsideClick: false, didOpen: function(){ Swal.showLoading(); } });
   try {

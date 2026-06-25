@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v11.79</span>
+      <span class="ph-chip ver">v11.80</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3482,7 +3482,7 @@
   <script src="report.js?v=1.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="hr.js?v=4.77"></script>
+<script src="hr.js?v=4.78"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
@@ -3626,7 +3626,13 @@
 // ===== ประวัติการแก้ไขงาน (Dev Logs) =====
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
-      { ref:'#REV-20260625-O', date:'2026-06-25', current: true,
+      { ref:'#REV-20260625-P', date:'2026-06-25', current: true,
+        items:[
+          'hr.js v4.78: _hrGET — เพิ่ม _t:Date.now() ป้องกัน browser cache (แก้ลายน้ำ "โอนแล้ว" ไม่แสดง)',
+          'hr.js: hrConfirmPayroll — เพิ่ม popup เตือนก่อนโอนโดยไม่แนบสลิป',
+          'form.html v11.80: hr.js?v=4.77 → v4.78',
+        ] },
+      { ref:'#REV-20260625-O', date:'2026-06-25', current: false,
         items:[
           'hr.js: paidMap — index empId|all ด้วย ให้การ์ดแสดงลายน้ำ "โอนแล้ว" ถูกต้องเมื่อ view "ทั้งเดือน"',
           'form.html v11.79: hr.js?v=4.76 → v4.77',
