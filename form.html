@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v11.88</span>
+      <span class="ph-chip ver">v11.89</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3482,7 +3482,7 @@
   <script src="report.js?v=1.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="hr.js?v=4.86"></script>
+<script src="hr.js?v=4.87"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
@@ -3627,7 +3627,13 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
-          ref: '#REV-20260625-AA',
+          ref: '#REV-20260625-AB',
+          date: '2026-06-25',
+          items: [
+            'hr.js v4.86→4.87: แก้การ์ดสรุปเงินเดือนแสดงสถานะ "โอนแล้ว" ผิดงวด — paidMap fallback id+all ใช้เฉพาะ mode all เท่านั้น',
+          ]
+        },
+        { ref: '#REV-20260625-AA',
           date: '2026-06-25',
           items: [
             'Code.gs: เพิ่ม saveHRPayCfg + getHRPayCfg — บันทึก/อ่าน pay cycle config จาก Config sheet',

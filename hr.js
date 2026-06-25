@@ -1342,11 +1342,19 @@ function _hrPayTableHtml(rows) {
   let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px">';
   if (monthly.length) {
     html += sectionLabel('💼 รายเดือน', monthly.length, '#4f46e5');
-    monthly.forEach(function(id) { html += payCard(id, paidMap[id+'|'+_hrSumPeriod] || paidMap[id+'|all'] || null); });
+    monthly.forEach(function(id) {
+      var _pr = paidMap[id+'|'+_hrSumPeriod];
+      if (!_pr && _hrSumPeriod === 'all') _pr = paidMap[id+'|all'];
+      html += payCard(id, _pr || null);
+    });
   }
   if (daily.length) {
     html += sectionLabel('🔧 รายวัน', daily.length, '#0891b2');
-    daily.forEach(function(id) { html += payCard(id, paidMap[id+'|'+_hrSumPeriod] || paidMap[id+'|all'] || null); });
+    daily.forEach(function(id) {
+      var _pr = paidMap[id+'|'+_hrSumPeriod];
+      if (!_pr && _hrSumPeriod === 'all') _pr = paidMap[id+'|all'];
+      html += payCard(id, _pr || null);
+    });
   }
   html += '</div>';
   return html;
