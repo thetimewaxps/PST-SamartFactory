@@ -1830,3 +1830,20 @@ body.trk-fullscreen-mode .trk-fs-toolbar {
   }
   .mob-drawer-backdrop.show { display: block; }
 }
+
+/* ── Loan deduct notification badge ── */
+.loan-notify-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  animation: loan-dot-blink 1s ease-in-out infinite;
+}
+@keyframes loan-dot-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .25; transform: scale(.6); }
+}
+

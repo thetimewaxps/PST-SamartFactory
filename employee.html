@@ -649,6 +649,7 @@ function empShowApp() {
   empTabSwitch('slip');
   _empCheckOnline();
   _empLoadHeaderStats();
+  _empRefreshLoanBadge();
 }
 
 // ── HEADER STATS ──────────────────────────────────────────────
@@ -782,10 +783,35 @@ function empTabSwitch(tab) {
 
   // เรียก render function
   if (tab === 'loan')     _hrRenderLoans();
-  if (tab === 'contract') _empRenderContracts();
+  if (tab === 'contract') { _empClearLoanBadge(); _empRenderContracts(); }
   if (tab === 'cal')      _hrRenderCal();
   if (tab === 'summary')  _empRenderAttSummary();
   if (tab === 'slip')     _empRenderSlip();
+}
+
+// ── Loan notify badge (employee side) ──
+var _LOAN_NOTIFY_KEY = 'ptts_loan_notify';
+function _empRefreshLoanBadge() {
+  var btn = document.getElementById('empBotBtn-contract');
+  var topBtn = document.getElementById('empTabBtn-contract');
+  try {
+    var has = localStorage.getItem(_LOAN_NOTIFY_KEY);
+    [btn, topBtn].forEach(function(b) {
+      if (!b) return;
+      var dot = b.querySelector('.loan-notify-dot');
+      if (has && !dot) { var d = document.createElement('span'); d.className = 'loan-notify-dot'; b.appendChild(d); }
+      else if (!has && dot) dot.remove();
+    });
+  } catch(e) {}
+}
+function _empClearLoanBadge() {
+  try { localStorage.removeItem(_LOAN_NOTIFY_KEY); } catch(e) {}
+  ['empBotBtn-contract', 'empTabBtn-contract'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    var dot = btn.querySelector('.loan-notify-dot');
+    if (dot) dot.remove();
+  });
 }
 
 // ── CONTRACT PANEL ────────────────────────────────────────────

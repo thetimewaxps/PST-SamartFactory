@@ -153,6 +153,29 @@ function _hrPOST(action, body) {
     });
 }
 
+
+// ── Loan deduct notification badge ──────────────────────────
+var _LOAN_NOTIFY_KEY = 'ptts_loan_notify';
+function _hrSetLoanBadge() {
+  try { localStorage.setItem(_LOAN_NOTIFY_KEY, '1'); } catch(e) {}
+  _hrRefreshLoanBadge();
+}
+function _hrClearLoanBadge() {
+  try { localStorage.removeItem(_LOAN_NOTIFY_KEY); } catch(e) {}
+  var btn = document.getElementById('hrBtn8');
+  if (btn) { var d = btn.querySelector('.loan-notify-dot'); if (d) d.remove(); }
+}
+function _hrRefreshLoanBadge() {
+  var btn = document.getElementById('hrBtn8');
+  if (!btn) return;
+  var has = btn.querySelector('.loan-notify-dot');
+  try {
+    if (localStorage.getItem(_LOAN_NOTIFY_KEY)) {
+      if (!has) { var dot = document.createElement('span'); dot.className = 'loan-notify-dot'; btn.appendChild(dot); }
+    } else { if (has) has.remove(); }
+  } catch(e) {}
+}
+
 // ── Sub-tab navigation ────────────────────────────────────────
 function hrSubSwitch(n) {
   _hrSubCur = String(n);
@@ -172,7 +195,7 @@ function hrSubSwitch(n) {
   if (n === '5') _hrRenderSettings();
   if (n === '6') _hrRenderCal();
   if (n === '7') _hrRenderLoans();
-  if (n === '8') _hrRenderLoanContracts();
+  if (n === '8') { _hrClearLoanBadge(); _hrRenderLoanContracts(); }
 }
 
 function hrInitTab() {
@@ -184,6 +207,7 @@ function hrInitTab() {
   }
   hrSubSwitch(_hrSubCur || '1');
   _hrRenderImport();
+  _hrRefreshLoanBadge();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -4545,6 +4569,7 @@ async function hrConfirmPayroll(id, nameEnc, net, month, period, loanEnc) {
             contracts: contractDeducts.map(function(x){ return { loanId: x.loanId, amount: x.amount }; }),
             requests:  requestDeducts.map(function(x){ return { requestId: x.requestId, amount: x.amount }; })
           });
+          if (contractDeducts.length) _hrSetLoanBadge(); // แจ้งเตือนแท็บสัญญาเงินกู้
         } catch(e3) { /* ไม่ block — salary บันทึกแล้ว */ }
         // ── mark advance closed → deducted (เฉพาะที่หักครบ) ──
         var closedAdvanceIds = _effItems
