@@ -1078,7 +1078,11 @@ function _hrPayTableHtml(rows) {
   var isManager = !_hrSession || _hrSession.role === 'manager';
   // Build paidMap keyed by empId+'|'+period from cached _hrSalaryPaid
   var paidMap = {};
-  (_hrSalaryPaid||[]).forEach(function(p){ paidMap[p.empId+'|'+p.period] = p; });
+  (_hrSalaryPaid||[]).forEach(function(p){
+    paidMap[p.empId+'|'+p.period] = p;
+    // index 'all' ด้วย เพื่อให้ view "ทั้งเดือน" เห็นว่าจ่ายแล้ว
+    if (!paidMap[p.empId+'|all']) paidMap[p.empId+'|all'] = p;
+  });
   if (!rows.length) {
     return '<div style="color:var(--t3);font-size:.85rem">ไม่พบข้อมูลเดือน ' + _hrMLab(_hrSumMon) + ' — กรุณานำเข้าข้อมูลก่อน</div>';
   }
