@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v11.94</span>
+      <span class="ph-chip ver">v11.95</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3627,7 +3627,13 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
-          ref: '#REV-20260625-AG',
+          ref: '#REV-20260625-AH',
+          date: '2026-06-25',
+          items: [
+            'employee.html: แก้ horizontal scroll — เพิ่ม overflow-x:hidden ที่ html,body และ #empSlipPreview',
+          ]
+        },
+        { ref: '#REV-20260625-AG',
           date: '2026-06-25',
           items: [
             'style.css: แก้ .trk-toggle-btn ถูกตัดกลาง (border: 1px ขาด) ทำให้ CSS parse error และ @media (max-width:1023px) drawer ไม่โหลด — mobile drawer เมนูกลับมาใช้งานได้',
