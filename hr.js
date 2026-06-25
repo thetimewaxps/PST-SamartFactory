@@ -1153,7 +1153,14 @@ function _hrPayTableHtml(rows) {
     var isDaily = e.type === 'daily';
     var headerBg = isDaily ? '#0e7490' : '#1e40af';
     var empRec = _hrEmps.find(function(x) { return String(x.empId) === id; }) || null;
-    var ps = _hrCalcPayslip(empRec, attByEmp[id] || [], _hrSumMon, _hrSumPeriod);
+    // Phase 3: ถ้างวดนี้โอนแล้วและมี snapshot rate → ใช้ rate ณ เวลาจ่าย (ไม่ใช่ rate ปัจจุบัน)
+    var empForCard = empRec;
+    if (paidRec && empRec && (paidRec.baseSalary || paidRec.dailyRate)) {
+      empForCard = Object.assign({}, empRec);
+      if (paidRec.baseSalary) empForCard.salary    = paidRec.baseSalary;
+      if (paidRec.dailyRate)  empForCard.dailyRate  = paidRec.dailyRate;
+    }
+    var ps = _hrCalcPayslip(empForCard, attByEmp[id] || [], _hrSumMon, _hrSumPeriod);
     // ถ้าโอนแล้ว → ใช้ deductItems จริงที่บันทึกตอน confirm (ไม่ recalculate)
     if (paidRec && paidRec.deductItems && paidRec.deductItems.length) {
       ps.loanDeductItems = paidRec.deductItems;
@@ -1258,7 +1265,7 @@ function _hrPayTableHtml(rows) {
         : '';
       var histDi = '';
       try { histDi = encodeURIComponent(JSON.stringify(paidRec.deductItems || [])); } catch(e) {}
-      var paidSlipBtn = '<button onclick="hrOpenPayslip(' + Q + id + Q + ',' + Q + _hrSumMon + Q + ',' + Q + _hrSumPeriod + Q + ',' + Q + histDi + Q + ')" '
+      var paidSlipBtn = '<button onclick="hrOpenPayslip(' + Q + id + Q + ',' + Q + _hrSumMon + Q + ',' + Q + _hrSumPeriod + Q + ',' + Q + histDi + Q + ',' + (paidRec.baseSalary||0) + ',' + (paidRec.dailyRate||0) + ')" '
         + 'style="margin-top:8px;width:100%;padding:7px;background:#f0fdf4;color:#166534;border:0.5px solid #86efac;border-radius:8px;cursor:pointer;font-family:Sarabun,sans-serif;font-size:.78rem;font-weight:700">'
         + '\ud83e\uddfe \u0e14\u0e39\u0e2a\u0e25\u0e34\u0e1b</button>';
       badgeHtml = '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
@@ -1546,9 +1553,10 @@ function _hrEmpsHtml() {
         (e.idCardUrl ? '<div style="margin-top:6px"><a href="' + e.idCardUrl + '" target="_blank" style="font-size:.75rem;color:#3b82f6;text-decoration:none">🪪 ดูสแกนบัตร</a></div>' : '') +
       '</div>' +
       // ── ปุ่ม ──
-      '<div style="display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--bc-input)">' +
-        '<button onclick="hrEditEmp(' + i + ')" style="flex:1;padding:6px;border-radius:8px;border:1px solid rgba(99,102,241,.35);background:rgba(99,102,241,.08);color:#6366f1;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-size:.8rem;font-weight:600">✏️ แก้ไข</button>' +
-        '<button onclick="hrDelEmp(' + i + ')" style="flex:1;padding:6px;border-radius:8px;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.07);color:#f87171;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-size:.8rem;font-weight:600">🗑 ลบ</button>' +
+      '<div style="display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--bc-input);flex-wrap:wrap">' +
+        '<button onclick="hrEditEmp(' + i + ')" style="flex:1;min-width:80px;padding:6px;border-radius:8px;border:1px solid rgba(99,102,241,.35);background:rgba(99,102,241,.08);color:#6366f1;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-size:.8rem;font-weight:600">✏️ แก้ไข</button>' +
+        '<button onclick="hrSalaryHistoryModal(\''+e.empId+'\')" style="flex:1;min-width:80px;padding:6px;border-radius:8px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);color:#059669;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-size:.8rem;font-weight:600">💰 ปรับเงินเดือน</button>' +
+        '<button onclick="hrDelEmp(' + i + ')" style="flex:1;min-width:80px;padding:6px;border-radius:8px;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.07);color:#f87171;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-size:.8rem;font-weight:600">🗑 ลบ</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -1574,6 +1582,132 @@ function _hrEmpAllowRemove(i) {
 }
 function hrAddEmp()   { _hrEmpModal(null, -1); }
 function hrEditEmp(i) { _hrEmpModal(_hrEmps[i], i); }
+
+// ══════════════════════════════════════════════
+// Salary History Modal — Phase 1
+// เปิด popup บันทึกการปรับเงินเดือน + ดูประวัติ
+// ไม่แตะ _hrCalcPayslip เลย
+// ══════════════════════════════════════════════
+function hrSalaryHistoryModal(empId) {
+  // หาชื่อพนักงาน
+  var emp = _hrEmps.find(function(e){ return String(e.empId) === String(empId); });
+  var empName = emp ? emp.name : empId;
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-'
+    + String(today.getMonth()+1).padStart(2,'0') + '-'
+    + String(today.getDate()).padStart(2,'0');
+  var currentSalary = emp ? (emp.salary || 0) : 0;
+  var currentDaily  = emp ? (emp.dailyRate || 0) : 0;
+
+  Swal.fire({
+    title: '💰 ปรับเงินเดือน',
+    html:
+      '<div style="text-align:left;font-family:Sarabun,sans-serif">' +
+      '<div style="font-size:.85rem;color:#6366f1;font-weight:700;margin-bottom:12px">' + _escH(empName) + '</div>' +
+
+      '<div style="background:rgba(99,102,241,.06);border-radius:10px;padding:10px;margin-bottom:14px;font-size:.8rem;color:var(--t2,#64748b)">' +
+        '<div>เงินเดือนปัจจุบัน: <b style="color:var(--t1)">' + currentSalary.toLocaleString('th-TH') + ' บาท</b></div>' +
+        (currentDaily ? '<div>รายวันปัจจุบัน: <b style="color:var(--t1)">' + currentDaily.toLocaleString('th-TH') + ' บาท/วัน</b></div>' : '') +
+      '</div>' +
+
+      '<div style="margin-bottom:10px">' +
+        '<label style="font-size:.78rem;font-weight:700;display:block;margin-bottom:4px">มีผลวันที่ <span style="color:#ef4444">*</span></label>' +
+        '<input id="sh_date" type="date" value="' + todayStr + '" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid var(--bc-input,#cbd5e1);border-radius:8px;font-family:Sarabun,sans-serif;font-size:.88rem">' +
+      '</div>' +
+
+      '<div style="margin-bottom:10px">' +
+        '<label style="font-size:.78rem;font-weight:700;display:block;margin-bottom:4px">เงินเดือนใหม่ (บาท) <span style="color:#94a3b8;font-size:.72rem;font-weight:400">(ถ้ามี)</span></label>' +
+        '<input id="sh_salary" type="number" min="0" step="100" value="' + currentSalary + '" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid var(--bc-input,#cbd5e1);border-radius:8px;font-family:Sarabun,sans-serif;font-size:.88rem">' +
+      '</div>' +
+
+      '<div style="margin-bottom:10px">' +
+        '<label style="font-size:.78rem;font-weight:700;display:block;margin-bottom:4px">รายวัน (บาท) <span style="font-size:.7rem;color:#94a3b8">กรณีพนักงานรายวัน ปล่อยว่างได้</span></label>' +
+        '<input id="sh_daily" type="number" min="0" step="50" value="' + (currentDaily||'') + '" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid var(--bc-input,#cbd5e1);border-radius:8px;font-family:Sarabun,sans-serif;font-size:.88rem">' +
+      '</div>' +
+
+      '<div style="margin-bottom:14px">' +
+        '<label style="font-size:.78rem;font-weight:700;display:block;margin-bottom:4px">หมายเหตุ</label>' +
+        '<input id="sh_note" type="text" placeholder="เช่น ปรับประจำปี 2569, เลื่อนตำแหน่ง" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid var(--bc-input,#cbd5e1);border-radius:8px;font-family:Sarabun,sans-serif;font-size:.88rem">' +
+      '</div>' +
+
+      '<div id="sh_histArea" style="margin-top:8px"><div style="font-size:.75rem;color:#94a3b8">⏳ กำลังโหลดประวัติ...</div></div>' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: '✅ บันทึกการปรับ',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#059669',
+    background: 'var(--bg-card,#fff)',
+    color: 'var(--t1)',
+    width: 480,
+    didOpen: function() {
+      // โหลดประวัติ
+      _hrGET('getHRSalaryHistory', { empId: empId }).then(function(res) {
+        var area = document.getElementById('sh_histArea');
+        if (!area) return;
+        var rows = (res && res.data) ? res.data : [];
+        if (!rows.length) {
+          area.innerHTML = '<div style="font-size:.75rem;color:#94a3b8;padding:8px 0">ยังไม่มีประวัติการปรับเงินเดือน</div>';
+          return;
+        }
+        area.innerHTML = '<div style="font-size:.75rem;font-weight:700;color:#64748b;margin-bottom:6px;border-top:1px solid rgba(0,0,0,.07);padding-top:8px">📋 ประวัติการปรับ</div>'
+          + '<div style="max-height:160px;overflow-y:auto;border:1px solid rgba(0,0,0,.07);border-radius:8px">'
+          + rows.map(function(r, ri) {
+              var _shFmtDate = function(s) {
+                // yyyy-MM-dd → dd/MM/พ.ศ.
+                var m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                if (m) return m[3] + '/' + m[2] + '/' + (parseInt(m[1])+543);
+                return s;
+              };
+              return '<div style="padding:6px 10px;font-size:.78rem;'+(ri%2===0?'background:rgba(99,102,241,.04)':'')+';display:flex;gap:8px;align-items:center">'
+                + '<span style="color:#94a3b8;min-width:90px">' + _shFmtDate(r.effectiveDate) + '</span>'
+                + '<span style="font-weight:700;color:#059669">' + Number(r.salary).toLocaleString('th-TH') + ' ฿</span>'
+                + (r.dailyRate ? '<span style="color:#64748b;font-size:.72rem">(' + Number(r.dailyRate).toLocaleString('th-TH') + '/วัน)</span>' : '')
+                + (r.note ? '<span style="color:#94a3b8;font-size:.72rem;margin-left:auto">' + _escH(r.note) + '</span>' : '')
+                + '</div>';
+            }).join('')
+          + '</div>';
+      }).catch(function() {
+        var area = document.getElementById('sh_histArea');
+        if (area) area.innerHTML = '<div style="font-size:.75rem;color:#f87171">โหลดประวัติไม่ได้</div>';
+      });
+    },
+    preConfirm: function() {
+      var date   = (document.getElementById('sh_date')  || {}).value || '';
+      var salary = parseFloat((document.getElementById('sh_salary') || {}).value || '0');
+      var daily  = parseFloat((document.getElementById('sh_daily')  || {}).value || '0') || 0;
+      var note   = (document.getElementById('sh_note')  || {}).value || '';
+      if (!date)   { Swal.showValidationMessage('กรุณาระบุวันที่มีผล'); return false; }
+      if ((!salary || salary <= 0) && (!daily || daily <= 0)) { Swal.showValidationMessage('กรุณาระบุเงินเดือนใหม่ หรือรายวัน อย่างใดอย่างหนึ่ง'); return false; }
+      return { empId: empId, effectiveDate: date, salary: salary, dailyRate: daily, note: note };
+    }
+  }).then(function(result) {
+    if (!result.isConfirmed) return;
+    var d = result.value;
+    _hrPOST('addHRSalaryHistory', d).then(function(res) {
+      if (res && res.status === 'ok') {
+        // อัป HR_Employees ด้วย salary/dailyRate ใหม่ (ถ้า effectiveDate <= วันนี้)
+        if (d.effectiveDate <= todayStr) {
+          var updEmp = Object.assign({}, emp, { salary: d.salary, dailyRate: d.dailyRate || emp.dailyRate });
+          var empIdx = _hrEmps.findIndex(function(e){ return String(e.empId) === String(empId); });
+          _hrPOST('saveHREmployee', Object.assign({ _idx: empIdx }, updEmp)).then(function(r2) {
+            if (r2 && r2.status === 'ok') {
+              _hrEmps[empIdx].salary    = d.salary;
+              _hrEmps[empIdx].dailyRate = d.dailyRate || _hrEmps[empIdx].dailyRate;
+            }
+            _hrRenderEmps();
+          }).catch(function(){ _hrRenderEmps(); });
+        } else {
+          // effectiveDate ในอนาคต → บันทึก history อย่างเดียว ไม่อัป HR_Employees
+          Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:'จะมีผลวันที่ ' + d.effectiveDate, timer:2000, showConfirmButton:false, background:'var(--bg-card)', color:'var(--t1)' });
+          return;
+        }
+        Swal.fire({ icon:'success', title:'ปรับเงินเดือนแล้ว', text:'อัปเดต HR_SalaryHistory + HR_Employees เรียบร้อย', timer:2200, showConfirmButton:false, background:'var(--bg-card)', color:'var(--t1)' });
+      } else {
+        Swal.fire({ icon:'error', title:'บันทึกไม่สำเร็จ', text:(res&&res.message)||'ไม่ทราบสาเหตุ', background:'var(--bg-card)', color:'var(--t1)' });
+      }
+    }).catch(function(err){ Swal.fire({ icon:'error', title:'Error', text: String(err), background:'var(--bg-card)', color:'var(--t1)' }); });
+  });
+}
 
 function _hrEmpModal(emp, idx) {
   const isNew = idx < 0;
@@ -2866,7 +3000,7 @@ function hrEditAtt(empId, month, period) {
 // ══════════════════════════════════════════════════════════════
 // PAYSLIP — สลิปเงินเดือน
 // ══════════════════════════════════════════════════════════════
-function hrOpenPayslip(empId, month, period, deductItemsJson) {
+function hrOpenPayslip(empId, month, period, deductItemsJson, snapBaseSalary, snapDailyRate) {
   period = period || 'all';
   const emp     = _hrEmps.find(function(e) { return String(e.empId) === String(empId); });
   const allAtt  = _hrAtt.filter(function(r) { return String(r.empId) === String(empId); });
@@ -2877,7 +3011,14 @@ function hrOpenPayslip(empId, month, period, deductItemsJson) {
     return;
   }
 
-  const payslip = _hrCalcPayslip(emp, att, month, period);
+  // Phase 3: ถ้ามี snapshot salary จากตอน confirm → ใช้แทน rate ปัจจุบัน (ไม่แตะ _hrCalcPayslip)
+  var empForCalc = emp;
+  if (emp && (snapBaseSalary || snapDailyRate)) {
+    empForCalc = Object.assign({}, emp);
+    if (snapBaseSalary) empForCalc.salary    = Number(snapBaseSalary);
+    if (snapDailyRate)  empForCalc.dailyRate = Number(snapDailyRate);
+  }
+  const payslip = _hrCalcPayslip(empForCalc, att, month, period);
 
   // ถ้ามี deductItems ที่บันทึกไว้ตอน confirm → ใช้แทนการคำนวณใหม่ (สลิป historical)
   if (deductItemsJson) {
@@ -4430,11 +4571,14 @@ async function hrRecordSalaryPayment(empId, empName, netPay) {
   });
   if (!isConfirmed || !v) return;
   try {
+    var _snapEmp2 = (_hrEmps || []).find(function(e){ return String(e.empId) === String(empId); });
     var res = await _hrPOST('recordSalaryPayment', {
       empId: empId, empName: empName,
       month: mon, period: _hrSumPeriod||'all',
       amount: v.amount, transferDate: v.transferDate,
-      note: v.note, recordedBy: 'admin'
+      note: v.note, recordedBy: 'admin',
+      baseSalary: _snapEmp2 ? (Number(_snapEmp2.salary)    || 0) : 0,
+      dailyRate:  _snapEmp2 ? (Number(_snapEmp2.dailyRate) || 0) : 0
     });
     if (res && res.status === 'ok') {
       Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:'โอนเงินเดือน ' + empName + ' เรียบร้อย', timer:2000, showConfirmButton:false });
@@ -4648,12 +4792,19 @@ async function hrConfirmPayroll(id, nameEnc, net, month, period, loanEnc) {
     }
 
     // บันทึกการโอน
+    // ── Phase 2: หา baseSalary/dailyRate ของพนักงาน ณ ตอนนี้ (snapshot) ──
+    var _snapEmp = (_hrEmps || []).find(function(e){ return String(e.empId) === String(id); });
+    var _snapSalary = _snapEmp ? (Number(_snapEmp.salary)    || 0) : 0;
+    var _snapDaily  = _snapEmp ? (Number(_snapEmp.dailyRate) || 0) : 0;
+
     var res = await _hrPOST('recordSalaryPayment', {
       empId: id, empName: empName,
       month: month, period: period || 'all',
       amount: v.amount, transferDate: v.transferDate,
       note: v.note, slipUrl: slipUrl, recordedBy: 'admin',
-      deductItems: (v.adjustedLoanItems && v.adjustedLoanItems.length) ? v.adjustedLoanItems : loanItems
+      deductItems: (v.adjustedLoanItems && v.adjustedLoanItems.length) ? v.adjustedLoanItems : loanItems,
+      baseSalary: _snapSalary,
+      dailyRate:  _snapDaily
     });
     if (res && res.status === 'ok') {
       // ── Auto ตัดยอดเงินกู้/เบิกที่ถูกหักงวดนี้ ──

@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v11.97</span>
+      <span class="ph-chip ver">v12.02</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3484,7 +3484,7 @@
   <script src="report.js?v=1.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="hr.js?v=4.87"></script>
+<script src="hr.js?v=4.90"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
@@ -3629,7 +3629,54 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
-          ref: '#REV-20260625-AJ',
+          ref: '#REV-20260625-AO',
+          date: '2026-06-25',
+          items: [
+            'Phase 3 (ต่อ) hr.js: payCard ใช้ empForCard แทน empRec เมื่อมี paidRec snapshot — การ์ดสรุปแสดง rate ณ เวลาจ่ายจริง',
+            'hr.js: hrSalaryHistoryModal — แก้ validation ให้ผ่านแค่ dailyRate อย่างเดียว (พนักงานรายวัน)',
+            'hr.js: label "เงินเดือนใหม่" เปลี่ยนจาก * เป็น (ถ้ามี)',
+            'Code.gs: addHRSalaryHistory — แก้ validation ให้รับ dailyRate โดยไม่ต้องมี salary',
+            'Code.gs: recordSalaryPayment — แก้ fallback condition + column index (r[5]/r[6]) ป้องกัน dailyRate=0 สำหรับพนักงานรายวัน',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260625-AN',
+          date: '2026-06-25',
+          items: [
+            'Phase 3 Salary History — hr.js: hrOpenPayslip รับ snapBaseSalary/snapDailyRate เพิ่ม',
+            'ปุ่ม "ดูสลิป" ของ record โอนแล้ว ส่ง paidRec.baseSalary/dailyRate ไปด้วย',
+            'สร้าง empForCalc ทับ rate ก่อนส่ง _hrCalcPayslip() — ไม่แตะ _hrCalcPayslip() เลย',
+            'Code.gs: force text format บน transferDate (col G) + month (col D) ป้องกัน Sheets auto-parse เป็น Date',
+            'getSalaryPayments: handle transferDate instanceof Date → format dd/MM/yyyy',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260625-AM',
+          date: '2026-06-25',
+          items: [
+            'Phase 2 Salary Snapshot — Code.gs: สร้าง HR_SalaryPayments sheet + recordSalaryPayment + getSalaryPayments + deleteSalaryPayment (3 functions ที่หายไป)',
+            'recordSalaryPayment บันทึก baseSalary + dailyRate ณ วันจ่าย (snapshot) ลงชีตทุกครั้ง',
+            'hr.js: hrConfirmPayroll + hrRecordSalaryPayment ส่ง baseSalary/dailyRate ไปพร้อม POST',
+            'ไม่แตะ _hrCalcPayslip() — ระบบเดิมปลอดภัย 100%',
+          ]
+        },
+        { ref: '#REV-20260625-AL',
+          date: '2026-06-25',
+          items: [
+            'แก้วันที่ประวัติปรับเงินเดือน: Code.gs format Date object → yyyy-MM-dd, hr.js แปลงเป็น dd/MM/พ.ศ.',
+          ]
+        },
+        { ref: '#REV-20260625-AK',
+          date: '2026-06-25',
+          items: [
+            'Phase 1 Salary History — Code.gs: สร้าง HR_SalaryHistory sheet + addHRSalaryHistory + getHRSalaryHistory',
+            'hr.js: ปุ่ม "💰 ปรับเงินเดือน" ในการ์ดพนักงาน + modal กรอกวันมีผล/เงินเดือนใหม่/หมายเหตุ',
+            'modal แสดงประวัติการปรับทั้งหมดแบบ real-time',
+            'ถ้า effectiveDate <= วันนี้ → อัป HR_Employees ทันที; ถ้าอนาคต → บันทึก history เท่านั้น',
+            'ไม่แตะ _hrCalcPayslip() เลย — ระบบเดิมปลอดภัย 100%',
+          ]
+        },
+        { ref: '#REV-20260625-AJ',
           date: '2026-06-25',
           items: [
             'DATA tab — เพิ่มสถานะ "ไม่ผ่าน" ในชิป quick-filter และ dropdown กรองละเอียด',
