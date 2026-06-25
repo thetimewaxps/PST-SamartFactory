@@ -496,16 +496,6 @@ window.addEventListener('DOMContentLoaded', function() {
   var slipMonEl = document.getElementById('empSlipMonth');
   if (slipMonEl) slipMonEl.value = yyyymm;
 
-  // อัปเดต label ปุ่มงวด ให้ตรงกับ HR_PAY_DEF จริง
-  (function() {
-    var pc = (typeof _hrPayCfg === 'function') ? _hrPayCfg() : null;
-    if (!pc) return;
-    var b1 = document.getElementById('empPeriodBtnP1');
-    var b2 = document.getElementById('empPeriodBtnP2');
-    if (b1) b1.textContent = 'งวด 1 (' + pc.p1.start + '–' + pc.p1.end + ')';
-    if (b2) b2.textContent = 'งวด 2 (' + pc.p2.start + '–' + pc.p2.end + ')';
-  })();
-
   // ตรวจว่าตั้ง Script URL ไว้หรือยัง
   var url = localStorage.getItem('ptts_script_url') || '';
   if (!url) {
@@ -654,10 +644,31 @@ function empShowApp() {
 
   var _logBtn = document.getElementById('empLogoutTopBtn');
   if (_logBtn) _logBtn.style.display = 'flex';
-  empTabSwitch('slip');
+
+  // โหลด pay cycle config จาก server ก่อน render (พนักงานไม่มี admin localStorage)
+  _empLoadPayCfgThenRender();
+
   _empCheckOnline();
   _empLoadHeaderStats();
   _empCheckLoanBadgeFromServer(); // ตรวจจาก server (ไม่พึ่ง admin localStorage)
+}
+
+// โหลด pay cfg จาก server → บันทึกลง localStorage → render slip tab
+function _empLoadPayCfgThenRender() {
+  _hrGET('getHRPayCfg')
+    .then(function(res) {
+      if (res && res.cfg) {
+        localStorage.setItem('ptts_hr_pay_cfg', JSON.stringify(res.cfg));
+        // อัปเดต label ปุ่มงวด ให้ตรงกับ HR ตั้งไว้
+        var pc = res.cfg;
+        var b1 = document.getElementById('empPeriodBtnP1');
+        var b2 = document.getElementById('empPeriodBtnP2');
+        if (b1 && pc.p1) b1.textContent = 'งวด 1 (' + pc.p1.start + '–' + pc.p1.end + ')';
+        if (b2 && pc.p2) b2.textContent = 'งวด 2 (' + pc.p2.start + '–' + pc.p2.end + ')';
+      }
+      empTabSwitch('slip');
+    })
+    .catch(function() { empTabSwitch('slip'); });
 }
 
 // ── HEADER STATS ──────────────────────────────────────────────

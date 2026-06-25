@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v11.87</span>
+      <span class="ph-chip ver">v11.88</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3482,7 +3482,7 @@
   <script src="report.js?v=1.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="hr.js?v=4.85"></script>
+<script src="hr.js?v=4.86"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
@@ -3627,7 +3627,15 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
-          ref: '#REV-20260625-Z',
+          ref: '#REV-20260625-AA',
+          date: '2026-06-25',
+          items: [
+            'Code.gs: เพิ่ม saveHRPayCfg + getHRPayCfg — บันทึก/อ่าน pay cycle config จาก Config sheet',
+            'hr.js v4.85→4.86: hrSavePayCfg — POST saveHRPayCfg ไป server ด้วย (sync ข้ามเครื่อง)',
+            'employee.html: โหลด pay cfg จาก server ก่อน render — แก้งวดไม่ตรงกับที่ HR ตั้งไว้',
+          ]
+        },
+        { ref: '#REV-20260625-Z',
           date: '2026-06-25',
           items: [
             'hr.js v4.84→4.85: นำเข้าข้อมูล — ตรวจซ้ำก่อนเลย แสดงรายการซ้ำใน popup confirm เดียว ไม่ต้องกด 2 รอบ',
@@ -3664,7 +3672,7 @@ const DEV_LOGS = [
             'hr.js v4.79→4.80: เพิ่มลายน้ำ ✅ โอนแล้ว (สีเขียว) บนการ์ดเบิกล่วงหน้าที่มีสถานะ closed',
           ]
         },
-      { ref:'#REV-20260625-T', date:'2026-06-25', current: true,
+      { ref:'#REV-20260625-T', date:'2026-06-25',
         items:[
           'Code.gs: getHRLoanPayments payDate ใช้ _fmtDateStr() — แก้วันที่ยาวในตารางผ่อนชำระ',
           'employee.html v2.7: badge .loan-notify-dot ใช้ absolute position บนปุ่ม nav',

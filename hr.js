@@ -2456,6 +2456,9 @@ function hrSavePayCfg() {
     p2: { start: g('hrPayP2Start') || 16, end: g('hrPayP2End') || 31, payday: g('hrPayP2Day') || 1 },
   };
   localStorage.setItem(HR_PAY_LS, JSON.stringify(cfg));
+  // sync ไปเซิร์ฟเวอร์ด้วย เพื่อให้ employee.html ใช้งวดเดียวกัน
+  _hrPOST('saveHRPayCfg', { cfg: cfg })
+    .catch(function() {}); // ไม่แจ้ง error ถ้า offline
   Swal.fire({ icon: 'success', title: '💾 บันทึกรอบการจ่ายแล้ว', timer: 1200, showConfirmButton: false });
 }
 
