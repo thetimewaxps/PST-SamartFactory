@@ -1564,7 +1564,7 @@ function _hrEmpModal(emp, idx) {
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">' +
         _hrField('empFAdvBudget', 'วงเงินเบิก/เดือน (฿)', emp && emp.advanceBudget || 0, 'number') +
-        _hrField('empFPin', 'PIN เข้าระบบ (4 หลัก)', '', 'password', '••••') +
+        '<div><label style="font-size:.76rem;color:var(--t3);display:block;margin-bottom:3px">PIN เข้าระบบ (4 หลัก)</label><div style="position:relative"><input id="empFPin" type="password" value="' + (emp && emp.pin ? emp.pin : '') + '" placeholder="••••" maxlength="6" style="width:100%;padding:8px 40px 8px 10px;border-radius:8px;border:1px solid var(--bc-input);background:var(--card);color:var(--t1);font-family:Sarabun,sans-serif;box-sizing:border-box"><button type="button" id="empFPinEye" onclick="hrTogglePinEye()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;padding:0;line-height:1">👁</button></div></div>' +
       '</div>' +
       // ── เอกสาร / รูปถ่าย ──
       '<div style="font-size:.72rem;font-weight:700;color:#6366f1;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">เอกสาร / รูปถ่าย (เก็บที่ Drive)</div>' +
@@ -1657,6 +1657,14 @@ function _hrField(id, label, value, type, placeholder, extra) {
     (placeholder ? ' placeholder="' + placeholder + '"' : '') +
     (extra ? ' ' + extra : '') +
     ' style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--bc-input);background:var(--card);color:var(--t1);font-family:\'Sarabun\',sans-serif;box-sizing:border-box"></div>';
+}
+
+function hrTogglePinEye() {
+  var inp = document.getElementById('empFPin');
+  var btn = document.getElementById('empFPinEye');
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  if (btn) btn.textContent = inp.type === 'password' ? '👁' : '🙈';
 }
 
 function hrDelEmp(i) {
