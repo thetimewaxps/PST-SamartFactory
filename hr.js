@@ -1215,11 +1215,16 @@ function _hrPayTableHtml(rows) {
         ? ' <a href="' + paidRec.slipUrl + '" target="_blank" title="\u0e14\u0e39\u0e43\u0e1a\u0e42\u0e2d\u0e19" '
           + 'style="color:#6ee7b7;font-size:.8rem;text-decoration:none;padding:0 4px">\ud83e\uddfe</a>'
         : '';
+      var histDi = '';
+      try { histDi = encodeURIComponent(JSON.stringify(paidRec.deductItems || [])); } catch(e) {}
+      var paidSlipBtn = '<button onclick="hrOpenPayslip(' + Q + id + Q + ',' + Q + _hrSumMon + Q + ',' + Q + _hrSumPeriod + Q + ',' + Q + histDi + Q + ')" '
+        + 'style="margin-top:8px;width:100%;padding:7px;background:#f0fdf4;color:#166534;border:0.5px solid #86efac;border-radius:8px;cursor:pointer;font-family:Sarabun,sans-serif;font-size:.78rem;font-weight:700">'
+        + '\ud83e\uddfe \u0e14\u0e39\u0e2a\u0e25\u0e34\u0e1b</button>';
       badgeHtml = '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
         + '<span style="font-size:.65rem;padding:3px 9px;border-radius:99px;background:#065f46;color:#6ee7b7;font-weight:700">\u2705 \u0e42\u0e2d\u0e19\u0e41\u0e25\u0e49\u0e27</span>'
         + '<span style="font-size:.6rem;color:rgba(255,255,255,.6)">' + paidRec.transferDate + slipBtn + delBtn + '</span>'
         + '</div>';
-      actionHtml = '';
+      actionHtml = '<div style="padding:0 14px 10px">' + paidSlipBtn + '</div>';
     } else {
       // รอยืนยัน
       var ocSlip    = 'hrOpenPayslip(' + Q + id + Q + ',' + Q + _hrSumMon + Q + ',' + Q + _hrSumPeriod + Q + ')';
@@ -2809,10 +2814,9 @@ function hrEditAtt(empId, month, period) {
 // ══════════════════════════════════════════════════════════════
 // PAYSLIP — สลิปเงินเดือน
 // ══════════════════════════════════════════════════════════════
-function hrOpenPayslip(empId, month, period) {
+function hrOpenPayslip(empId, month, period, deductItemsJson) {
   period = period || 'all';
   const emp     = _hrEmps.find(function(e) { return String(e.empId) === String(empId); });
-  // รวบรวม att ทั้งหมดของพนักงานที่โหลดไว้ (อาจมีหลายเดือนถ้า p2)
   const allAtt  = _hrAtt.filter(function(r) { return String(r.empId) === String(empId); });
   const att     = _hrFilterByPeriod(allAtt, period, month);
 
@@ -2822,6 +2826,19 @@ function hrOpenPayslip(empId, month, period) {
   }
 
   const payslip = _hrCalcPayslip(emp, att, month, period);
+
+  // ถ้ามี deductItems ที่บันทึกไว้ตอน confirm → ใช้แทนการคำนวณใหม่ (สลิป historical)
+  if (deductItemsJson) {
+    try {
+      var histItems = JSON.parse(decodeURIComponent(deductItemsJson));
+      if (histItems && histItems.length) {
+        payslip.loanDeductItems = histItems;
+        payslip.loanDeductTotal = histItems.reduce(function(s, x) { return s + (x.amount || 0); }, 0);
+        payslip.net = payslip.gross - (payslip.absentDeduct || 0) - (payslip.offDeduct || 0) - payslip.loanDeductTotal;
+      }
+    } catch(e) {}
+  }
+
   const html    = _hrSlipHtml(payslip);
 
   const win = window.open('', '_blank');
@@ -4565,7 +4582,8 @@ async function hrConfirmPayroll(id, nameEnc, net, month, period, loanEnc) {
       empId: id, empName: empName,
       month: month, period: period || 'all',
       amount: v.amount, transferDate: v.transferDate,
-      note: v.note, slipUrl: slipUrl, recordedBy: 'admin'
+      note: v.note, slipUrl: slipUrl, recordedBy: 'admin',
+      deductItems: (v.adjustedLoanItems && v.adjustedLoanItems.length) ? v.adjustedLoanItems : loanItems
     });
     if (res && res.status === 'ok') {
       // ── Auto ตัดยอดเงินกู้/เบิกที่ถูกหักงวดนี้ ──
