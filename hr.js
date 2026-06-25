@@ -603,18 +603,57 @@ function hrConfirmImport() {
 
 // ── บันทึกจริง ────────────────────────────────────────────────
 function _hrDoSave(rows) {
-  Swal.fire({ title: '⏳ กำลังบันทึก...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
-  _hrPOST('saveHRAttendance', { rows: rows }).then(function(r) {
+  // Step 1: checkOnly — ตรวจซ้ำก่อน
+  Swal.fire({ title: '⏳ กำลังตรวจข้อมูล...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+  _hrPOST('saveHRAttendance', { rows: rows, checkOnly: true }).then(function(chk) {
     Swal.hideLoading(); Swal.close();
-    if (r.status === 'ok') {
-      Swal.fire({ icon: 'success', title: '✅ บันทึกสำเร็จ', text: 'บันทึก ' + (r.saved || rows.length) + ' รายการ', timer: 1800, showConfirmButton: false });
-      _hrPreview = [];
-      _hrAtt = [];
-      document.getElementById('hrImportPreview').innerHTML = '';
-      document.getElementById('hrImportActions').innerHTML = '';
-      setTimeout(function() { hrSubSwitch('2'); }, 1900);
+    if (chk.status !== 'ok') { Swal.fire('❌ ผิดพลาด', chk.message || '', 'error'); return; }
+
+    var skipCount = chk.skipped || 0;
+    var skipList  = chk.skippedList || [];
+    var newCount  = rows.length - skipCount;
+
+    function doActualSave() {
+      Swal.fire({ title: '⏳ กำลังบันทึก...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+      _hrPOST('saveHRAttendance', { rows: rows, skipExisting: true }).then(function(r) {
+        Swal.hideLoading(); Swal.close();
+        if (r.status === 'ok') {
+          var txt = 'เพิ่มใหม่ ' + r.saved + ' รายการ';
+          if (r.skipped) txt += ' · ข้ามซ้ำ ' + r.skipped + ' รายการ';
+          Swal.fire({ icon: 'success', title: '✅ บันทึกสำเร็จ', text: txt, timer: 2200, showConfirmButton: false });
+          _hrPreview = []; _hrAtt = [];
+          document.getElementById('hrImportPreview').innerHTML = '';
+          document.getElementById('hrImportActions').innerHTML = '';
+          setTimeout(function() { hrSubSwitch('2'); }, 2300);
+        } else {
+          Swal.fire('❌ ผิดพลาด', r.message || 'ไม่ทราบสาเหตุ', 'error');
+        }
+      }).catch(function(e) { Swal.hideLoading(); Swal.close(); Swal.fire('❌ Error', String(e), 'error'); });
+    }
+
+    if (skipCount === 0) {
+      // ไม่มีซ้ำ — บันทึกเลย
+      doActualSave();
     } else {
-      Swal.fire('❌ ผิดพลาด', r.message || 'ไม่ทราบสาเหตุ', 'error');
+      // มีซ้ำ — แสดง popup เตือน
+      var listHtml = skipList.slice(0, 10).map(function(s) {
+        return '<li style="font-size:.82rem;color:#92400e">' + (s.name || s.empId) + ' — ' + s.date + '</li>';
+      }).join('');
+      if (skipList.length > 10) listHtml += '<li style="font-size:.78rem;color:#b45309">...และอีก ' + (skipList.length - 10) + ' รายการ</li>';
+
+      Swal.fire({
+        title: '⚠️ พบข้อมูลซ้ำ ' + skipCount + ' รายการ',
+        html: '<div style="text-align:left;margin-bottom:8px;font-size:.88rem;color:#374151">รายการเหล่านี้มีอยู่ในชีตแล้ว จะ<b>ข้ามไป</b>เพื่อไม่ทับข้อมูลที่แก้ไขแล้ว:</div>'
+          + '<ul style="margin:0 0 10px 16px;padding:0;max-height:180px;overflow-y:auto;background:#fef3c7;border-radius:8px;padding:8px 8px 8px 24px">' + listHtml + '</ul>'
+          + '<div style="font-size:.85rem;color:#059669;font-weight:600">จะเพิ่มข้อมูลใหม่ ' + newCount + ' รายการ</div>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '✅ ดำเนินการต่อ (ข้ามซ้ำ)',
+        cancelButtonText: '❌ ยกเลิก',
+        confirmButtonColor: '#059669',
+      }).then(function(res) {
+        if (res.isConfirmed) doActualSave();
+      });
     }
   }).catch(function(e) { Swal.hideLoading(); Swal.close(); Swal.fire('❌ Error', String(e), 'error'); });
 }
