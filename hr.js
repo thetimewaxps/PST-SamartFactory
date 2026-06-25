@@ -1126,6 +1126,12 @@ function _hrPayTableHtml(rows) {
     var headerBg = isDaily ? '#0e7490' : '#1e40af';
     var empRec = _hrEmps.find(function(x) { return String(x.empId) === id; }) || null;
     var ps = _hrCalcPayslip(empRec, attByEmp[id] || [], _hrSumMon, _hrSumPeriod);
+    // ถ้าโอนแล้ว → ใช้ deductItems จริงที่บันทึกตอน confirm (ไม่ recalculate)
+    if (paidRec && paidRec.deductItems && paidRec.deductItems.length) {
+      ps.loanDeductItems = paidRec.deductItems;
+      ps.loanDeductTotal = paidRec.deductItems.reduce(function(s, x) { return s + (x.amount || 0); }, 0);
+      ps.net = ps.gross - (ps.absentDeduct || 0) - (ps.offDeduct || 0) - ps.loanDeductTotal;
+    }
     var phone = (empRec && empRec.phone) ? empRec.phone.replace(/[^0-9]/g,'') : '';
     var initials = e.name ? e.name.charAt(0) : '?';
     var thumbUrl = _hrDriveThumb(empRec && empRec.profileUrl);
