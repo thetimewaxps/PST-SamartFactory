@@ -3419,7 +3419,7 @@ function _trkBuildCustFilter() {
   )].sort((a, b) => (countMap[b] || 0) - (countMap[a] || 0));
 
   const sel = bar.querySelector('select');
-  const prev = sel ? sel.value : _trkTaskCustFilter;
+  const prev = _trkTaskCustFilter;  // อ่านจาก state โดยตรง ไม่ใช่ DOM (DOM ยังค้างค่าเก่าเมื่อกด ✕)
   const opts = ['<option value="">👥 ทั้งหมด</option>']
     .concat(allCusts.map(c => {
       const n = countMap[c] || 0;
