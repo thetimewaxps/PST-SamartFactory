@@ -5697,7 +5697,7 @@ function _hrRegBuildTable() {
     var allAllowNames = [];
     rows.forEach(function(r) {
       (r.allowances || []).forEach(function(a) {
-        if (a.name && allAllowNames.indexOf(a.name) < 0) allAllowNames.push(a.name);
+        if (a.label && allAllowNames.indexOf(a.label) < 0) allAllowNames.push(a.label);
       });
     });
 
@@ -5714,7 +5714,7 @@ function _hrRegBuildTable() {
     // dynamic allowance headers
     var allowCols = allAllowNames.map(function(n) { return th(n, 'right'); }).join('');
     var allowTotCols = allAllowNames.map(function(n) {
-      var s = 0; rows.forEach(function(r) { var a = (r.allowances||[]).find(function(x){return x.name===n;}); if(a) s+=Number(a.amount)||0; });
+      var s = 0; rows.forEach(function(r) { var a = (r.allowances||[]).find(function(x){return x.label===n;}); if(a) s+=Number(a.amount)||0; });
       return '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:right;font-weight:700">'+fmt(Math.round(s))+'</td>';
     }).join('');
 
@@ -5736,7 +5736,7 @@ function _hrRegBuildTable() {
     var bodyRows = rows.map(function(r, i) {
       var paidStyle = r.isPaid ? 'background:#f0fdf4' : '';
       var allowTds = allAllowNames.map(function(n) {
-        var a = (r.allowances||[]).find(function(x){return x.name===n;});
+        var a = (r.allowances||[]).find(function(x){return x.label===n;});
         return td(a ? fmt(Math.round(Number(a.amount)||0)) : '-', 'right');
       }).join('');
       return '<tr style="' + paidStyle + '">' +
@@ -5823,14 +5823,14 @@ function hrPrintPayrollRegister() {
   // dynamic allowance columns สำหรับ print
   var pAllowNames = [];
   rows.forEach(function(r) {
-    (r.allowances||[]).forEach(function(a){ if(a.name && pAllowNames.indexOf(a.name)<0) pAllowNames.push(a.name); });
+    (r.allowances||[]).forEach(function(a){ if(a.label && pAllowNames.indexOf(a.label)<0) pAllowNames.push(a.label); });
   });
   var pAllowTh = pAllowNames.map(function(n){ return '<th style="'+thStyle+'">'+n+'</th>'; }).join('');
 
   var bodyRows = rows.map(function(r, i) {
     var bg = r.isPaid ? 'background:#f0fdf4' : '';
     var pAllowTd = pAllowNames.map(function(n){
-      var a = (r.allowances||[]).find(function(x){return x.name===n;});
+      var a = (r.allowances||[]).find(function(x){return x.label===n;});
       return '<td style="'+tdStyle+'">'+(a?fmt(Math.round(Number(a.amount)||0)):'-')+'</td>';
     }).join('');
     return '<tr style="'+bg+'">' +
@@ -5858,7 +5858,7 @@ function hrPrintPayrollRegister() {
   }).join('');
 
   var pAllowTotTd = pAllowNames.map(function(n){
-    var s=0; rows.forEach(function(r){ var a=(r.allowances||[]).find(function(x){return x.name===n;}); if(a) s+=Number(a.amount)||0; });
+    var s=0; rows.forEach(function(r){ var a=(r.allowances||[]).find(function(x){return x.label===n;}); if(a) s+=Number(a.amount)||0; });
     return '<td style="'+tdStyle+';font-weight:700">'+fmt(Math.round(s))+'</td>';
   }).join('');
 
