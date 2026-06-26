@@ -5916,7 +5916,7 @@ function hrPrintPayrollRegister() {
   }
   var _slipCo = {}; try { _slipCo = JSON.parse(localStorage.getItem('ptts_company_cfg')||'{}'); } catch(e){}
   var company = _slipCo.name || localStorage.getItem('ptts_company_name') || 'PTS Smart Factory';
-  var fmt = function(n) { return n ? Number(n).toLocaleString() : '-'; };
+  var fmt = function(n) { return (n===null||n===undefined||n===''||n===false||n===0) ? '-' : Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); };
   var rows = _hrRegRows, tot = _hrRegTot;
 
   var thStyle = 'padding:4px 5px;font-size:9px;font-weight:700;border:0.5px solid #94a3b8;background:#f1f5f9;text-align:center;white-space:nowrap;color:#1e293b';
@@ -5935,7 +5935,7 @@ function hrPrintPayrollRegister() {
     var bg = r.isPaid ? 'background:#f0fdf4' : '';
     var pAllowTd = pAllowNames.map(function(n){
       var a = (r.allowances||[]).find(function(x){return x.label===n;});
-      return '<td style="'+tdStyle+'">'+(a?fmt(Math.round(Number(a.amount)||0)):'-')+'</td>';
+      return '<td style="'+tdStyle+'">'+(a?fmt(Number(a.amount)||0):'-')+'</td>';
     }).join('');
     return '<tr style="'+bg+'">' +
       '<td style="'+tdCStyle+'">'+  (i+1) +'</td>' +
@@ -5963,7 +5963,7 @@ function hrPrintPayrollRegister() {
 
   var pAllowTotTd = pAllowNames.map(function(n){
     var s=0; rows.forEach(function(r){ var a=(r.allowances||[]).find(function(x){return x.label===n;}); if(a) s+=Number(a.amount)||0; });
-    return '<td style="'+tdStyle+';font-weight:700">'+fmt(Math.round(s))+'</td>';
+    return '<td style="'+tdStyle+';font-weight:700">'+fmt(s)+'</td>';
   }).join('');
 
   var totRow =
@@ -6005,7 +6005,7 @@ function hrPrintPayrollRegister() {
       '<th style="'+thStyle+'">OT ช.ม.</th><th style="'+thStyle+'">OT/ชม</th><th style="'+thStyle+'">OT เงิน</th>' +
       pAllowTh +
       '<th style="'+thStyle+'">รวมยอด</th>' +
-      '<th style="'+thStyle+'">ภาษี</th><th style="'+thStyle+'">ปกส.</th>' +
+      '<th style="'+thStyle+'">ภาษี</th><th style="'+thStyle+'">สปส.</th>' +
       '<th style="'+thStyle+'">หักขาด/ลา</th><th style="'+thStyle+'">หักเงินกู้</th>' +
       '<th style="'+thStyle+'">หักเบิก</th><th style="'+thStyle+'">อื่นๆ</th>' +
       '<th style="'+thStyle+'">รวมหัก</th>' +
