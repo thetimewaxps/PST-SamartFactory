@@ -237,10 +237,13 @@ function _invOrderTotal(r) {
 function _invCountPendingPOs(cust) {
   const matchKeys = [cust.contact, cust.name].map(s => (s||'').trim()).filter(Boolean);
   if (!matchKeys.length) return 0;
-  return (_orderCache || []).filter(r =>
-    matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim()) &&
-    !String(r[ORDER_COLS.invoiceNo]||'').trim()
-  ).length;
+  const invoicedPOs = _invInvoicedPOSet();
+  return (_orderCache || []).filter(r => {
+    const noPO = String(r[ORDER_COLS.noPO]||'').trim();
+    return matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim()) &&
+      !String(r[ORDER_COLS.invoiceNo]||'').trim() &&
+      !invoicedPOs.has(noPO);  // ชั้น 2: cross-check กับ Invoices sheet
+  }).length;
 }
 
 function _invRefreshCustomerSelect() {
@@ -292,10 +295,13 @@ function renderInvOrderList() {
   // คอลัมน์ "ลูกค้า" ใน Order เก็บค่า "ชื่อผู้ติดต่อ" (ตอนออกใบเสนอราคา) ไม่ใช่ชื่อบริษัท
   // จึงจับคู่ด้วย cust.contact เป็นหลัก (เผื่อกรณีกรอกชื่อบริษัทไว้ในช่องนั้นด้วย จึงเทียบ cust.name ด้วย)
   const matchKeys = [cust.contact, cust.name].map(s => (s||'').trim()).filter(Boolean);
-  let rows = _orderCache.filter(r =>
-    matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim()) &&
-    !String(r[ORDER_COLS.invoiceNo]||'').trim()
-  );
+  const invoicedPOs = _invInvoicedPOSet(); // ชั้น 2: cross-check กับ Invoices sheet
+  let rows = _orderCache.filter(r => {
+    const noPO = String(r[ORDER_COLS.noPO]||'').trim();
+    return matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim()) &&
+      !String(r[ORDER_COLS.invoiceNo]||'').trim() &&
+      !invoicedPOs.has(noPO);
+  });
   const poFilterTerms = ($('invPOFilter')?.value || '').toLowerCase()
     .split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
   if (poFilterTerms.length) {
@@ -442,6 +448,15 @@ function _invUpdateSummary() {
 }
 
 // ── ตรวจสอบ PO ที่เลือก ว่าซ้ำกับใบกำกับที่ออกไปแล้วหรือไม่ ──
+// คืน Set ของ noPO ทั้งหมดที่ออกใบกำกับไปแล้ว (ใช้ cross-check หลายจุด)
+function _invInvoicedPOSet() {
+  const s = new Set();
+  (_invIssuedCache || []).forEach(inv => {
+    String(inv.poList || '').split(',').map(x => x.trim()).filter(Boolean).forEach(po => s.add(po));
+  });
+  return s;
+}
+
 // คืนรายการ {po, invoiceNo} ของ PO ที่พบว่าซ้ำ (เคยอยู่ในใบกำกับอื่นมาก่อน)
 function _invFindDuplicatePOs(selectedPOs) {
   const dups = [];
@@ -465,21 +480,20 @@ async function invGeneratePreview() {
     return;
   }
 
-  // ── ตรวจสอบ PO ซ้ำกับใบกำกับที่ออกไปแล้ว ──
+  // ── ตรวจสอบ PO ซ้ำกับใบกำกับที่ออกไปแล้ว (BLOCK — ห้ามผ่านเด็ดขาด) ──
   const dups = _invFindDuplicatePOs(_invSelectedPOs);
   if (dups.length) {
-    const list = dups.map(d => `PO ${d.po} → อยู่ในใบกำกับ ${d.invoiceNo} แล้ว`).join('<br>');
-    const result = await Swal.fire({
-      icon: 'warning',
-      title: 'พบ PO ซ้ำกับใบกำกับที่ออกไปแล้ว',
-      html: list,
-      showCancelButton: true,
-      confirmButtonText: 'ออกใบกำกับต่อ',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#f59e0b',
+    const list = dups.map(d => `• PO <b>${d.po}</b> → ใบกำกับ <b>${d.invoiceNo}</b>`).join('<br>');
+    await Swal.fire({
+      icon: 'error',
+      title: '🚫 ออกใบกำกับซ้ำไม่ได้',
+      html: `<div style="text-align:left;font-size:.88rem;line-height:2">${list}</div>
+             <div style="margin-top:10px;font-size:.8rem;color:#f87171">กรุณายกเลิกการเลือก PO ที่ซ้ำออกก่อน</div>`,
+      confirmButtonText: 'ตกลง',
+      confirmButtonColor: '#dc2626',
       background: '#0d1b2a', color: '#cce4ff'
     });
-    if (!result.isConfirmed) return;
+    return; // BLOCK — ไม่มีทางเลือก "ออกต่อ"
   }
 
   const type = $('inv_type')?.value === 'short' ? 'short' : 'full';
@@ -1292,6 +1306,10 @@ async function fetchIssuedInvoices() {
     if (wrap) { wrap.innerHTML = `<div style="text-align:center;padding:16px;color:#f87171;font-size:.82rem">โหลดข้อมูลไม่สำเร็จ: ${e.message}</div>`; return; }
   }
   renderIssuedInvoiceList();
+  // re-render PO picker + customer counts หลัง issued cache โหลดเสร็จ
+  // เพื่อให้ cross-check กับ Invoices sheet มีผลทันที
+  _invRefreshCustomerSelect();
+  renderInvOrderList();
 }
 
 // ล้างตัวกรอง "ใบกำกับที่ออกแล้ว"

@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.08</span>
+      <span class="ph-chip ver">v12.09</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3634,8 +3634,20 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260626-F',
+          date: '2026-06-26',
+          items: [
+            'invoice.js: เพิ่ม _invInvoicedPOSet() — build Set ของ noPO ทั้งหมดที่ออกใบกำกับไปแล้วจาก Invoices sheet',
+            'invoice.js: renderInvOrderList() — cross-check กับ Invoices sheet (ชั้น 2) ป้องกัน PO ที่ออกแล้วยังแสดงอยู่',
+            'invoice.js: _invCountPendingPOs() — cross-check เช่นกัน ตัวเลข "รอเปิด X PO" ถูกต้องแน่นอน',
+            'invoice.js: invGeneratePreview() — duplicate check เปลี่ยนจาก warning → BLOCK เด็ดขาด ไม่มีปุ่ม "ออกต่อ"',
+            'invoice.js: fetchIssuedInvoices() — re-render PO picker หลัง Invoices sheet โหลดเสร็จ (ป้องกัน stale data)',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260626-E',
           date: '2026-06-26',
+          current: false,
           items: [
             'hr.js: ทะเบียนเงินเดือน — คอลัมน์วันทำงาน: รายเดือน = periodDays(15/30) - วันขาด, รายวัน = วันมาจริง',
           ]
