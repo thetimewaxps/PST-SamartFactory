@@ -1945,11 +1945,12 @@ function _hrRenderCal() {
     '</div>' +
     // ── calendar grid ──
     '<div id="hrCalGrid"></div>' +
-    // ── legend ──
-    '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:.74rem;color:var(--t3)">' +
+    // ── legend + summary ──
+    '<div style="margin-top:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:.74rem;color:var(--t3)">' +
       '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(248,113,113,.4);border-radius:3px;vertical-align:middle;margin-right:4px"></span>นักขัตฤกษ์</span>' +
       '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(251,191,36,.4);border-radius:3px;vertical-align:middle;margin-right:4px"></span>ชดเชย</span>' +
       '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(52,211,153,.4);border-radius:3px;vertical-align:middle;margin-right:4px"></span>บริษัท</span>' +
+      '<span id="hrCalSummary" style="margin-left:8px;color:var(--t2)"></span>' +
     '</div>' +
     '</div>';
 
@@ -2009,6 +2010,32 @@ function _hrCalLoad() {
   }).catch(function(e) {
     if (grid) grid.innerHTML = '<div style="color:#f87171;font-size:.85rem;padding:12px">❌ โหลดวันหยุดไม่ได้ — ตรวจสอบ Script URL และ Redeploy Code.gs<br><small style="color:#94a3b8">' + String(e) + '</small></div>';
   });
+}
+
+// อัป summary วันหยุดตามปีที่เลือก (ใช้ข้อมูลใน _hrHolidays)
+function _hrCalUpdateSummary(beYear) {
+  var cnt = { 'นักขัตฤกษ์': 0, 'ชดเชย': 0, 'บริษัท': 0 };
+  (_hrHolidays || []).forEach(function(h) {
+    var p = String(h.date || '').split('/');
+    if (p.length === 3 && parseInt(p[2]) === beYear) {
+      if (cnt[h.type] !== undefined) cnt[h.type]++;
+      else cnt['นักขัตฤกษ์']++;
+    }
+  });
+  var total = cnt['นักขัตฤกษ์'] + cnt['ชดเชย'] + cnt['บริษัท'];
+  var html =
+    '<b style="color:#dc2626">นักขัตฤกษ์ ' + cnt['นักขัตฤกษ์'] + '</b>' +
+    '<span style="margin:0 4px;opacity:.4">|</span>' +
+    '<b style="color:#92400e">ชดเชย ' + cnt['ชดเชย'] + '</b>' +
+    '<span style="margin:0 4px;opacity:.4">|</span>' +
+    '<b style="color:#059669">บริษัท ' + cnt['บริษัท'] + '</b>' +
+    '<span style="margin:0 6px;opacity:.4">·</span>' +
+    '<b style="color:var(--t1)">รวม ' + total + ' วัน</b>';
+  var el = document.getElementById('hrCalSummary');
+  if (el) el.innerHTML = html;
+  // อัปฝั่ง settings ด้วย (ถ้ามี element)
+  var el2 = document.getElementById('hrHolCurSum');
+  if (el2) el2.innerHTML = html;
 }
 
 function _hrCalDraw() {
@@ -2075,6 +2102,7 @@ function _hrCalDraw() {
   }
   html += '</div>';
   grid.innerHTML = html;
+  _hrCalUpdateSummary(beYear);
 }
 
 function _hrCalClick(dateStr, existingName) {
@@ -2412,8 +2440,9 @@ function _hrRenderSettings() {
 
     // ── การ์ดจัดการวันหยุด ─────────────────────────────────────────
     '<div style="max-width:560px;margin-top:16px;background:var(--card);border:1px solid var(--bc-input);border-radius:14px;padding:22px 24px">' +
-      '<div style="font-weight:700;font-size:.95rem;color:var(--c1);margin-bottom:4px">📅 วันหยุดราชการ</div>' +
-      '<div style="font-size:.76rem;color:var(--t3);margin-bottom:14px">สร้างรายการวันหยุดประจำปีลงใน Sheet HR_Holidays — ข้ามวันที่ซ้ำอัตโนมัติ</div>' +
+      '<div style="font-weight:700;font-size:.95rem;color:var(--c1);margin-bottom:2px">📅 วันหยุดราชการ</div>' +
+      '<div style="font-size:.76rem;color:var(--t3);margin-bottom:6px">สร้างรายการวันหยุดประจำปีลงใน Sheet HR_Holidays — ข้ามวันที่ซ้ำอัตโนมัติ</div>' +
+      '<div id="hrHolCurSum" style="font-size:.76rem;margin-bottom:10px;color:var(--t2)"></div>' +
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">' +
         '<label style="font-size:.82rem;color:var(--t2)">เลือกปี:</label>' +
         '<select id="hrHolYear" onchange="_hrHolPreview()" style="padding:7px 12px;border-radius:8px;border:1px solid var(--bc-input);background:var(--bg);color:var(--t1);font-family:\'Sarabun\',sans-serif;font-size:.85rem">' +
@@ -2615,21 +2644,47 @@ function hrSeedHolidays() {
   var holidays = _hrBuildHolidays(beYear);
   if (!holidays.length) return;
 
-  Swal.fire({ title: '⏳ กำลังสร้างวันหยุดปี ' + beYear + '...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+  // นับวันที่ซ้ำกับที่มีอยู่แล้วใน _hrHolidays
+  var existingDates = {};
+  (_hrHolidays || []).forEach(function(h) { if (h.date) existingDates[h.date] = true; });
+  var willAdd  = holidays.filter(function(h) { return !existingDates[h.date]; }).length;
+  var willSkip = holidays.length - willAdd;
 
-  _hrPOST('seedHRHolidays', { holidays: holidays })
-    .then(function(r) {
-      Swal.fire({
-        icon: 'success',
-        title: '✅ สร้างวันหยุดปี ' + beYear + ' แล้ว',
-        html: 'เพิ่ม <b style="color:#34d399">' + (r.added || 0) + ' วัน</b>' +
-              (r.skipped ? ' | ข้าม <b style="color:#94a3b8">' + r.skipped + ' วัน</b> (มีอยู่แล้ว)' : ''),
-        confirmButtonColor: '#4f46e5',
-      });
-      // อัปเดต _hrHolidays cache
-      _hrGET('getHRHolidays').then(function(res) { _hrHolidays = res.data || []; });
-    })
-    .catch(function(e) { Swal.fire('❌ ผิดพลาด', String(e), 'error'); });
+  Swal.fire({
+    icon: 'question',
+    title: '📅 สร้างวันหยุดปี ' + beYear + '?',
+    html:
+      '<div style="font-size:.88rem;line-height:1.8;text-align:left">' +
+      '<div>📋 วันหยุดในชุดมาตรฐาน: <b>' + holidays.length + ' วัน</b></div>' +
+      (willAdd  ? '<div style="color:#34d399">➕ จะเพิ่มใหม่: <b>' + willAdd  + ' วัน</b></div>' : '<div style="color:#94a3b8">ℹ️ ไม่มีวันใหม่ที่ต้องเพิ่ม</div>') +
+      (willSkip ? '<div style="color:#94a3b8">⏭️ ข้าม (มีอยู่แล้ว): <b>' + willSkip + ' วัน</b></div>' : '') +
+      '<div style="margin-top:8px;padding:8px 10px;background:#fef9c3;border-radius:6px;font-size:.8rem;color:#92400e">' +
+      '⚠️ วันที่มีอยู่แล้วในปฏิทิน <b>จะไม่ถูกเขียนทับ</b><br>แต่ถ้าเพิ่งแก้ไขวันหยุดบางวัน ให้ตรวจสอบปฏิทินก่อนกด' +
+      '</div>' +
+      '</div>',
+    showCancelButton: true,
+    confirmButtonText: '✅ สร้างวันหยุด',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#4f46e5',
+  }).then(function(cf) {
+    if (!cf.isConfirmed) return;
+
+    Swal.fire({ title: '⏳ กำลังสร้างวันหยุดปี ' + beYear + '...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+
+    _hrPOST('seedHRHolidays', { holidays: holidays })
+      .then(function(r) {
+        Swal.fire({
+          icon: 'success',
+          title: '✅ สร้างวันหยุดปี ' + beYear + ' แล้ว',
+          html: 'เพิ่ม <b style="color:#34d399">' + (r.added || 0) + ' วัน</b>' +
+                (r.skipped ? ' | ข้าม <b style="color:#94a3b8">' + r.skipped + ' วัน</b> (มีอยู่แล้ว)' : ''),
+          confirmButtonColor: '#4f46e5',
+        });
+        // อัปเดต _hrHolidays cache
+        _hrGET('getHRHolidays').then(function(res) { _hrHolidays = res.data || []; });
+      })
+      .catch(function(e) { Swal.fire('❌ ผิดพลาด', String(e), 'error'); });
+  });
 }
 
 
