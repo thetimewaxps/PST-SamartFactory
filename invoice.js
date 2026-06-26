@@ -316,7 +316,41 @@ function renderInvOrderList() {
     _invUpdateSummary();
     return;
   }
-  wrap.innerHTML = rows.map(r => {
+  // ── ตรวจหา PO ที่ออกใบกำกับแล้วแต่ยัง stamp ไม่ครบใน Order sheet (col AC/AD) ──
+  const unstampedWarning = (function() {
+    if (!_invIssuedCache || !_invIssuedCache.length) return '';
+    const issues = [];
+    (_invIssuedCache).forEach(inv => {
+      const poArr = String(inv.poList || '').split(',').map(x => x.trim()).filter(Boolean);
+      poArr.forEach(po => {
+        const orderRow = (_orderCache || []).find(r => String(r[ORDER_COLS.noPO]||'').trim() === po);
+        if (orderRow && !String(orderRow[ORDER_COLS.invoiceNo]||'').trim()) {
+          issues.push({ po, invoiceNo: inv.invoiceNo, invDate: inv.date || '' });
+        }
+      });
+    });
+    if (!issues.length) return '';
+    const lines = issues.map(x => {
+      const safePo  = encodeURIComponent(x.po);
+      const safeInv = encodeURIComponent(x.invoiceNo);
+      const safeDt  = encodeURIComponent(x.invDate || '');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">`+
+        `<span style="font-weight:800;color:#dc2626">${x.po}</span>`+
+        `<span style="color:#991b1b;font-size:.75rem">(${x.invoiceNo})</span>`+
+        `<button onclick="invStampOrderPO(decodeURIComponent('${safePo}'),decodeURIComponent('${safeInv}'),decodeURIComponent('${safeDt}'))" `+
+          `style="font-size:.72rem;padding:2px 10px;border-radius:5px;border:none;`+
+          `background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;cursor:pointer;font-weight:600">`+
+          `📌 Stamp</button>`+
+        `</div>`;
+    }).join('');
+    return `<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:10px">
+      <div style="font-size:.8rem;font-weight:700;color:#dc2626;margin-bottom:6px">⚠️ PO ต่อไปนี้ออกใบกำกับแล้ว แต่ยังไม่ได้ stamp ในชีต Order (col AC/AD):</div>
+      <div style="font-size:.82rem;line-height:1.9">${lines}</div>
+      <div style="font-size:.72rem;color:#b91c1c;margin-top:4px">กดปุ่ม Stamp เพื่ออัปเดต col AC/AD ทันที — หรือตรวจสอบในชีต Order</div>
+    </div>`;
+  })();
+
+  wrap.innerHTML = unstampedWarning + rows.map(r => {
     const noPO  = String(r[ORDER_COLS.noPO] || '');
     const prod  = r[ORDER_COLS.productList] || '';
     const date  = r[ORDER_COLS.orderDate] || '';
@@ -351,6 +385,50 @@ function renderInvOrderList() {
 function _invClearPOFilter() {
   if ($('invPOFilter')) $('invPOFilter').value = '';
   renderInvOrderList();
+}
+
+// ── Stamp PO ลง Order col AC/AD ผ่าน Code.gs ──────────────────────────────
+async function invStampOrderPO(po, invoiceNo, invDate) {
+  const cf = await Swal.fire({
+    title: 'ยืนยัน Stamp PO?',
+    html: `จะเขียน <b>${invoiceNo}</b> ลงใน Order<br>col AC/AD ของ <b>${po}</b><br><span style="font-size:.8rem;color:#6b7280">วันที่ใบกำกับ: ${invDate || '(ไม่มี)'}</span>`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: '📌 Stamp เลย',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#dc2626',
+    reverseButtons: true
+  });
+  if (!cf.isConfirmed) return;
+
+  if (!SCRIPT_URL) {
+    Swal.fire('ข้อผิดพลาด', 'ยังไม่ได้ตั้งค่า Script URL — ไปที่แท็บ ตั้งค่า', 'error');
+    return;
+  }
+  Swal.fire({ title: 'กำลัง Stamp...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'stampOrderPO', noPOs: [po], invoiceNo, invoiceDate: invDate })
+    });
+    const json = await res.json();
+    if (json.status !== 'ok') throw new Error(json.message || 'ไม่สำเร็จ');
+
+    // อัป local cache ให้ row นั้นมี invoiceNo แล้ว → warning หาย
+    (_orderCache || []).forEach(r => {
+      if (String(r[ORDER_COLS.noPO] || '').trim() === po) {
+        r[ORDER_COLS.invoiceNo]   = invoiceNo;
+        r[ORDER_COLS.invoiceDate] = invDate;
+      }
+    });
+
+    await Swal.fire({ icon: 'success', title: 'Stamp สำเร็จ!',
+      html: `<b>${po}</b> → ${invoiceNo}`, timer: 1800, showConfirmButton: false });
+    renderInvOrderList();
+  } catch (e) {
+    Swal.fire('ข้อผิดพลาด', e.message, 'error');
+  }
 }
 
 function _invToggleRow(noPO, checked) {
