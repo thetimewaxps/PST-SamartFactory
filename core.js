@@ -268,7 +268,7 @@ function _sbGoto(tab, subTab, view) {
   localStorage.setItem('ptts_active_subtab', _activeSubTab || '');
   localStorage.setItem('ptts_sb_view', _activeSbView || '');
   switchTab(tab);
-  if (subTab && typeof _invSubTabSwitch === 'function') _invSubTabSwitch(subTab);
+  if (subTab && tab === 'invoice' && typeof _invSubTabSwitch === 'function') _invSubTabSwitch(subTab);
   // Order sub-tab switching: ใบเสนอราคา (view=quo) → sub2, Job Order / no view → sub1 + scroll
   if (tab === 'order' && typeof _ordSubTabSwitch === 'function') {
     _ordSubTabSwitch(view === 'quo' ? '2' : '1');
@@ -302,7 +302,9 @@ function _loadTabCfg() {
   let order, hidden;
   try { order  = JSON.parse(localStorage.getItem('ptts_tab_order')  || 'null') || TAB_DEFS.map(t=>t.id); } catch(e) { order  = TAB_DEFS.map(t=>t.id); }
   try { hidden = JSON.parse(localStorage.getItem('ptts_tab_hidden') || '[]'); } catch(e) { hidden = []; }
-  // เผื่อมีแท็บใหม่ (เช่น order) ที่ไม่อยู่ใน config เก่าที่บันทึกไว้ — เติมต่อท้ายให้ครบ
+  // กรอง tab ที่ไม่มีใน TAB_DEFS ออก (ป้องกันขยะ localStorage จาก tab เก่าที่ถูกลบ)
+  order = order.filter(id => TAB_DEFS.some(t => t.id === id));
+  // เผื่อมีแท็บใหม่ที่ไม่อยู่ใน config เก่า — เติมต่อท้ายให้ครบ
   TAB_DEFS.forEach(t => { if (!order.includes(t.id)) order.push(t.id); });
   return { order, hidden };
 }

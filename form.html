@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.18</span>
+      <span class="ph-chip ver">v12.24</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3634,6 +3634,57 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260626-U',
+          date: '2026-06-26',
+          items: [
+            'employee.html: หน้าสลิปพนักงาน — ข้าม att.length check สำหรับ executive (แสดงสลิปได้แม้ไม่มีข้อมูลสแกน)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260626-T',
+          date: '2026-06-26',
+          items: [
+            'hr.js: _hrPayTableHtml — inject exec จาก _hrEmps ก่อน filter (แก้ exec ไม่โผล่ในสรุปเงินเดือน)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260626-S',
+          date: '2026-06-26',
+          items: [
+            'hr.js: สรุปเงินเดือน — early return ตรวจ exec ก่อน ถ้ามี exec ให้ผ่านแม้ไม่มีแถวสแกน',
+            'hr.js: ฝ่ายบริหารโผล่การ์ดทุกงวดแม้ไม่มีพนักงานคนอื่น',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260626-R',
+          date: '2026-06-26',
+          items: [
+            'hr.js: สรุปเงินเดือน — inject executive จาก _hrEmps เสมอ (ไม่ต้องมีแถวสแกน)',
+            'hr.js: ฝ่ายบริหารโผล่บนการ์ดทุกงวด พร้อม QR โอน + สลิป',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260626-Q',
+          date: '2026-06-26',
+          items: [
+            'core.js: _loadTabCfg — filter tab ที่ไม่มีใน TAB_DEFS ออกจาก localStorage (ป้องกันขยะสะสม)',
+            'hr.js: payCard — headerBg ฝ่ายบริหาร (executive) เป็นสีม่วง #5b21b6',
+            'hr.js: hrOpenPayslip — ข้าม att.length guard สำหรับ executive และ historical paid record',
+            'hr.js: Task#44 complete — exec มีปุ่มดูสลิป + QR โอน ครบเหมือนพนักงานทั่วไป',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260626-P',
+          date: '2026-06-26',
+          items: [
+            'core.js: sidebar HR — เพิ่มครบ 9 รายการ ตรงกับ sub-tab ทั้งหมด',
+            'core.js: _sbGoto — guard _invSubTabSwitch เฉพาะ tab invoice เท่านั้น',
+            'hr.js: hrSubSwitch — persist sub-tab ลง localStorage + sync _activeSbView → sidebar highlight ถูก',
+            'hr.js: hrInitTab — restore sub-tab จาก localStorage เมื่อกลับมา HR tab',
+            'core.js: restore ส่วน _chatSend/_chatInit ที่ถูก truncate',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260626-O',
           date: '2026-06-26',
           items: [

@@ -1175,7 +1175,8 @@ function _empLoadSlipPreview() {
           '</table></div></div>'
       : '';
 
-    var slipBase = att.length ? _empSlipPreviewHtml(ps, mon, latestPay) : '<div style="padding:16px;text-align:center;color:var(--t3);font-size:.85rem">ไม่พบข้อมูลเวลางานเดือนนี้</div>';
+    var _isExecEmp = empRec && empRec.type === 'executive';
+    var slipBase = (att.length || _isExecEmp) ? _empSlipPreviewHtml(ps, mon, latestPay) : '<div style="padding:16px;text-align:center;color:var(--t3);font-size:.85rem">ไม่พบข้อมูลเวลางานเดือนนี้</div>';
     var slipHtml = '<div style="position:relative">'
       + slipBase
       + '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;transform:rotate(-30deg)">'

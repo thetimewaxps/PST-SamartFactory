@@ -180,6 +180,15 @@ function _hrRefreshLoanBadge() {
 // ── Sub-tab navigation ────────────────────────────────────────
 function hrSubSwitch(n) {
   _hrSubCur = String(n);
+  // persist ← restore ได้เมื่อกลับมา tab HR
+  try { localStorage.setItem('ptts_hr_subtab', _hrSubCur); } catch(e) {}
+  // sync sidebar highlight ให้ตรง view ที่เลือก
+  var _HR_VMAP = {'1':'import','2':'summary','3':'payroll','4':'emps','5':'settings','6':'holidays','7':'advance','8':'loans','9':'register'};
+  if (typeof _activeSbView !== 'undefined') {
+    _activeSbView = _HR_VMAP[_hrSubCur] || null;
+    try { localStorage.setItem('ptts_sb_view', _activeSbView || ''); } catch(e) {}
+    if (typeof renderTabBar === 'function') renderTabBar();
+  }
   ['1', '2', '3', '4', '5', '6', '7', '8', '9'].forEach(function(k) {
     const btn = document.getElementById('hrBtn' + k);
     const pan = document.getElementById('hrPanel' + k);
@@ -207,6 +216,11 @@ function hrInitTab() {
   if (!_hrSession) {
     _hrSession = { empId: 'admin', name: 'ผู้จัดการ', dept: '', role: 'manager', advanceBudget: 0 };
   }
+  // restore sub-tab ที่เคยเปิดไว้ก่อนออกจาก HR tab
+  try {
+    var saved = localStorage.getItem('ptts_hr_subtab');
+    if (saved && /^[1-9]$/.test(saved)) _hrSubCur = saved;
+  } catch(e) {}
   hrSubSwitch(_hrSubCur || '1');
   _hrRenderImport();
   _hrRefreshLoanBadge();
@@ -907,6 +921,16 @@ function _hrSumTableHtml(rows) {
     attByEmp[id].push(r);
   });
 
+  // inject executive employees ที่ไม่มีข้อมูลสแกนหน้า (ไม่ต้องสแกน) ให้โผล่บนการ์ดด้วย
+  (_hrEmps || []).forEach(function(e) {
+    if (e.type === 'executive') {
+      var xid = String(e.empId);
+      if (!emp[xid]) {
+        emp[xid] = { name: e.name, dept: e.dept, type: 'executive',
+          present: 0, absent: 0, off: 0, lateTimes: 0, lateMin: 0, otWD: 0, otSun: 0 };
+      }
+    }
+  });
   const executive = Object.keys(emp).filter(function(id) { return emp[id].type === 'executive'; });
   const monthly = Object.keys(emp).filter(function(id) { return !emp[id].type || emp[id].type === 'monthly'; });
   const daily   = Object.keys(emp).filter(function(id) { return emp[id].type === 'daily'; });
@@ -1118,7 +1142,9 @@ function _hrPayTableHtml(rows) {
     // index 'all' ด้วย เพื่อให้ view "ทั้งเดือน" เห็นว่าจ่ายแล้ว
     if (!paidMap[p.empId+'|all']) paidMap[p.empId+'|all'] = p;
   });
-  if (!rows.length) {
+  // ตรวจก่อนว่ามี executive ไหม — ถ้ามีให้ผ่านได้แม้ rows ว่าง
+  var _execEmps = (_hrEmps||[]).filter(function(e){ return e.type==='executive'; });
+  if (!rows.length && !_execEmps.length) {
     return '<div style="color:var(--t3);font-size:.85rem">ไม่พบข้อมูลเดือน ' + _hrMLab(_hrSumMon) + ' — กรุณานำเข้าข้อมูลก่อน</div>';
   }
 
@@ -1151,6 +1177,16 @@ function _hrPayTableHtml(rows) {
     attByEmp[id].push(r);
   });
 
+  // inject executive ที่ไม่มีข้อมูลสแกน ให้โผล่บนการ์ดสรุปเงินเดือนด้วย
+  (_hrEmps || []).forEach(function(e) {
+    if (e.type === 'executive') {
+      var xid = String(e.empId);
+      if (!emp[xid]) {
+        emp[xid] = { name: e.name, dept: e.dept, type: 'executive',
+          present: 0, absent: 0, off: 0, lateTimes: 0, lateMin: 0, otWD: 0, otSun: 0 };
+      }
+    }
+  });
   const executive = Object.keys(emp).filter(function(id) { return emp[id].type === 'executive'; });
   const monthly = Object.keys(emp).filter(function(id) { return !emp[id].type || emp[id].type === 'monthly'; });
   const daily   = Object.keys(emp).filter(function(id) { return emp[id].type === 'daily'; });
@@ -1158,7 +1194,8 @@ function _hrPayTableHtml(rows) {
   function payCard(id, paidRec) {
     var e = emp[id];
     var isDaily = e.type === 'daily';
-    var headerBg = isDaily ? '#0e7490' : '#1e40af';
+    var isExec  = e.type === 'executive';
+    var headerBg = isDaily ? '#0e7490' : isExec ? '#5b21b6' : '#1e40af';
     var empRec = _hrEmps.find(function(x) { return String(x.empId) === id; }) || null;
     // Phase 3: ถ้างวดนี้โอนแล้วและมี snapshot rate → ใช้ rate ณ เวลาจ่าย (ไม่ใช่ rate ปัจจุบัน)
     var empForCard = empRec;
@@ -3104,7 +3141,10 @@ function hrOpenPayslip(empId, month, period, deductItemsJson, snapBaseSalary, sn
   const allAtt  = _hrAtt.filter(function(r) { return String(r.empId) === String(empId); });
   const att     = _hrFilterByPeriod(allAtt, period, month);
 
-  if (!att.length) {
+  // ข้าม att check ถ้าเป็น exec (ไม่สแกน) หรือเป็น historical paid record
+  var _isExecEmp = emp && emp.type === 'executive';
+  var _isPaidHist = !!(snapBaseSalary || snapDailyRate);
+  if (!att.length && !_isExecEmp && !_isPaidHist) {
     Swal.fire('⚠️', 'ไม่พบข้อมูลเวลางานของพนักงานนี้ในงวดที่เลือก — กรุณาโหลดข้อมูลก่อน', 'warning');
     return;
   }
