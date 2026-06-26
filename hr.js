@@ -180,7 +180,7 @@ function _hrRefreshLoanBadge() {
 // ── Sub-tab navigation ────────────────────────────────────────
 function hrSubSwitch(n) {
   _hrSubCur = String(n);
-  ['1', '2', '3', '4', '5', '6', '7', '8'].forEach(function(k) {
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9'].forEach(function(k) {
     const btn = document.getElementById('hrBtn' + k);
     const pan = document.getElementById('hrPanel' + k);
     if (btn) {
@@ -197,6 +197,7 @@ function hrSubSwitch(n) {
   if (n === '6') _hrRenderCal();
   if (n === '7') _hrRenderLoans();
   if (n === '8') { _hrClearLoanBadge(); _hrRenderLoanContracts(); }
+  if (n === '9') _hrRenderPayrollRegister();
 }
 
 function hrInitTab() {
@@ -5512,3 +5513,340 @@ function _hrEmpMyLoansSection() {
   '</div>';
 }
 
+
+// ══════════════════════════════════════════════════════════════
+// PANEL 9 — ทะเบียนจ่ายเงินเดือน (Payroll Register)
+// ══════════════════════════════════════════════════════════════
+var _hrRegMon = '';  // เดือนที่เลือกสำหรับ register
+
+function _hrRenderPayrollRegister() {
+  var p = document.getElementById('hrPanel9');
+  if (!p) return;
+
+  // ค่า default เดือนปัจจุบัน
+  if (!_hrRegMon) {
+    var now = new Date();
+    _hrRegMon = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  }
+  var selPeriod = (typeof _hrSumPeriod !== 'undefined' ? _hrSumPeriod : 'all');
+
+  p.innerHTML =
+    '<div style="padding:12px 0">' +
+    // ── Toolbar ──
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px">' +
+      '<div style="font-size:1rem;font-weight:700;color:var(--t1);flex:1">📄 ทะเบียนจ่ายเงินเดือน</div>' +
+      '<input type="month" id="hrRegMonInput" value="' + _hrRegMon + '" ' +
+        'onchange="_hrRegMon=this.value;_hrRegBuildTable()" ' +
+        'style="padding:6px 10px;border:1px solid var(--bc-input);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:\'Sarabun\',sans-serif;font-size:.86rem">' +
+      '<select id="hrRegPeriodSel" onchange="_hrRegBuildTable()" ' +
+        'style="padding:6px 10px;border:1px solid var(--bc-input);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:\'Sarabun\',sans-serif;font-size:.86rem">' +
+        '<option value="all"' + (selPeriod==='all'?' selected':'') + '>ทั้งเดือน</option>' +
+        '<option value="p1"'  + (selPeriod==='p1' ?' selected':'') + '>งวด 1</option>' +
+        '<option value="p2"'  + (selPeriod==='p2' ?' selected':'') + '>งวด 2</option>' +
+      '</select>' +
+      '<button onclick="_hrRegBuildTable()" style="padding:6px 14px;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-size:.86rem;font-weight:700">🔄 โหลด</button>' +
+      '<button onclick="hrPrintPayrollRegister()" style="padding:6px 14px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:\'Sarabun\',sans-serif;font-size:.86rem;font-weight:700">🖨️ พิมพ์</button>' +
+    '</div>' +
+    // ── Table container ──
+    '<div id="hrRegTableWrap" style="overflow-x:auto;border-radius:10px;border:1px solid var(--bc-input)">' +
+      '<div style="padding:32px;text-align:center;color:var(--t3)">กด 🔄 โหลด เพื่อดึงข้อมูล</div>' +
+    '</div>' +
+    '</div>';
+}
+
+function _hrRegBuildTable() {
+  var mon = document.getElementById('hrRegMonInput');
+  if (mon) _hrRegMon = mon.value;
+  var perSel = document.getElementById('hrRegPeriodSel');
+  var period = perSel ? perSel.value : 'all';
+
+  var wrap = document.getElementById('hrRegTableWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="padding:24px;text-align:center;color:var(--t3)">⏳ กำลังโหลด...</div>';
+
+  // โหลด employees + attendance + salaryPayments + loans พร้อมกัน
+  Promise.all([
+    _hrGET('getHREmployees',    {}),
+    _hrGET('getHRAttendance',   { month: _hrRegMon }),
+    _hrGET('getSalaryPayments', {}),
+    _hrGET('getHRLoanContracts',{}),
+    _hrGET('getHRLoans',        {})
+  ]).then(function(res) {
+    var emps     = (res[0] && res[0].data) || [];
+    var attAll   = (res[1] && res[1].data) || [];
+    var salPays  = (res[2] && res[2].data) || [];
+    _hrLoanContracts = (res[3] && res[3].data) || [];
+    _hrLoans         = (res[4] && res[4].data) || [];
+
+    var pc = _hrPayCfg();
+
+    // กรอง attendance ตามเดือน+งวด
+    var attFiltered = _hrFilterByPeriod(attAll, period, _hrRegMon);
+    var attByEmp = {};
+    attFiltered.forEach(function(r) { var id = String(r.empId||''); if (!attByEmp[id]) attByEmp[id] = []; attByEmp[id].push(r); });
+
+    // หา salaryPayment ของเดือน+งวดนี้ (สำหรับ snapshot)
+    var paidMap = {};
+    salPays.forEach(function(sp) {
+      if (sp.month !== _hrRegMon) return;
+      if (period !== 'all' && sp.period !== period && sp.period !== 'all') return;
+      paidMap[String(sp.empId)] = sp;
+    });
+
+    // title งวด
+    var periodTitle = period === 'all' ? 'ทั้งเดือน' :
+                      period === 'p1'  ? 'งวดที่ 1 ('+pc.p1.start+'-'+pc.p1.end+')' :
+                                         'งวดที่ 2 ('+pc.p2.start+'-'+pc.p2.end+')';
+
+    // คำนวณ payslip แต่ละคน
+    var rows = [];
+    emps.forEach(function(emp) {
+      var id = String(emp.empId || '');
+      var att = attByEmp[id] || [];
+      if (!att.length) return; // ไม่มีข้อมูล attendance ข้ามไป
+
+      // ใช้ snapshot rate ถ้ามี paidRec
+      var empForCalc = emp;
+      var paidRec = paidMap[id];
+      if (paidRec && (paidRec.baseSalary || paidRec.dailyRate)) {
+        empForCalc = Object.assign({}, emp);
+        if (paidRec.baseSalary) empForCalc.salary    = Number(paidRec.baseSalary);
+        if (paidRec.dailyRate)  empForCalc.dailyRate  = Number(paidRec.dailyRate);
+      }
+
+      var ps = _hrCalcPayslip(empForCalc, att, _hrRegMon, period);
+      // แยก SSO / เงินกู้ / เบิก จาก loanDeductItems
+      var sso = 0, loanDed = 0, advDed = 0, otherDed = 0;
+      (ps.loanDeductItems || []).forEach(function(d) {
+        if (d.source === 'sso')          sso     += d.amount;
+        else if (d.type === 'loan')      loanDed += d.amount;
+        else if (d.type === 'advance')   advDed  += d.amount;
+        else                             otherDed+= d.amount;
+      });
+      rows.push({
+        empId: ps.empId, name: ps.name, dept: ps.dept,
+        type: ps.type, salary: ps.salary, dailyRate: ps.dailyRate,
+        workDays: ps.present,
+        basePay: ps.basePay,
+        otHours: Math.round((ps.otWDH + ps.otSunH)*10)/10,
+        otRate: ps.otRateWD,
+        otPay: Math.round(ps.otPayWD + ps.otPaySun),
+        allowance: Math.round(ps.allowanceTotal),
+        gross: Math.round(ps.gross),
+        tax: 0,
+        sso: Math.round(sso),
+        absentDed: Math.round(ps.absentDeduct + ps.offDeduct),
+        loanDed: Math.round(loanDed),
+        advDed: Math.round(advDed),
+        otherDed: Math.round(otherDed),
+        totalDed: Math.round(ps.loanDeductTotal),
+        net: Math.round(ps.net),
+        payType: paidRec ? 'โอนแล้ว' : 'โอนเข้าบัญชี',
+        isPaid: !!paidRec
+      });
+    });
+
+    if (!rows.length) {
+      wrap.innerHTML = '<div style="padding:32px;text-align:center;color:var(--t3)">ไม่พบข้อมูลพนักงานที่มีบันทึกเวลางาน</div>';
+      return;
+    }
+
+    // คำนวณยอดรวม
+    var tot = { workDays:0, basePay:0, otHours:0, otPay:0, allowance:0, gross:0, tax:0, sso:0, absentDed:0, loanDed:0, advDed:0, otherDed:0, totalDed:0, net:0 };
+    rows.forEach(function(r) { Object.keys(tot).forEach(function(k){ tot[k] += (r[k]||0); }); });
+
+    // สร้างตาราง
+    var th = function(t, opts) {
+      return '<th style="padding:5px 7px;font-size:.72rem;font-weight:700;color:#475569;border:1px solid #e2e8f0;background:#f8fafc;white-space:nowrap;text-align:'+(opts||'center')+'">'+t+'</th>';
+    };
+    var td = function(t, opts) {
+      return '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:'+(opts||'center')+';white-space:nowrap'+(opts===''?';color:var(--t1)':'')+'">' + t + '</td>';
+    };
+    var fmt = function(n) { return n ? Number(n).toLocaleString() : '-'; };
+    var fmtH = function(n) { return n ? n : '-'; };
+
+    var headerRow =
+      '<tr>' +
+        th('ลำดับ') + th('ชื่อ-นามสกุล','left') +
+        th('เงินเดือน','right') + th('รายวัน','right') + th('วันทำงาน') +
+        th('รวมรับ','right') +
+        th('OT ช.ม.') + th('OT/ชม','right') + th('OT เงิน','right') +
+        th('อื่นๆ','right') +
+        th('รวมยอด','right') +
+        th('ภาษี','right') + th('ประกันสังคม','right') +
+        th('หักขาด/ลา','right') + th('หักเงินกู้','right') +
+        th('หักเบิก','right') + th('อื่นๆ','right') +
+        th('รวมหัก','right') +
+        th('สุทธิ','right') + th('ประเภทจ่าย') +
+      '</tr>';
+
+    var bodyRows = rows.map(function(r, i) {
+      var paidStyle = r.isPaid ? 'background:#f0fdf4' : '';
+      return '<tr style="' + paidStyle + '">' +
+        td(i+1) + td(r.name, 'left') +
+        td(r.type==='monthly' ? fmt(r.salary) : '-', 'right') +
+        td(r.type==='daily'   ? fmt(r.dailyRate) : '-', 'right') +
+        td(r.workDays) +
+        td(fmt(r.basePay), 'right') +
+        td(fmtH(r.otHours)) + td(r.otRate ? fmt(r.otRate) : '-', 'right') + td(r.otPay ? fmt(r.otPay) : '-', 'right') +
+        td(r.allowance ? fmt(r.allowance) : '-', 'right') +
+        '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#1e40af;white-space:nowrap">' + fmt(r.gross) + '</td>' +
+        td(r.tax ? fmt(r.tax) : '-', 'right') +
+        td(r.sso ? fmt(r.sso) : '-', 'right') +
+        td(r.absentDed ? fmt(r.absentDed) : '-', 'right') +
+        td(r.loanDed ? fmt(r.loanDed) : '-', 'right') +
+        td(r.advDed ? fmt(r.advDed) : '-', 'right') +
+        td(r.otherDed ? fmt(r.otherDed) : '-', 'right') +
+        '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:right;color:#dc2626;white-space:nowrap">' + (r.totalDed ? fmt(r.totalDed) : '-') + '</td>' +
+        '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#059669;white-space:nowrap">' + fmt(r.net) + '</td>' +
+        '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:center;color:' + (r.isPaid?'#059669':'#64748b') + '">' + r.payType + '</td>' +
+      '</tr>';
+    }).join('');
+
+    var totRow = '<tr style="background:#f1f5f9;font-weight:700">' +
+      '<td colspan="2" style="padding:5px 7px;font-size:.78rem;border:1px solid #e2e8f0;font-weight:700;color:var(--t1)">รวมยอด</td>' +
+      td('-') + td('-') + td(tot.workDays) +
+      td(fmt(tot.basePay), 'right') +
+      td(fmt(tot.otHours)) + td('-') + td(fmt(tot.otPay), 'right') +
+      td(fmt(tot.allowance), 'right') +
+      '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#1e40af">' + fmt(tot.gross) + '</td>' +
+      td(fmt(tot.tax), 'right') + td(fmt(tot.sso), 'right') +
+      td(fmt(tot.absentDed), 'right') + td(fmt(tot.loanDed), 'right') +
+      td(fmt(tot.advDed), 'right') + td(fmt(tot.otherDed), 'right') +
+      '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#dc2626">' + fmt(tot.totalDed) + '</td>' +
+      '<td style="padding:4px 7px;font-size:.78rem;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:#059669">' + fmt(tot.net) + '</td>' +
+      '<td style="padding:4px 7px;border:1px solid #e2e8f0"></td>' +
+    '</tr>';
+
+    // หาชื่อเดือน BE
+    var mp = _hrRegMon.split('-');
+    var monLabel = _CAL_MONTHS[parseInt(mp[1])-1] + ' ' + (parseInt(mp[0])+543);
+
+    wrap.innerHTML =
+      '<div style="padding:10px 12px;font-size:.8rem;color:var(--t2);border-bottom:1px solid var(--bc-input)">' +
+        '<span style="font-weight:700;color:var(--t1)">งวดประจำเดือน ' + monLabel + ' — ' + periodTitle + '</span>' +
+        '&nbsp;&nbsp;·&nbsp;&nbsp;พนักงาน ' + rows.length + ' คน' +
+      '</div>' +
+      '<div style="overflow-x:auto">' +
+      '<table style="width:100%;border-collapse:collapse;font-family:\'Sarabun\',sans-serif">' +
+        '<thead>' + headerRow + '</thead>' +
+        '<tbody>' + bodyRows + '</tbody>' +
+        '<tfoot>' + totRow + '</tfoot>' +
+      '</table>' +
+      '</div>';
+
+    // เก็บ rows ไว้ให้ hrPrintPayrollRegister ใช้
+    _hrRegRows   = rows;
+    _hrRegTot    = tot;
+    _hrRegPeriodTitle = periodTitle;
+    _hrRegMonLabel    = monLabel;
+
+  }).catch(function(e) {
+    wrap.innerHTML = '<div style="padding:24px;color:#dc2626">โหลดข้อมูลล้มเหลว: ' + e + '</div>';
+  });
+}
+
+var _hrRegRows = [], _hrRegTot = {}, _hrRegPeriodTitle = '', _hrRegMonLabel = '';
+
+function hrPrintPayrollRegister() {
+  if (!_hrRegRows || !_hrRegRows.length) {
+    Swal.fire({ icon:'warning', title:'ยังไม่มีข้อมูล', text:'กด 🔄 โหลด ก่อนพิมพ์', confirmButtonColor:'#0891b2' });
+    return;
+  }
+  var _slipCo = {}; try { _slipCo = JSON.parse(localStorage.getItem('ptts_company_cfg')||'{}'); } catch(e){}
+  var company = _slipCo.name || localStorage.getItem('ptts_company_name') || 'PTS Smart Factory';
+  var fmt = function(n) { return n ? Number(n).toLocaleString() : '-'; };
+  var rows = _hrRegRows, tot = _hrRegTot;
+
+  var thStyle = 'padding:4px 5px;font-size:9px;font-weight:700;border:0.5px solid #94a3b8;background:#f1f5f9;text-align:center;white-space:nowrap;color:#1e293b';
+  var tdStyle = 'padding:3px 5px;font-size:9px;border:0.5px solid #cbd5e1;text-align:right;white-space:nowrap;color:#1e293b';
+  var tdCStyle= 'padding:3px 5px;font-size:9px;border:0.5px solid #cbd5e1;text-align:center;white-space:nowrap;color:#1e293b';
+  var tdLStyle= 'padding:3px 5px;font-size:9px;border:0.5px solid #cbd5e1;text-align:left;white-space:nowrap;color:#1e293b';
+
+  var bodyRows = rows.map(function(r, i) {
+    var bg = r.isPaid ? 'background:#f0fdf4' : '';
+    return '<tr style="'+bg+'">' +
+      '<td style="'+tdCStyle+'">'+  (i+1) +'</td>' +
+      '<td style="'+tdLStyle+'">'+  r.name +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.type==='monthly' ? fmt(r.salary) : '-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.type==='daily'   ? fmt(r.dailyRate): '-') +'</td>' +
+      '<td style="'+tdCStyle+'">'+ r.workDays +'</td>' +
+      '<td style="'+tdStyle+'">'+ fmt(r.basePay) +'</td>' +
+      '<td style="'+tdCStyle+'">'+ (r.otHours||'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.otRate?fmt(r.otRate):'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.otPay?fmt(r.otPay):'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.allowance?fmt(r.allowance):'-') +'</td>' +
+      '<td style="'+tdStyle+';font-weight:700;color:#1e40af">'+ fmt(r.gross) +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.tax?fmt(r.tax):'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.sso?fmt(r.sso):'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.absentDed?fmt(r.absentDed):'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.loanDed?fmt(r.loanDed):'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.advDed?fmt(r.advDed):'-') +'</td>' +
+      '<td style="'+tdStyle+'">'+ (r.otherDed?fmt(r.otherDed):'-') +'</td>' +
+      '<td style="'+tdStyle+';color:#dc2626">'+ (r.totalDed?fmt(r.totalDed):'-') +'</td>' +
+      '<td style="'+tdStyle+';font-weight:700;color:#059669">'+ fmt(r.net) +'</td>' +
+      '<td style="'+tdCStyle+';color:'+(r.isPaid?'#059669':'#64748b')+'">'+r.payType+'</td>' +
+    '</tr>';
+  }).join('');
+
+  var totRow =
+    '<tr style="background:#e2e8f0;font-weight:700">' +
+    '<td colspan="2" style="'+tdLStyle+';font-weight:700">รวมยอด</td>' +
+    '<td style="'+tdStyle+';font-weight:700">-</td><td style="'+tdStyle+';font-weight:700">-</td>' +
+    '<td style="'+tdCStyle+';font-weight:700">'+tot.workDays+'</td>' +
+    '<td style="'+tdStyle+';font-weight:700">'+fmt(tot.basePay)+'</td>' +
+    '<td style="'+tdCStyle+'">-</td><td style="'+tdStyle+'">-</td>' +
+    '<td style="'+tdStyle+';font-weight:700">'+fmt(tot.otPay)+'</td>' +
+    '<td style="'+tdStyle+';font-weight:700">'+fmt(tot.allowance)+'</td>' +
+    '<td style="'+tdStyle+';font-weight:700;color:#1e40af">'+fmt(tot.gross)+'</td>' +
+    '<td style="'+tdStyle+'">'+fmt(tot.tax)+'</td>' +
+    '<td style="'+tdStyle+'">'+fmt(tot.sso)+'</td>' +
+    '<td style="'+tdStyle+'">'+fmt(tot.absentDed)+'</td>' +
+    '<td style="'+tdStyle+'">'+fmt(tot.loanDed)+'</td>' +
+    '<td style="'+tdStyle+'">'+fmt(tot.advDed)+'</td>' +
+    '<td style="'+tdStyle+'">'+fmt(tot.otherDed)+'</td>' +
+    '<td style="'+tdStyle+';font-weight:700;color:#dc2626">'+fmt(tot.totalDed)+'</td>' +
+    '<td style="'+tdStyle+';font-weight:700;color:#059669">'+fmt(tot.net)+'</td>' +
+    '<td style="'+tdCStyle+'"></td>' +
+    '</tr>';
+
+  var html = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">' +
+    '<style>*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font-family:\'Sarabun\',sans-serif;font-size:10px;color:#1e293b;padding:20px 28px}' +
+    '.title{font-size:13px;font-weight:800;text-align:center;margin-bottom:2px}' +
+    '.sub{font-size:10px;text-align:center;color:#64748b;margin-bottom:12px}' +
+    'table{width:100%;border-collapse:collapse}' +
+    '@media print{body{padding:12px 18px}@page{size:A4 landscape;margin:10mm}}</style></head><body>' +
+    '<div class="title">ทะเบียนจ่ายเงินเดือนพนักงาน</div>' +
+    '<div class="sub">งวดประจำเดือน '+_hrRegMonLabel+' — '+_hrRegPeriodTitle+'&nbsp;&nbsp;|&nbsp;&nbsp;'+company+'&nbsp;&nbsp;|&nbsp;&nbsp;จัดทำวันที่ '+_hrDMY(new Date())+'</div>' +
+    '<table><thead><tr>' +
+      '<th style="'+thStyle+'">ลำดับ</th>' +
+      '<th style="'+thStyle+';text-align:left">ชื่อ-นามสกุล</th>' +
+      '<th style="'+thStyle+'">เงินเดือน</th><th style="'+thStyle+'">รายวัน</th><th style="'+thStyle+'">วันทำงาน</th>' +
+      '<th style="'+thStyle+'">รวมรับ</th>' +
+      '<th style="'+thStyle+'">OT ช.ม.</th><th style="'+thStyle+'">OT/ชม</th><th style="'+thStyle+'">OT เงิน</th>' +
+      '<th style="'+thStyle+'">อื่นๆ</th>' +
+      '<th style="'+thStyle+'">รวมยอด</th>' +
+      '<th style="'+thStyle+'">ภาษี</th><th style="'+thStyle+'">ปกส.</th>' +
+      '<th style="'+thStyle+'">หักขาด/ลา</th><th style="'+thStyle+'">หักเงินกู้</th>' +
+      '<th style="'+thStyle+'">หักเบิก</th><th style="'+thStyle+'">อื่นๆ</th>' +
+      '<th style="'+thStyle+'">รวมหัก</th>' +
+      '<th style="'+thStyle+'">สุทธิ</th><th style="'+thStyle+'">ประเภทจ่าย</th>' +
+    '</tr></thead>' +
+    '<tbody>'+bodyRows+'</tbody>' +
+    '<tfoot>'+totRow+'</tfoot>' +
+    '</table>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:32px">' +
+      '<div style="text-align:center;border-top:0.5px solid #334155;padding-top:4px"><div style="font-size:9px;color:#64748b">ผู้จัดทำ</div><div style="font-size:9px;margin-top:24px">............................................</div><div style="font-size:9px;color:#64748b">วันที่ ....../....../......</div></div>' +
+      '<div style="text-align:center;border-top:0.5px solid #334155;padding-top:4px"><div style="font-size:9px;color:#64748b">ผู้ตรวจสอบ</div><div style="font-size:9px;margin-top:24px">............................................</div><div style="font-size:9px;color:#64748b">วันที่ ....../....../......</div></div>' +
+      '<div style="text-align:center;border-top:0.5px solid #334155;padding-top:4px"><div style="font-size:9px;color:#64748b">ผู้อนุมัติ</div><div style="font-size:9px;margin-top:24px">............................................</div><div style="font-size:9px;color:#64748b">วันที่ ....../....../......</div></div>' +
+    '</div>' +
+    '<script>(function(){if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){window.print();});}else{setTimeout(function(){window.print();},700);}})();<\/script>' +
+    '</body></html>';
+
+  var win = window.open('', '_blank');
+  if (!win) { Swal.fire({ icon:'warning', title:'Popup ถูกบล็อก', text:'กรุณาอนุญาต popup แล้วลองใหม่' }); return; }
+  win.document.write(html);
+  win.document.close();
+}

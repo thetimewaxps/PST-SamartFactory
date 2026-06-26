@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.03</span>
+      <span class="ph-chip ver">v12.04</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -2211,6 +2211,10 @@
       style="padding:8px 18px;border-radius:10px;border:1px solid var(--bc-input);background:transparent;color:var(--t3);font-family:'Sarabun',sans-serif;font-size:.84rem;font-weight:700;cursor:pointer">
       📋 สัญญาเงินกู้
     </button>
+    <button id="hrBtn9" onclick="hrSubSwitch('9')"
+      style="padding:8px 18px;border-radius:10px;border:1px solid var(--bc-input);background:transparent;color:var(--t3);font-family:'Sarabun',sans-serif;font-size:.84rem;font-weight:700;cursor:pointer">
+      📄 ทะเบียนเงินเดือน
+    </button>
   </div>
 
   <!-- Sub-tab panels (rendered by hr.js) -->
@@ -2222,6 +2226,7 @@
   <div id="hrPanel6" style="display:none"></div>
   <div id="hrPanel7" style="display:none"></div>
   <div id="hrPanel8" style="display:none"></div>
+  <div id="hrPanel9" style="display:none"></div>
 </div>
 </div><!-- end tab-hr -->
 
@@ -3629,6 +3634,17 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260626-A',
+          date: '2026-06-26',
+          items: [
+            'form.html: เพิ่ม hrBtn9 + hrPanel9 "📄 ทะเบียนเงินเดือน" ใน HR tab',
+            'hr.js: hrSubSwitch รองรับ tab 9',
+            'hr.js: เพิ่ม _hrRenderPayrollRegister() — picker เดือน/งวด + ตารางรวมพนักงานทุกคน + ยอดรวม',
+            'hr.js: เพิ่ม hrPrintPayrollRegister() — พิมพ์ A4 landscape มีลายเซ็น 3 ช่อง',
+            'ใช้ snapshot baseSalary/dailyRate จาก HR_SalaryPayments เมื่อดูงวดที่โอนแล้ว',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260625-AP',
           date: '2026-06-25',
           items: [
