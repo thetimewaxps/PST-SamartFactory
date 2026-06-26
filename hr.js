@@ -1804,9 +1804,13 @@ function _hrEmpModal(emp, idx) {
         _hrField('empFSal',  'เงินเดือน (บาท/เดือน)', emp && emp.salary    || 0, 'number') +
         _hrField('empFDay',  'ค่าแรง (บาท/วัน)',       emp && emp.dailyRate || 0, 'number') +
       '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">' +
         _hrField('empFOTWD',  'OT ปกติ (฿/ชม.)',       emp && emp.otRateWD  || 100, 'number') +
         _hrField('empFOTSun', 'OT อาทิตย์ (฿/ชม.)',    emp && emp.otRateSun || 200, 'number') +
+      '</div>' +
+      '<div style="margin-bottom:10px;text-align:right">' +
+        '<button type="button" onclick="_hrAutoCalcOT()" style="font-size:.72rem;padding:3px 10px;border-radius:6px;border:none;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;cursor:pointer;font-family:Sarabun,sans-serif;font-weight:600">⚡ คำนวณ OT อัตโนมัติ</button>' +
+        '<span style="font-size:.65rem;color:var(--t3);margin-left:6px">รายเดือน: เงินเดือน÷160 | รายวัน: ค่าแรง÷8</span>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">' +
         _hrField('empFAdvBudget', 'วงเงินเบิก/เดือน (฿)', emp && emp.advanceBudget || 0, 'number') +
@@ -1843,6 +1847,26 @@ function _hrEmpModal(emp, idx) {
     showCancelButton: true,
     confirmButtonText: isNew ? '➕ เพิ่ม' : '💾 บันทึก',
     cancelButtonText: 'ยกเลิก',
+    didOpen: function() {
+      // expose _hrAutoCalcOT to onclick inside Swal HTML
+      window._hrAutoCalcOT = function() {
+        var type   = (document.getElementById('empFType') || {}).value || 'monthly';
+        var salary = parseFloat((document.getElementById('empFSal') || {}).value) || 0;
+        var daily  = parseFloat((document.getElementById('empFDay') || {}).value) || 0;
+        var wd, sun;
+        if (type === 'daily') {
+          wd  = Math.round(daily  / 8   * 1.5 * 100) / 100;
+          sun = Math.round(daily  / 8   * 3   * 100) / 100;
+        } else {
+          wd  = Math.round(salary / 160 * 1.5 * 100) / 100;
+          sun = Math.round(salary / 160 * 3   * 100) / 100;
+        }
+        var wdEl  = document.getElementById('empFOTWD');
+        var sunEl = document.getElementById('empFOTSun');
+        if (wdEl)  { wdEl.value  = wd;  wdEl.style.background  = '#d1fae5'; setTimeout(function(){wdEl.style.background='';},  800); }
+        if (sunEl) { sunEl.value = sun; sunEl.style.background = '#d1fae5'; setTimeout(function(){sunEl.style.background='';}, 800); }
+      };
+    },
     preConfirm: function() {
       var addr = document.getElementById('empFAddr');
       var data = {
