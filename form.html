@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.35</span>
+      <span class="ph-chip ver">v12.37</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3494,7 +3494,7 @@
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
-<script src="plating.js?v=8.94"></script>
+<script src="plating.js?v=8.96"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -3635,10 +3635,27 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260702-B',
+          date: '2026-07-02',
+          items: [
+            'plating.js: แก้เลือก Order ข้ามหน้า — _platingSelectedSet (Set) เก็บ noPO ข้ามหน้า, restore checkbox ทุก render',
+            'plating.js: แถบสรุปรายการที่เลือก #platingSelBar — แสดง noPO+ชื่อรายการ, ปุ่ม ✕ ล้าง',
+            'plating.js: _platingToggleAll ตอนนี้เลือก/ล้างทุกรายการใน filtered list ทุกหน้า',
+            'plating.js: platingPreview ใช้ _platingSelectedSet แทน DOM query เพื่อรองรับข้ามหน้า',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260702-A',
+          date: '2026-07-02',
+          items: [
+            'plating.js: เพิ่มกรองละเอียดใน checklist ออกใบส่งชุบ — ค้นหา noPO/รายการ, กรองลูกค้า, กรองสถานะ (เร่งด่วน/ปรกติ/สต๊อก) + ปุ่ม ✕ ล้าง',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260627-K',
           date: '2026-06-27',
           items: [
-            'form.html: เพิ่ม #saveFab — ปุ่มวงกลมลอยล่างจอ เฉพาะ Breakdown tab',
+            'form.html: เพิ่ม+ลบ #saveFab — ปุ่มวงกลมลอยล่างจอ เฉพาะ Breakdown tab',
             'style.css: .save-fab + @keyframes fabPulse — กรอกครบ → เปลี่ยนสีเขียว + pulse วูบวาบ',
             'core.js: _checkFabReady() — ตรวจ field ครบ → toggle .fab-ready บน FAB',
           ]

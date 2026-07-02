@@ -12,6 +12,10 @@ let _platingPreviewData = null;
 let _platingOrderMeta  = {};   // { [noPO]: { price, status } } — ราคา/สถานะ ต่อ Order ใน checklist
 let _platingHideSent     = true; // ซ่อนรายการที่ "ส่งชุบแล้ว" (มาร์ค) ออกจาก checklist
 let _platingHideNoNeed  = true; // ซ่อนรายการที่มาร์ค "ไม่ต้องชุบ" ออกจาก checklist
+let _platingSearchText   = '';   // ค้นหาด้วยข้อความ (noPO / รายการ)
+let _platingFilterStatus = '';   // กรองสถานะ: '' | 'เร่งด่วน' | 'ปรกติ' | 'สต๊อก'
+let _platingFilterCust   = '';   // กรองลูกค้า
+const _platingSelectedSet = new Set(); // เก็บ noPO ที่เลือกข้ามหน้า
 let _platingOrderPage  = 1;    // หน้าปัจจุบันของ checklist Order
 const PLATING_PAGE_SIZE = 20;  // จำนวนรายการต่อหน้า
 let _platingShareData  = null; // { platingNo, dateStr, supplier, items } — สำหรับสร้างการ์ดแชร์รูป (มือถือ)
@@ -209,6 +213,9 @@ function _platingToggleHideNoNeed(checked) {
   _platingOrderPage = 1;
   _platingRenderOrderList();
 }
+function _platingSetSearch(v)       { _platingSearchText   = (v||'').trim(); _platingOrderPage=1; _platingRenderOrderList(); }
+function _platingSetFilterStatus(v) { _platingFilterStatus = (v||'');        _platingOrderPage=1; _platingRenderOrderList(); }
+function _platingSetFilterCust(v)   { _platingFilterCust   = (v||'');        _platingOrderPage=1; _platingRenderOrderList(); }
 
 // ── แสดง checklist Order ทั้งหมด (ทุกสถานะ) พร้อมมาร์ครายการที่เคยส่งชุบแล้ว + ฟิลเตอร์ + แบ่งหน้า ──
 function _platingRenderOrderList() {
@@ -227,6 +234,19 @@ function _platingRenderOrderList() {
   let list = all;
   if (_platingHideSent) list = list.filter(r => !sentSet.has(String(r[ORDER_COLS.noPO]||'').trim()));
   if (_platingHideNoNeed) list = list.filter(r => !noNeedSet.has(String(r[ORDER_COLS.noPO]||'').trim()));
+  if (_platingSearchText) {
+    const q = _platingSearchText.toLowerCase();
+    list = list.filter(r =>
+      String(r[ORDER_COLS.noPO]||'').toLowerCase().includes(q) ||
+      String(r[ORDER_COLS.productList]||'').toLowerCase().includes(q)
+    );
+  }
+  if (_platingFilterStatus) {
+    list = list.filter(r => String(r[ORDER_COLS.status]||'').trim() === _platingFilterStatus);
+  }
+  if (_platingFilterCust) {
+    list = list.filter(r => String(r[ORDER_COLS.customer]||'').trim() === _platingFilterCust);
+  }
 
   const totalPages = Math.max(1, Math.ceil(list.length / PLATING_PAGE_SIZE));
   if (_platingOrderPage > totalPages) _platingOrderPage = totalPages;
@@ -235,19 +255,48 @@ function _platingRenderOrderList() {
   const pageList = list.slice(start, start + PLATING_PAGE_SIZE);
 
   const hiddenCount = all.length - list.length;
+
+  // สร้าง customer list จาก orderCache สำหรับ dropdown
+  const _custList = [...new Set((_orderCache||[]).map(r=>String(r[ORDER_COLS.customer]||'').trim()).filter(Boolean))].sort();
+  // สถานะที่มี
+  const STATUS_OPTS = ['เร่งด่วน','ปรกติ','สต๊อก'];
+
   const filterBar = `
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:.8rem">
-      <div style="display:flex;flex-wrap:wrap;gap:14px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--t2)">
-          <input type="checkbox" ${_platingHideSent?'checked':''} onchange="_platingToggleHideSent(this.checked)" style="width:16px;height:16px;cursor:pointer">
-          รายการแจ้งชุบแล้ว
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--t2)">
-          <input type="checkbox" ${_platingHideNoNeed?'checked':''} onchange="_platingToggleHideNoNeed(this.checked)" style="width:16px;height:16px;cursor:pointer">
-          ซ่อนรายการไม่ต้องชุบ
-        </label>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;font-size:.82rem">
+      <!-- แถว 1: ค้นหา + ลูกค้า + สถานะ (แถวเดียว) -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <input type="text" placeholder="🔍 ค้นหา PO / รายการ…"
+          value="${_platingSearchText}"
+          oninput="_platingSetSearch(this.value)"
+          style="width:200px;padding:5px 10px;border-radius:8px;border:1px solid var(--bc-input);background:var(--bg-input);color:var(--t1);font-family:Sarabun,sans-serif;font-size:.82rem">
+        <select onchange="_platingSetFilterCust(this.value)"
+          style="padding:5px 8px;border-radius:8px;border:1px solid var(--bc-input);background:var(--bg-input);color:var(--t1);font-family:Sarabun,sans-serif;font-size:.82rem;max-width:160px">
+          <option value="">👤 ทุกลูกค้า</option>
+          ${_custList.map(c=>`<option value="${c}" ${_platingFilterCust===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+        <select onchange="_platingSetFilterStatus(this.value)"
+          style="padding:5px 8px;border-radius:8px;border:1px solid var(--bc-input);background:var(--bg-input);color:var(--t1);font-family:Sarabun,sans-serif;font-size:.82rem">
+          <option value="">🏷 ทุกสถานะ</option>
+          ${STATUS_OPTS.map(s=>`<option value="${s}" ${_platingFilterStatus===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        ${(_platingSearchText||_platingFilterStatus||_platingFilterCust)?`
+        <button onclick="_platingSetSearch('');_platingFilterStatus='';_platingFilterCust='';_platingOrderPage=1;_platingRenderOrderList()"
+          style="padding:5px 10px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-family:Sarabun,sans-serif;font-size:.8rem">✕ ล้าง</button>`:''}
       </div>
-      <span style="color:var(--t3)">พบ ${list.length} รายการ${hiddenCount ? ` (ซ่อน ${hiddenCount} รายการ)` : ''}</span>
+      <!-- แถว 2: checkbox ซ่อน + นับ -->
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-wrap:wrap;gap:14px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--t2)">
+            <input type="checkbox" ${_platingHideSent?'checked':''} onchange="_platingToggleHideSent(this.checked)" style="width:16px;height:16px;cursor:pointer">
+            รายการแจ้งชุบแล้ว
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--t2)">
+            <input type="checkbox" ${_platingHideNoNeed?'checked':''} onchange="_platingToggleHideNoNeed(this.checked)" style="width:16px;height:16px;cursor:pointer">
+            ซ่อนรายการไม่ต้องชุบ
+          </label>
+        </div>
+        <span style="color:var(--t3)">พบ ${list.length} รายการ${hiddenCount ? ` (ซ่อน ${hiddenCount} รายการ)` : ''}</span>
+      </div>
     </div>`;
 
   if (!list.length) {
@@ -298,7 +347,10 @@ function _platingRenderOrderList() {
 
     return `<tr style="border-bottom:1px solid var(--bc-card)">
       <td style="padding:6px 8px;text-align:center">
-        <input type="checkbox" class="plating-chk" data-idx="${idx}" style="width:16px;height:16px;cursor:pointer">
+        <input type="checkbox" class="plating-chk" data-nopo="${noPO.replace(/"/g,'&quot;')}" data-idx="${idx}"
+          ${_platingSelectedSet.has(noPO)?'checked':''}
+          onchange="_platingToggleSelect('${noPO.replace(/'/g,"\'")}',this.checked)"
+          style="width:16px;height:16px;cursor:pointer">
       </td>
       <td style="padding:6px 8px">
         <a href="javascript:void(0)" onclick="_platingGoToOrder('${noPO.replace(/'/g,"\\'")}')"
@@ -357,7 +409,10 @@ function _platingRenderOrderList() {
         style="padding:5px 12px;border-radius:6px;border:1px solid var(--bc-input);background:var(--bg-input);color:var(--t1);cursor:${_platingOrderPage>=totalPages?'default':'pointer'};opacity:${_platingOrderPage>=totalPages?'.4':'1'};font-family:Sarabun,sans-serif">ถัดไป ›</button>
     </div>`;
 
-  wrap.innerHTML = filterBar + `
+  // render selection bar
+  setTimeout(_platingRenderSelectionBar, 0);
+
+  wrap.innerHTML = filterBar + `<div id="platingSelBar" style="display:none;margin-bottom:8px"></div>` + `
     <table style="width:100%;border-collapse:collapse;font-size:.8rem">
       <thead>
         <tr style="border-bottom:1px solid var(--bc-card)">
@@ -402,8 +457,51 @@ function _platingGotoPage(page) {
   _platingRenderOrderList();
 }
 
+function _platingToggleSelect(noPO, checked) {
+  if (checked) _platingSelectedSet.add(noPO);
+  else _platingSelectedSet.delete(noPO);
+  _platingRenderSelectionBar();
+}
 function _platingToggleAll(checked) {
+  const wrap = $('platingOrderListWrap');
+  const list = wrap?._platingList || [];
+  // apply ทุกรายการใน filtered list (ไม่ใช่แค่หน้านี้)
+  list.forEach(r => {
+    const noPO = String(r[ORDER_COLS.noPO]||'').trim();
+    if (checked) _platingSelectedSet.add(noPO);
+    else _platingSelectedSet.delete(noPO);
+  });
+  // sync checkbox DOM ของหน้านี้
   document.querySelectorAll('#platingOrderListWrap .plating-chk').forEach(c => c.checked = checked);
+  _platingRenderSelectionBar();
+}
+function _platingClearSelection() {
+  _platingSelectedSet.clear();
+  document.querySelectorAll('#platingOrderListWrap .plating-chk').forEach(c => c.checked = false);
+  const ca = $('platingChkAll'); if (ca) ca.checked = false;
+  _platingRenderSelectionBar();
+}
+function _platingRenderSelectionBar() {
+  const bar = $('platingSelBar');
+  if (!bar) return;
+  const cnt = _platingSelectedSet.size;
+  if (!cnt) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  const all = _orderCache || [];
+  const poLabels = [..._platingSelectedSet].map(noPO => {
+    const row = all.find(r => String(r[ORDER_COLS.noPO]||'').trim() === noPO);
+    const product = row ? String(row[ORDER_COLS.productList]||'').trim() : '';
+    return `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.35);border-radius:6px;padding:2px 8px;font-size:.75rem;color:var(--t1)">
+      <b>${noPO}</b>${product ? `<span style="color:var(--t3)">${product.length>18?product.slice(0,18)+'…':product}</span>` : ''}
+    </span>`;
+  }).join('');
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:10px;font-size:.8rem">
+      <span style="font-weight:700;color:#818cf8;white-space:nowrap">✅ เลือกแล้ว ${cnt} รายการ</span>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;flex:1">${poLabels}</div>
+      <button onclick="_platingClearSelection()"
+        style="padding:3px 10px;border-radius:6px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-family:Sarabun,sans-serif;font-size:.78rem;white-space:nowrap">✕ ล้าง</button>
+    </div>`;
 }
 
 // ── ตะแกรงกลาง: toggle ❌ ↔ qty input (ค่าเริ่มต้น ❌, กดเพื่อเปิด/ปิด) ──
@@ -951,10 +1049,11 @@ function _platingGenerate() {
       background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#2563eb'});
     return;
   }
-  const checkedOrders = wrap && wrap._platingList
-    ? Array.from(document.querySelectorAll('#platingOrderListWrap .plating-chk:checked'))
-        .map(c => wrap._platingList[parseInt(c.dataset.idx,10)]).filter(Boolean)
-    : [];
+  // ใช้ _platingSelectedSet เพื่อรองรับการเลือกข้ามหน้า
+  const _allOrders = _orderCache || [];
+  const checkedOrders = [..._platingSelectedSet]
+    .map(noPO => _allOrders.find(r => String(r[ORDER_COLS.noPO]||'').trim() === noPO))
+    .filter(Boolean);
 
   if (!checkedOrders.length && !_platingExtraItems.length) {
     Swal.fire({icon:'warning', title:'กรุณาเลือก Order หรือเพิ่มรายการอย่างน้อย 1 รายการ',
