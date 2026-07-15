@@ -264,8 +264,8 @@ function _invRefreshCustomerSelect() {
 
 let _invRepInited = false;
 async function invInit() {
-  // โหลด Order ทั้งหมด — ถ้า cache ยังครบ (limited=false) ไม่ต้องโหลดซ้ำ
-  if (typeof fetchOrders === 'function' && (typeof _orderCacheLimited === 'undefined' || _orderCacheLimited !== false)) {
+  // โหลด Order ทั้งหมดทุกครั้งที่เปิด Invoice tab (ไม่จำกัด 100 รายการ)
+  if (typeof fetchOrders === 'function') {
     const wrap = $('invOrderListWrap');
     if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3);font-size:.82rem"><span class="spin-ico">↻</span> โหลด Order ทั้งหมด…</div>';
     await fetchOrders(true);

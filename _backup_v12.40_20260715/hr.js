@@ -921,14 +921,14 @@ function _hrSumTableHtml(rows) {
     attByEmp[id].push(r);
   });
 
-  // inject executive employees — force overwrite เสมอ (แม้มีข้อมูลสแกนใน sheet ก็ไม่นับ)
+  // inject executive employees ที่ไม่มีข้อมูลสแกนหน้า (ไม่ต้องสแกน) ให้โผล่บนการ์ดด้วย
   (_hrEmps || []).forEach(function(e) {
     if (e.type === 'executive') {
       var xid = String(e.empId);
-      emp[xid] = { name: e.name, dept: e.dept, type: 'executive',
-        present: 0, absent: 0, off: 0, lateTimes: 0, lateMin: 0, otWD: 0, otSun: 0 };
-      // ล้าง attByEmp ด้วย เพื่อไม่ให้ payslip คิด scan rows
-      if (attByEmp[xid]) delete attByEmp[xid];
+      if (!emp[xid]) {
+        emp[xid] = { name: e.name, dept: e.dept, type: 'executive',
+          present: 0, absent: 0, off: 0, lateTimes: 0, lateMin: 0, otWD: 0, otSun: 0 };
+      }
     }
   });
   const executive = Object.keys(emp).filter(function(id) { return emp[id].type === 'executive'; });
@@ -1177,13 +1177,14 @@ function _hrPayTableHtml(rows) {
     attByEmp[id].push(r);
   });
 
-  // inject executive ที่ไม่มีข้อมูลสแกน — force overwrite เสมอ ไม่นับ scan
+  // inject executive ที่ไม่มีข้อมูลสแกน ให้โผล่บนการ์ดสรุปเงินเดือนด้วย
   (_hrEmps || []).forEach(function(e) {
     if (e.type === 'executive') {
       var xid = String(e.empId);
-      emp[xid] = { name: e.name, dept: e.dept, type: 'executive',
-        present: 0, absent: 0, off: 0, lateTimes: 0, lateMin: 0, otWD: 0, otSun: 0 };
-      if (attByEmp && attByEmp[xid]) delete attByEmp[xid];
+      if (!emp[xid]) {
+        emp[xid] = { name: e.name, dept: e.dept, type: 'executive',
+          present: 0, absent: 0, off: 0, lateTimes: 0, lateMin: 0, otWD: 0, otSun: 0 };
+      }
     }
   });
   const executive = Object.keys(emp).filter(function(id) { return emp[id].type === 'executive'; });
@@ -4113,11 +4114,6 @@ function hrLoanNew() {
         '<label style="font-size:.85rem;color:var(--t2)">เหตุผล</label>' +
         '<input id="lnFReason" type="text" style="width:100%;padding:8px;border:1px solid var(--bc-input);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:inherit;margin-top:4px;box-sizing:border-box">' +
       '</div>' +
-      ((!_hrSession || _hrSession.role === 'manager') ?
-        '<div id="lnFDateRow" style="margin-bottom:10px">'
-        + '<label style="font-size:.85rem;color:var(--t2)">วันที่บันทึก <span style="font-size:.75rem;color:#f59e0b">(admin — ปล่อยว่างใช้วันนี้)</span></label>'
-        + '<input id="lnFDate" type="date" style="width:100%;padding:8px;border:1px solid var(--bc-input);border-radius:8px;background:var(--bg2);color:var(--t1);font-family:inherit;margin-top:4px;box-sizing:border-box">'
-        + '</div>' : '') +
       '<div id="lnBudgetInfo" style="font-size:.82rem;color:#4338ca;background:#e0e7ff;border-radius:8px;padding:8px 12px;display:none"></div>' +
     '</div>',
     showCancelButton: true,
@@ -4149,13 +4145,10 @@ function hrLoanNew() {
           }
         }
       }
-      var dateEl = document.getElementById('lnFDate');
-      var overrideDate = dateEl && dateEl.value ? dateEl.value : '';
       return {
         empId: empId, empName: empObj.name || '', dept: empObj.dept || '',
         type: type, amount: amt, reason: reason, repayPeriods: periods,
-        advanceBudget: parseFloat(empOpt.dataset.budget) || 0,
-        overrideDate: overrideDate
+        advanceBudget: parseFloat(empOpt.dataset.budget) || 0
       };
     }
   }).then(function(res) {
