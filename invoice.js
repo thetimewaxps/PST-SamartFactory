@@ -222,6 +222,7 @@ function renderCustomerTable() {
 // ══ TAB: ใบกำกับภาษี (Tax Invoice) ══════════════════════
 // ══════════════════════════════════════════════════════
 let _invSelectedPOs = new Set();
+let _invPoTotalMap = {};
 
 // ยอดรวมของ Order (รวม VAT) — คอลัมน์ totalTax (X) บางแถวยังไม่มีค่า (สูตรในชีตยังไม่คำนวณ)
 // จึงคำนวณสำรองจาก จำนวน × ราคา × 1.07
@@ -262,7 +263,13 @@ function _invRefreshCustomerSelect() {
 }
 
 let _invRepInited = false;
-function invInit() {
+async function invInit() {
+  // โหลด Order ทั้งหมด — ถ้า cache ยังครบ (limited=false) ไม่ต้องโหลดซ้ำ
+  if (typeof fetchOrders === 'function' && (typeof _orderCacheLimited === 'undefined' || _orderCacheLimited !== false)) {
+    const wrap = $('invOrderListWrap');
+    if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3);font-size:.82rem"><span class="spin-ico">↻</span> โหลด Order ทั้งหมด…</div>';
+    await fetchOrders(true);
+  }
   _invRefreshCustomerSelect();
   renderInvOrderList();
   if (!_invRepInited) {
@@ -301,6 +308,12 @@ function renderInvOrderList() {
     return matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim()) &&
       !String(r[ORDER_COLS.invoiceNo]||'').trim() &&
       !invoicedPOs.has(noPO);
+  });
+  // สร้าง map noPO → total จากแถวที่ผ่าน filter ขั้นแรก (ก่อน text filter)
+  _invPoTotalMap = {};
+  rows.forEach(r => {
+    const k = String(r[ORDER_COLS.noPO]||'').trim();
+    if (k) _invPoTotalMap[k] = _invOrderTotal(r);
   });
   const poFilterTerms = ($('invPOFilter')?.value || '').toLowerCase()
     .split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
@@ -505,8 +518,14 @@ function _invUpdateSummary() {
   const sumEl = $('invSummaryWrap');
   if (!sumEl) return;
   let total = 0;
-  _orderCache.forEach(r => {
-    if (_invSelectedPOs.has(String(r[ORDER_COLS.noPO]||''))) total += _invOrderTotal(r);
+  _invSelectedPOs.forEach(noPO => {
+    const key = noPO.trim();
+    if (_invPoTotalMap && key in _invPoTotalMap) {
+      total += _invPoTotalMap[key];
+    } else {
+      const r = (_orderCache || []).find(row => String(row[ORDER_COLS.noPO]||'').trim() === key);
+      if (r) total += _invOrderTotal(r);
+    }
   });
   const subtotal = total / 1.07;
   const vat = total - subtotal;

@@ -569,7 +569,7 @@ function switchTab(name) {
   }
   if (name === 'po')        { fetchSuppliers(); fetchPurchaseOrders(); fetchPOSupplierItems(); if (!_poEditingNo && !_poItems.length) _poNewForm(); }
   if (name === 'cust')       { fetchCustomers(); fetchOrders(); }
-  if (name === 'invoice')    { fetchCustomers(); fetchOrders(); invInit(); }
+  if (name === 'invoice')    { fetchCustomers(); invInit(); } // fetchOrders(true) อยู่ใน invInit() แล้ว
   if (name === 'plating')    { fetchSuppliers(); fetchOrders(); platingInit(); }
   if (name === 'dashboard')  { if (typeof _dbInit    === 'function') _dbInit(); }
   if (name === 'inspect')    { if (typeof _inspInit  === 'function') _inspInit(); }
