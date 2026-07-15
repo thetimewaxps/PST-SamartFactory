@@ -222,6 +222,7 @@ function renderCustomerTable() {
 // ══ TAB: ใบกำกับภาษี (Tax Invoice) ══════════════════════
 // ══════════════════════════════════════════════════════
 let _invSelectedPOs = new Set();
+let _invPoTotalMap  = {}; // { noPO(trim): total } — สร้างใน renderInvOrderList, ใช้ใน _invUpdateSummary
 
 // ยอดรวมของ Order (รวม VAT) — คอลัมน์ totalTax (X) บางแถวยังไม่มีค่า (สูตรในชีตยังไม่คำนวณ)
 // จึงคำนวณสำรองจาก จำนวน × ราคา × 1.07
@@ -262,7 +263,15 @@ function _invRefreshCustomerSelect() {
 }
 
 let _invRepInited = false;
-function invInit() {
+async function invInit() {
+  // ── โหลด Order ทั้งหมดอัตโนมัติถ้า cache โหลดมาไม่ครบ (limit < total) ──
+  if (typeof _orderCacheLimited !== 'undefined' && _orderCacheLimited) {
+    if (typeof loadOrders === 'function') {
+      const wrap = $('invOrderListWrap');
+      if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3);font-size:.82rem"><span class="spin-ico">↻</span> โหลด Order ทั้งหมด…</div>';
+      await loadOrders(true); // showAll = true → limit=0
+    }
+  }
   _invRefreshCustomerSelect();
   renderInvOrderList();
   if (!_invRepInited) {
@@ -301,6 +310,12 @@ function renderInvOrderList() {
     return matchKeys.includes(String(r[ORDER_COLS.customer]||'').trim()) &&
       !String(r[ORDER_COLS.invoiceNo]||'').trim() &&
       !invoicedPOs.has(noPO);
+  });
+  // สร้าง map noPO → total เพื่อให้ _invUpdateSummary ใช้ได้ตรงๆ (ป้องกัน mismatch)
+  _invPoTotalMap = {};
+  rows.forEach(r => {
+    const k = String(r[ORDER_COLS.noPO]||'').trim();
+    if (k) _invPoTotalMap[k] = _invOrderTotal(r);
   });
   const poFilterTerms = ($('invPOFilter')?.value || '').toLowerCase()
     .split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
@@ -505,8 +520,16 @@ function _invUpdateSummary() {
   const sumEl = $('invSummaryWrap');
   if (!sumEl) return;
   let total = 0;
-  _orderCache.forEach(r => {
-    if (_invSelectedPOs.has(String(r[ORDER_COLS.noPO]||''))) total += _invOrderTotal(r);
+  // ใช้ _invPoTotalMap (สร้างตอน renderInvOrderList) เพื่อดึงยอดที่ถูกต้องตรงๆ
+  // fallback: scan _orderCache ถ้า map ยังไม่ถูก populate
+  _invSelectedPOs.forEach(noPO => {
+    const key = noPO.trim();
+    if (_invPoTotalMap && key in _invPoTotalMap) {
+      total += _invPoTotalMap[key];
+    } else {
+      const r = (_orderCache || []).find(row => String(row[ORDER_COLS.noPO]||'').trim() === key);
+      if (r) total += _invOrderTotal(r);
+    }
   });
   const subtotal = total / 1.07;
   const vat = total - subtotal;

@@ -24,6 +24,7 @@ const ORDER_COLS = {
 };
 const ORDER_NUM_COLS = 38;
 let _orderCache = [];
+let _orderCacheLimited = false; // true = โหลดมาแค่บางส่วน (limit < total)
 let _wiCache = []; // WI list โหลดจาก backend (match ด้วย OD+ID+H+workType)
 const ORDER_LOAD_LIMIT = 100; // โหลดปกติ = 100 รายการล่าสุด, กด "โหลดทั้งหมด" = 0 (ทั้งหมด)
 let _itemMasterCache = []; // รายการสินค้า/บริการที่ใช้บ่อย (Item Master) — โหลดจาก fetchItemMaster()
@@ -1790,6 +1791,7 @@ async function fetchOrders(showAll) {
     if (data.status === 'error') throw new Error(data.message || 'unknown');
     // กรองแถวว่าง (ไม่มีเลข PO) ออก — เกิดจากแถวเปล่าท้ายชีตที่ getLastRow() นับรวมมาด้วย
     _orderCache = (data.rows || []).filter(r => String(r[ORDER_COLS.noPO]||'').trim()).slice().reverse(); // ใหม่สุดก่อน
+    _orderCacheLimited = !!data.limited;
     _initSeenIfEmpty(SEEN_KEY_ORDER, _orderCache.map(r => r[ORDER_COLS.noPO]));
     _ordPage = 1;
     _ordPopulateMatMeshDatalists();

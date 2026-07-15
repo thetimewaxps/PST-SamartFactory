@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.39</span>
+      <span class="ph-chip ver">v12.40</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3483,7 +3483,7 @@
 <script src="formcalc.js?v=9.08"></script>
 <script src="aifeatures.js?v=8.94"></script>
 <script src="theme.js?v=9.10"></script>
-<script src="order.js?v=9.79"></script>
+<script src="order.js?v=9.80"></script>
 <script src="dashboard.js?v=9.73"></script>
 <script src="inspect.js?v=10.09"></script>
   <script src="stock.js?v=10.32"></script>
@@ -3493,7 +3493,7 @@
 <script src="hr.js?v=4.92"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
-<script src="invoice.js?v=9.03"></script>
+<script src="invoice.js?v=9.04"></script>
 <script src="plating.js?v=8.96"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
@@ -3635,6 +3635,15 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260715-C',
+          date: '2026-07-15',
+          items: [
+            'order.js v9.80: เพิ่ม _orderCacheLimited flag — set true เมื่อ getOrders โหลดมาไม่ครบ (limit < total)',
+            'invoice.js v9.04: invInit() async — โหลด Order ทั้งหมดอัตโนมัติถ้า cache ไม่ครบ (ป้องกัน PO หายจาก Invoice tab)',
+            'invoice.js: แก้ราคา 0.00 — เพิ่ม _invPoTotalMap สร้างตอน renderInvOrderList, _invUpdateSummary ดึงยอดจาก map แทน scan _orderCache',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260715-B',
           date: '2026-07-15',
           items: [
