@@ -1241,11 +1241,6 @@ function _hrPayTableHtml(rows) {
     var incHtml = iRow(baseLabel, ps.basePay, false);
     if (ps.otPayWD  > 0) incHtml += iRow('OT \u0e1b\u0e23\u0e01\u0e15\u0e34 (' + ps.otWDH  + ' \u0e0a\u0e21.)', ps.otPayWD,  true);
     if (ps.otPaySun > 0) incHtml += iRow('OT \u0e2d\u0e32\u0e17\u0e34\u0e15\u0e22\u0e4c (' + ps.otSunH + ' \u0e0a\u0e21.)', ps.otPaySun, true);
-    // แสดงแถว allowances (เบี้ยเลี้ยง/โบนัสอื่นๆ) ถ้ามี
-    (ps.allowances || []).filter(function(a){ return (a.effectiveAmount||0) > 0; }).forEach(function(a){
-      var aLbl = (a.label || 'เบี้ยเลี้ยง') + (ps.isPeriod && a.payIn === 'split' ? ' (แบ่ง 2 งวด)' : '');
-      incHtml += iRow(aLbl, a.effectiveAmount, true);
-    });
     incHtml += sumRow('\u0e23\u0e27\u0e21\u0e23\u0e32\u0e22\u0e23\u0e31\u0e1a', ps.gross, '#059669');
 
     // รายหัก
@@ -1632,8 +1627,7 @@ function _hrEmpAllowAdd() {
   div.id = 'empFA_' + i;
   div.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;align-items:center';
   div.innerHTML = '<input id="empFALbl_' + i + '" type="text" placeholder="ชื่อรายการ เช่น ค่าตำแหน่ง" style="flex:1;padding:7px 10px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.83rem;background:var(--bg-input);color:var(--t1)">'
-    + '<input id="empFAAmt_' + i + '" type="number" min="0" placeholder="0" value="0" style="width:90px;padding:7px 10px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.83rem;background:var(--bg-input);color:var(--t1)">'
-    + '<select id="empFAPayIn_' + i + '" title="วิธีจ่าย" style="width:116px;flex-shrink:0;padding:6px 5px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.76rem;background:var(--bg-input);color:var(--t1);cursor:pointer"><option value="split" selected>แบ่ง 2 งวด</option><option value="all">ทุกงวด (เต็ม)</option><option value="p1">งวด 1 เท่านั้น</option><option value="p2">งวด 2 เท่านั้น</option></select>'
+    + '<input id="empFAAmt_' + i + '" type="number" min="0" placeholder="0" value="0" style="width:100px;padding:7px 10px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.83rem;background:var(--bg-input);color:var(--t1)">'
     + '<button type="button" onclick="_hrEmpAllowRemove(' + i + ')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:.9rem;flex-shrink:0">✕</button>';
   list.appendChild(div);
 }
@@ -1878,16 +1872,9 @@ function _hrEmpModal(emp, idx) {
         var rows = (emp && emp.allowances) || [];
         if (!rows.length) rows = [{ label: '', amount: 0 }];
         return rows.map(function(a, i) {
-          var _pi = a.payIn || 'split';
-        return '<div id="empFA_' + i + '" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">' +
+          return '<div id="empFA_' + i + '" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">' +
             '<input id="empFALbl_' + i + '" type="text" placeholder="ชื่อรายการ เช่น ค่าตำแหน่ง" value="' + (a.label||'') + '" style="flex:1;padding:7px 10px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.83rem;background:var(--bg-input);color:var(--t1)">' +
-            '<input id="empFAAmt_' + i + '" type="number" min="0" placeholder="0" value="' + (a.amount||0) + '" style="width:90px;padding:7px 10px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.83rem;background:var(--bg-input);color:var(--t1)">' +
-            '<select id="empFAPayIn_' + i + '" title="วิธีจ่าย" style="width:116px;flex-shrink:0;padding:6px 5px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.76rem;background:var(--bg-input);color:var(--t1);cursor:pointer">' +
-              '<option value="split"' + (_pi==='split'?' selected':'') + '>แบ่ง 2 งวด</option>' +
-              '<option value="all"' + (_pi==='all'?' selected':'') + '>ทุกงวด (เต็ม)</option>' +
-              '<option value="p1"' + (_pi==='p1'?' selected':'') + '>งวด 1 เท่านั้น</option>' +
-              '<option value="p2"' + (_pi==='p2'?' selected':'') + '>งวด 2 เท่านั้น</option>' +
-            '</select>' +
+            '<input id="empFAAmt_' + i + '" type="number" min="0" placeholder="0" value="' + (a.amount||0) + '" style="width:100px;padding:7px 10px;border:1px solid var(--bc-input);border-radius:7px;font-family:Sarabun,sans-serif;font-size:.83rem;background:var(--bg-input);color:var(--t1)">' +
             '<button type="button" onclick="_hrEmpAllowRemove(' + i + ')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:.9rem;flex-shrink:0">✕</button>' +
           '</div>';
         }).join('');
@@ -1943,8 +1930,7 @@ function _hrEmpModal(emp, idx) {
             var lbl = document.getElementById('empFALbl_' + i);
             var amt = document.getElementById('empFAAmt_' + i);
             if (lbl && amt && lbl.value.trim()) {
-              var payInEl = document.getElementById('empFAPayIn_' + i);
-              result.push({ label: lbl.value.trim(), amount: parseFloat(amt.value) || 0, payIn: payInEl ? payInEl.value : 'split' });
+              result.push({ label: lbl.value.trim(), amount: parseFloat(amt.value) || 0 });
             }
           }
           return result;
@@ -3261,21 +3247,9 @@ function _hrCalcPayslip(emp, att, month, period) {
 
   const otPayWD  = otWDH  * otRateWD;
   const otPaySun = otSunH * otRateSun;
-  // allowances จากข้อมูลพนักงาน (คำนึง payIn: split/p1/p2/all)
+  // allowances จากข้อมูลพนักงาน
   var allowances = (emp && emp.allowances) || [];
-  var effectiveAllowances = allowances.map(function(a) {
-    var amt = parseFloat(a.amount) || 0;
-    var payIn = a.payIn || 'split';
-    var effAmt = amt;
-    if (isPeriod) {
-      if (payIn === 'split') effAmt = amt / 2;
-      else if (payIn === 'p1') effAmt = (period === 'p1') ? amt : 0;
-      else if (payIn === 'p2') effAmt = (period === 'p2') ? amt : 0;
-      // 'all' = เต็มจำนวนทุกงวด → effAmt = amt (ไม่เปลี่ยน)
-    }
-    return { label: a.label || '', amount: amt, payIn: payIn, effectiveAmount: effAmt };
-  });
-  var allowanceTotal = effectiveAllowances.reduce(function(s, a) { return s + a.effectiveAmount; }, 0);
+  var allowanceTotal = allowances.reduce(function(s, a) { return s + (parseFloat(a.amount) || 0); }, 0);
   const gross    = basePay + otPayWD + otPaySun + allowanceTotal;
 
   // ── หักเงินกู้/เบิก — ดึงจาก _hrLoanContracts + _hrLoans (approved) ──
@@ -3401,8 +3375,7 @@ function _hrCalcPayslip(emp, att, month, period) {
     otWDH: otWDH, otSunH: otSunH,
     salary: salary, dailyRate: dailyRate, otRateWD: otRateWD, otRateSun: otRateSun,
     basePay: basePay, otPayWD: otPayWD, otPaySun: otPaySun,
-    allowances: effectiveAllowances, allowanceTotal: allowanceTotal,
-    period: period, isPeriod: isPeriod,
+    allowances: allowances, allowanceTotal: allowanceTotal,
     absentDeduct: absentDeduct, offDeduct: offDeduct, gross: gross,
     loanDeductItems: loanDeductItems, loanDeductTotal: loanDeductTotal,
     net: net,
@@ -3423,8 +3396,8 @@ function _hrSlipHtml(p) {
       : 'เงินเดือน', p.basePay],
     p.otWDH  > 0 ? ['OT ปกติ (' + p.otWDH  + ' ชม. × ฿' + _hrFmt(p.otRateWD)  + ')', p.otPayWD]  : null,
     p.otSunH > 0 ? ['OT อาทิตย์ (' + p.otSunH + ' ชม. × ฿' + _hrFmt(p.otRateSun) + ')', p.otPaySun] : null,
-  ].concat((p.allowances || []).filter(function(a) { return (a.effectiveAmount || a.amount || 0) > 0; }).map(function(a) {
-    return [a.label || 'รายได้อื่นๆ', a.effectiveAmount || a.amount];
+  ].concat((p.allowances || []).filter(function(a) { return a.amount > 0; }).map(function(a) {
+    return [a.label || 'รายได้อื่นๆ', a.amount];
   })).filter(Boolean);
 
   const absentDeductRows = p.absentDeduct > 0
