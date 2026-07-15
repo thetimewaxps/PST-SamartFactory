@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.37</span>
+      <span class="ph-chip ver">v12.39</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3490,7 +3490,7 @@
   <script src="report.js?v=1.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="hr.js?v=4.90"></script>
+<script src="hr.js?v=4.92"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.03"></script>
@@ -3635,6 +3635,23 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260715-B',
+          date: '2026-07-15',
+          items: [
+            'hr.js v4.92: รายได้อื่นๆ (allowances) — เพิ่ม field payIn (แบ่ง 2 งวด / ทุกงวด / งวด 1 / งวด 2)',
+            'hr.js: _hrCalcPayslip คำนวณ effectiveAllowances ตาม payIn × isPeriod',
+            'hr.js: modal แก้ไขพนักงาน — เพิ่ม dropdown วิธีจ่ายต่อแถว allowance',
+            'hr.js: การ์ดสรุปเงินเดือน — แสดงยอดต่องวดจริง + hint "(แบ่ง 2 งวด)" + แก้ bug label (a.name → a.label)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260715-A',
+          date: '2026-07-15',
+          items: [
+            'hr.js: แก้การ์ดสรุปเงินเดือน — เพิ่มแถว allowances (เบี้ยเลี้ยง) ในส่วนรายได้ก่อน รวมรายรับ (gross แสดงครบไม่บวกซ่อน)',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260702-B',
           date: '2026-07-02',
           items: [
