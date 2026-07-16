@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.43</span>
+      <span class="ph-chip ver">v12.47</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3490,7 +3490,7 @@
   <script src="report.js?v=1.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="hr.js?v=4.94"></script>
+<script src="hr.js?v=4.97"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.58"></script>
 <script src="invoice.js?v=9.05"></script>
@@ -3635,6 +3635,35 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260716-D',
+          date: '2026-07-16',
+          items: [
+            'hr.js v4.97: _hrRegBuildTable — ล้าง attByEmp สำหรับ executive ก่อนคำนวณ payslip (แก้ register แสดงหักขาด/ลา ทั้งที่ฝ่ายบริหารไม่มีขาดงาน)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260716-C',
+          date: '2026-07-16',
+          items: [
+            'hr.js v4.96: _hrRegBuildTable — executive ที่ยังไม่ confirm payroll ไม่คิด loan/advance จาก calculated payslip (ให้ตรงกับ summary card ที่แสดง 0)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260716-B',
+          date: '2026-07-16',
+          items: [
+            'hr.js v4.95: _hrRegBuildTable — allowance columns (ค่าตำแหน่ง, ค่าอาหาร ฯลฯ) ใช้ effectiveAmount แทน amount เพื่อแสดงยอดต่องวดแทนยอดเต็ม (ทั้ง screen และ print)',
+            'hr.js: _hrRegBuildTable — แก้ register แสดงหักเงินกู้ผิด: ถ้ามี paidRec (โอนแล้ว) ให้ใช้ deductItems actual เสมอแม้จะว่าง แก้ปัญหา executive แสดง loan 4000 ทั้งที่สลิปเป็น 0',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260716-A',
+          date: '2026-07-16',
+          items: [
+            'theme.js: Quotation card — ย้ายรูปใบขอราคาจากด้านล่างมาเป็น column ขวา (flex layout)',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260715-I',
           date: '2026-07-15',
           items: [
@@ -7316,7 +7345,4 @@ const DEV_LOGS = [
   },
   {
     ref: '#REV-20260614-CG',
-    date: '2026-06-14',
-    current: false,
-    items: [
-      'ใบสั่งงานผลิต (Work Order): ปรับส่วน "รายการ/จำนวน" ให้ตัวใหญ่เด่นชัดแบบเดียวกับใบส่งชุบ — แปลงชื่อรา�
+    date: '2026-06
