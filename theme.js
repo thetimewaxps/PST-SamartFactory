@@ -299,16 +299,16 @@ function buildShareCardHTML(row) {
     return row_('↔️', lbl, `${gapWeld} mm.`);
   })();
 
-  const imgSection = ((_lastSavedImage || _attachedImage) && !(_lastSavedImage || _attachedImage).legacy) ? (() => {
-    const img = _lastSavedImage || _attachedImage;
-    return `<div style="padding:10px 16px 0">
-      <div style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;
-        letter-spacing:.6px;margin-bottom:6px">📎 รูปใบขอราคา</div>
+  const _imgObj = ((_lastSavedImage || _attachedImage) && !(_lastSavedImage || _attachedImage).legacy)
+    ? (_lastSavedImage || _attachedImage) : null;
+  const imgCol = _imgObj ? `
+    <div style="width:175px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+      padding:10px 12px 10px 4px;border-left:1px solid #f1f5f9">
       <div role="img" aria-label="ใบขอราคา" onclick="viewAttachedImage()"
-        style="width:100%;height:200px;border-radius:8px;border:1px solid #e2e8f0;
-        background:#f8fafc url('${img.dataUrl}') center center / contain no-repeat;cursor:pointer"></div>
-    </div>`;
-  })() : '';
+        style="width:155px;height:155px;border-radius:10px;border:1px solid #e2e8f0;
+        background:#f8fafc url('${_imgObj.dataUrl}') center center / contain no-repeat;
+        cursor:pointer;flex-shrink:0"></div>
+    </div>` : '';
 
   return `
   <div id="shareCardInner" style="background:#fff;border-radius:16px;overflow:hidden;
@@ -333,43 +333,50 @@ function buildShareCardHTML(row) {
       </div>
     </div>
 
-    <!-- Date + Ref -->
-    <div style="background:#fff">
-      ${row_('📅','วันที่', date)}
-      ${row_('🔗','Ref', `<span style="color:#6366f1;font-size:.82rem">${refId}${rev > 0 ? ' Rev.'+rev : ''}</span>`, null)}
+    <!-- Body: info left + image right -->
+    <div style="display:flex;align-items:stretch">
+      <div style="flex:1;min-width:0">
+
+        <!-- Date + Ref -->
+        <div style="background:#fff">
+          ${row_('📅','วันที่', date)}
+          ${row_('🔗','Ref', `<span style="color:#6366f1;font-size:.82rem">${refId}${rev > 0 ? ' Rev.'+rev : ''}</span>`, null)}
+        </div>
+
+        <!-- Section: ข้อมูลชิ้นงาน -->
+        <div style="padding:8px 16px 4px;background:#f8fafc;
+          border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
+          <span style="font-size:.72rem;font-weight:800;color:#475569;
+            letter-spacing:.5px;text-transform:uppercase">ข้อมูลชิ้นงาน</span>
+        </div>
+        <div style="background:#fff">
+          ${rawMat   ? row_('🧱','วัตถุดิบ', rawMat) : ''}
+          ${workType ? row_('🔧','แบบงาน', workType) : ''}
+          ${row_('📐','ขนาด', size)}
+          ${unit > 0 ? row_('🔢','จำนวน', `${unit.toLocaleString('th-TH')} ลูก`) : ''}
+          ${meshOut  ? row_('🟪','ตะแกรงนอก', matLabel(meshOut), '#1e293b', meshIn?'':'') : ''}
+          ${meshIn   ? row_('🟫','ตะแกรงใน',  matLabel(meshIn),  '#1e293b', '') : ''}
+          ${gapRow}
+          ${remark   ? row_('📝','หมายเหตุ', remark, '#d97706') : ''}
+        </div>
+
+        <!-- ราคา -->
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;
+          background:#fff;border-top:2px solid #f1f5f9">
+          <span style="font-size:1.1rem">💰</span>
+          <span style="font-size:.88rem;color:#475569;font-weight:600;white-space:nowrap">ราคาเสนอ / ลูก</span>
+          <span style="font-size:1.45rem;font-weight:800;color:#16a34a;
+            border:2.5px solid #16a34a;border-radius:999px;
+            padding:3px 20px;letter-spacing:.5px;white-space:nowrap">
+            ${Math.round(sellPrice).toLocaleString('th-TH')}.-
+          </span>
+        </div>
+
+      </div>
+      ${imgCol}
     </div>
 
-    <!-- Section: ข้อมูลชิ้นงาน -->
-    <div style="padding:8px 16px 4px;background:#f8fafc;
-      border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
-      <span style="font-size:.72rem;font-weight:800;color:#475569;
-        letter-spacing:.5px;text-transform:uppercase">ข้อมูลชิ้นงาน</span>
-    </div>
-    <div style="background:#fff">
-      ${rawMat   ? row_('🧱','วัตถุดิบ', rawMat) : ''}
-      ${workType ? row_('🔧','แบบงาน', workType) : ''}
-      ${row_('📐','ขนาด', size)}
-      ${unit > 0 ? row_('🔢','จำนวน', `${unit.toLocaleString('th-TH')} ลูก`) : ''}
-      ${meshOut  ? row_('🟪','ตะแกรงนอก', matLabel(meshOut), '#1e293b', meshIn?'':'') : ''}
-      ${meshIn   ? row_('🟫','ตะแกรงใน',  matLabel(meshIn),  '#1e293b', '') : ''}
-      ${gapRow}
-      ${remark   ? row_('📝','หมายเหตุ', remark, '#d97706') : ''}
-    </div>
-
-    <!-- ราคา -->
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;
-      background:#fff;border-top:2px solid #f1f5f9">
-      <span style="font-size:1.1rem">💰</span>
-      <span style="font-size:.88rem;color:#475569;font-weight:600;white-space:nowrap">ราคาเสนอ / ลูก</span>
-      <span style="font-size:1.45rem;font-weight:800;color:#16a34a;
-        border:2.5px solid #16a34a;border-radius:999px;
-        padding:3px 20px;letter-spacing:.5px;white-space:nowrap">
-        ${Math.round(sellPrice).toLocaleString('th-TH')}.-
-      </span>
-    </div>
-
-    ${imgSection}
-    <div style="padding-bottom:6px"></div>
+    <div style="padding-bottom:4px"></div>
   </div>`;
 }
 
