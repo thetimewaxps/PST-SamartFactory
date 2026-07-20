@@ -312,7 +312,7 @@ function dtRender() {
     const workNote = [r[DT.workType], r[DT.remark]].filter(Boolean).join(' · ');
     // ไฮไลต์แถวที่ใช้วัตถุดิบสแตนเลส/SUS304 (AW) เพราะราคาสูงเป็นพิเศษ
     const rawMatStr = String(r[DT.rawMat]||'').toUpperCase();
-    const isStainless = rawMatStr.includes('สแตนเลส') || rawMatStr.includes('SUS');
+    const isStainless = rawMatStr.includes('สแตนเลส') || rawMatStr.includes('แสตนเลส') || rawMatStr.includes('SUS');
     const rowBg = isStainless
       ? 'background:rgba(250,204,21,.16);border-left:3px solid #facc15'
       : (ri % 2 === 0 ? '' : 'background:var(--pair-bg)');
