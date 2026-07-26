@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.47</span>
+      <span class="ph-chip ver">v12.49</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -1915,7 +1915,8 @@
       ✏️ แก้ไข Order — <span id="ordEdit_noPO" style="color:var(--c1)"></span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;margin-bottom:14px">
-      <div class="field" style="grid-column:1/-1"><label>ลูกค้า</label>
+      <div class="field"><label>No.PO</label><input type="text" id="ordEdit_newNoPO" placeholder="เลขที่ PO"></div>
+      <div class="field" style="grid-column:2/-1"><label>ลูกค้า</label>
         <select id="ordEdit_customer"></select>
       </div>
       <div class="field"><label>วันที่สั่งซื้อ</label><input type="date" id="ordEdit_orderDate"></div>
@@ -1944,10 +1945,10 @@
       <div class="field"><label>ราคา</label><input type="number" id="ordEdit_price" step="0.01"></div>
       <div class="field" style="grid-column:1/-1"><label>รายการสินค้า</label><input type="text" id="ordEdit_productList"></div>
       <div class="field"><label>วัตถุดิบ</label><input type="text" id="ordEdit_material"></div>
-      <div class="field"><label>ฝาบน</label><input type="text" id="ordEdit_matTop"></div>
-      <div class="field"><label>ฝาล่าง</label><input type="text" id="ordEdit_matBot"></div>
-      <div class="field"><label>ตะแกรงนอก</label><input type="text" id="ordEdit_meshOut"></div>
-      <div class="field"><label>ตะแกรงใน</label><input type="text" id="ordEdit_meshIn"></div>
+      <div class="field"><label>ฝาบน</label><select id="ordEdit_matTop"><option value="">—</option></select></div>
+      <div class="field"><label>ฝาล่าง</label><select id="ordEdit_matBot"><option value="">—</option></select></div>
+      <div class="field"><label>ตะแกรงนอก</label><select id="ordEdit_meshOut"><option value="">—</option></select></div>
+      <div class="field"><label>ตะแกรงใน</label><select id="ordEdit_meshIn"><option value="">—</option></select></div>
       <div class="field"><label>OD (mm)</label><input type="number" id="ordEdit_od" step="0.01" placeholder="—"></div>
       <div class="field"><label>ID (mm)</label><input type="number" id="ordEdit_id" step="0.01" placeholder="—"></div>
       <div class="field"><label>H (mm)</label><input type="number" id="ordEdit_h" step="0.01" placeholder="—"></div>
@@ -3483,7 +3484,7 @@
 <script src="formcalc.js?v=9.08"></script>
 <script src="aifeatures.js?v=8.94"></script>
 <script src="theme.js?v=9.10"></script>
-<script src="order.js?v=9.80"></script>
+<script src="order.js?v=9.82"></script>
 <script src="dashboard.js?v=9.73"></script>
 <script src="inspect.js?v=10.09"></script>
   <script src="stock.js?v=10.32"></script>
@@ -3635,6 +3636,20 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260726-B',
+          date: '2026-07-26',
+          items: [
+            'form.html + order.js v9.82: ฟอร์มแก้ไข Order — เปลี่ยนช่องฝาบน/ฝาล่าง/ตะแกรงนอก/ตะแกรงใน จาก input text เป็น dropdown (ดึงจาก _localMatFlap/_localMatMesh เหมือนฟอร์มสร้าง Order)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260726-A',
+          date: '2026-07-26',
+          items: [
+            'form.html + order.js v9.81: เพิ่มช่อง No.PO แก้ไขได้ในฟอร์มแก้ไข Order — บันทึกเปลี่ยนเลข PO ในชีตได้โดยตรง',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260716-D',
           date: '2026-07-16',
           items: [

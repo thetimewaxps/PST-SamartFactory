@@ -190,6 +190,21 @@ function _ordFillSelectOptions(id, opts) {
   el.value = cur;
 }
 
+// เติม dropdown ฝาบน/ฝาล่าง/ตะแกรง ในฟอร์มแก้ไข Order
+function _ordEditPopulateMatMesh() {
+  const matCodes  = ['ไม่มี', ...Array.from(new Set((_localMatFlap||[]).map(m=>String(m.code||'').trim()).filter(Boolean))).sort()];
+  const meshCodes = ['ไม่มี', ...Array.from(new Set((_localMatMesh||[]).map(m=>String(m.code||'').trim()).filter(Boolean))).sort()];
+  ['ordEdit_matTop','ordEdit_matBot'].forEach(id => _ordFillSelectOptions(id, ['', ...matCodes.filter(v=>v!=='')]));
+  ['ordEdit_meshOut','ordEdit_meshIn'].forEach(id => _ordFillSelectOptions(id, ['', ...meshCodes.filter(v=>v!=='')]));
+  // เพิ่ม "ไม่มี" เป็น option ถ้ายังไม่มี
+  ['ordEdit_matTop','ordEdit_matBot','ordEdit_meshOut','ordEdit_meshIn'].forEach(function(id){
+    var el = $(id); if(!el) return;
+    if (!Array.from(el.options).some(function(o){return o.value==='ไม่มี';})) {
+      el.insertBefore(new Option('ไม่มี','ไม่มี'), el.options[1] || null);
+    }
+  });
+}
+
 // เติมค่าอัตโนมัติลงช่อง select โดยไม่ทับค่าที่ผู้ใช้แก้ไขเองแล้ว (เพิ่ม option ใหม่ถ้ายังไม่มีในลิสต์)
 function _ordAutoFillSelect(id, val) {
   const el = $(id);
@@ -2958,6 +2973,8 @@ function openEditOrder(noPO) {
   renderOrderTable();
   _ordEditNoPO = noPO;
   $('ordEdit_noPO').textContent  = noPO;
+  if ($('ordEdit_newNoPO')) $('ordEdit_newNoPO').value = noPO;
+  _ordEditPopulateMatMesh();
   _ordEditFillCustomerSelect(r[ORDER_COLS.customer] || '');
   $('ordEdit_orderDate').value   = _ordDateToInput(r[ORDER_COLS.orderDate]);
   $('ordEdit_wantDate').value    = _ordDateToInput(r[ORDER_COLS.wantDate]);
@@ -2999,10 +3016,12 @@ function closeOrderEdit() {
 async function saveOrderEdit() {
   if (!_ordEditNoPO) return;
   const editingNoPO = _ordEditNoPO;
+  const newNoPO = ($('ordEdit_newNoPO')?.value || '').trim() || editingNoPO;
   const r = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(_ordEditNoPO));
   if (!r) return;
   const row = r.slice();
   while (row.length < ORDER_NUM_COLS) row.push('');
+  row[ORDER_COLS.noPO]        = newNoPO;
   row[ORDER_COLS.customer]    = $('ordEdit_customer').value;
   row[ORDER_COLS.orderDate]   = _ordDateToSheet($('ordEdit_orderDate').value);
   row[ORDER_COLS.wantDate]    = _ordDateToSheet($('ordEdit_wantDate').value);
@@ -3062,7 +3081,7 @@ async function saveOrderEdit() {
     await fetchOrders();
     Swal.fire({icon:'success',title:'บันทึกแล้ว ✅',background:'#0d1b2a',color:'#cce4ff',
       confirmButtonColor:'#6366f1', timer:1300, showConfirmButton:false});
-    setTimeout(() => showOrderDetail(editingNoPO), 900);
+    setTimeout(() => showOrderDetail(newNoPO), 900);
   } catch (err) {
     Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:'บันทึกไม่สำเร็จ',background:'#0d1b2a',color:'#cce4ff',confirmButtonColor:'#6366f1'});
     if (statusEl) statusEl.textContent = '';
