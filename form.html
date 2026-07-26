@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.49</span>
+      <span class="ph-chip ver">v12.50</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -1910,11 +1910,11 @@
 <div id="orderEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;
   align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--bg-card);border:1px solid var(--bc-card);border-radius:14px;
-    padding:18px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+    padding:18px;max-width:880px;width:100%;max-height:90vh;overflow-y:auto">
     <div style="font-weight:700;font-size:.95rem;color:var(--t1);margin-bottom:12px">
       ✏️ แก้ไข Order — <span id="ordEdit_noPO" style="color:var(--c1)"></span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px 14px;margin-bottom:14px">
       <div class="field"><label>No.PO</label><input type="text" id="ordEdit_newNoPO" placeholder="เลขที่ PO"></div>
       <div class="field" style="grid-column:2/-1"><label>ลูกค้า</label>
         <select id="ordEdit_customer"></select>
@@ -3636,6 +3636,13 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260726-C',
+          date: '2026-07-26',
+          items: [
+            'form.html: modal แก้ไข Order — ขยายกว้าง max-width 480→880px, grid เปลี่ยนเป็น 4 คอลัมน์',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260726-B',
           date: '2026-07-26',
           items: [

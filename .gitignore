@@ -1,0 +1,31 @@
+CLAUDE.md
+Code.gs
+
+# CLASP — ห้าม push ขึ้น Public repo (มี Script ID / Deployment ID)
+.clasp.json
+deploy.ps1
+appsscript.json
+PTTS-Form.js
+ค่าเริ่มต้น XY.txt
+วิธีpush.txt
+ที่ต้องทำ.txt
+วิธีติดตั้ง.txt
+/New folder
+/ตัวอย่างงาน
+PTS.png
+แจ้งเตือนวันหยุด.js
+แจ้งเตือนซ่อมบำรุง.js
+สลิปเงินเดือน.js
+สรุปเงินเดือน.js
+สถานะงาน telegram.js
+ดึง DATA Inv..js
+telegram รถวิ่งงาน.js
+submit5.js
+submit4.js
+submit3.js
+submit2.js
+submit1.js
+mannaul telegram.js
+
+.claspignore
+start_server.bat
