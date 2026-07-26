@@ -3682,16 +3682,14 @@ const DEV_LOGS = [
           ref: '#REV-20260715-I',
           date: '2026-07-15',
           items: [
-            'hr.js v4.94: แก้ executive (ฝ่ายบริหาร) — force overwrite emp[] เสมอ ไม่ว่าจะมีข้อมูลสแกนใน sheet หรือไม่',
-            'hr.js: ล้าง attByEmp[xid] สำหรับ executive ด้วย เพื่อไม่ให้ payslip คิดจาก scan rows',
+            'hr.js v4.97: _hrRegBuildTable — ล้าง attByEmp สำหรับ executive ก่อนคำนวณ payslip (แก้ register แสดงหักขาด/ลา ทั้งที่ฝ่ายบริหารไม่มีขาดงาน)',
           ]
         },
         { current: false,
-          ref: '#REV-20260715-H',
-          date: '2026-07-15',
+          ref: '#REV-20260716-C',
+          date: '2026-07-16',
           items: [
-            'hr.js v4.93: modal เบิกล่วงหน้า — เพิ่ม field "วันที่บันทึก" เฉพาะ admin (ใช้ทำย้อนหลัง)',
-            'Code.gs: saveLoanRequest — รับ overrideDate (yyyy-MM-dd) จาก admin แทนวันปัจจุบัน + ใช้วันนั้นตรวจ budget month',
+            'hr.js v4.96: _hrRegBuildTable — executive ที่ยังไม่ confirm payroll ไม่คิด loan/advance จาก calculated payslip (ให้ตรงกับ summary card ที่แสดง 0)',
           ]
         },
         { current: false,
