@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.50</span>
+      <span class="ph-chip ver">v12.56</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3479,12 +3479,12 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="core.js?v=9.01"></script>
-<script src="data.js?v=8.95"></script>
+<script src="core.js?v=9.02"></script>
+<script src="data.js?v=2.13"></script>
 <script src="formcalc.js?v=9.08"></script>
 <script src="aifeatures.js?v=8.94"></script>
 <script src="theme.js?v=9.10"></script>
-<script src="order.js?v=9.82"></script>
+<script src="order.js?v=9.83"></script>
 <script src="dashboard.js?v=9.73"></script>
 <script src="inspect.js?v=10.09"></script>
   <script src="stock.js?v=10.32"></script>
@@ -3636,6 +3636,50 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260804-D',
+          date: '2026-08-04',
+          items: [
+            'data.js v2.13: dtShareCard — ไม่เรียก _enableShareBtn() อีกต่อไป ป้องกันปุ่มแชร์/รูปใน Breakdown tab ถูก enable โดยไม่ได้บันทึก Breakdown จริงๆ (set _lastSavedRow โดยตรงแทน เพื่อให้ปุ่มในการ์ดแชร์ยังทำงานได้)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260804-C',
+          date: '2026-08-04',
+          items: [
+            'data.js v2.12: ⚙ Property ▾ — เปลี่ยนชื่อและเรียงลำดับใหม่: โหลดจ็อบ→"ส่งไปแก้ไข Break Down", คัดลอก→"โคลนใบเสนอราคา", สเปค→"พิมพ์ Spec"; จัดลำดับ: แก้ไข, โคลน, พิมพ์ Spec, Order, แชร์/รูป, ลบ',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260804-B',
+          date: '2026-08-04',
+          items: [
+            'order.js v9.83: รวมปุ่ม 👁️ดู / ✂️ตัดเหล็ก / 📋Job Order เป็นปุ่ม "⚙ Property ▾" อันเดียวใน tab Order — dropdown เดียวกับ DATA tab (ดูรายละเอียด, แก้ไข Order, ตัดเหล็ก, Job Order)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260804-A',
+          date: '2026-08-04',
+          items: [
+            'core.js v9.02: Auto-ping — ping Apps Script ทุก 8 นาที (fetch mode:no-cors) ป้องกัน cold start ช้า เริ่มอัตโนมัติเมื่อ SCRIPT_URL มีค่า, รีสตาร์ทอัตโนมัติเมื่อบันทึก URL ใหม่ในแท็บตั้งค่า',
+            'Code.gs: เพิ่ม action=ping ใน doGet — ส่งกลับ {status:ok,pong:true} เพื่อปลุก runtime (ต้อง Redeploy)',
+            'aifeatures.js: เรียก _autoPingStart() หลัง apiTabSaveScript บันทึก URL',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260726-E',
+          date: '2026-07-26',
+          items: [
+            'data.js v2.11: Property menu — เพิ่มตัวเลือก 📤 แชร์/รูป เรียก showSaveSuccessCard() จาก DATA row โดยตรง ไม่ต้องโหลดเข้าฟอร์มก่อน + set _lastSavedRow ให้ปุ่ม Breakdown ทำงานต่อได้',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260726-D',
+          date: '2026-07-26',
+          items: [
+            'data.js v2.10: รวมปุ่มปฏิบัติการ (โหลด/สเปค/Order/คัดลอก/ลบ) เป็นปุ่ม "⚙ Property ▾" อันเดียว — คลิกแล้วเปิด dropdown menu',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260726-C',
           date: '2026-07-26',
           items: [

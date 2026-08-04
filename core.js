@@ -123,7 +123,31 @@ let SCRIPT_URL = localStorage.getItem('ptts_script_url') || '';
 if (SCRIPT_URL) {
   if ($('apiTab_scriptUrl')) $('apiTab_scriptUrl').value = SCRIPT_URL;
   if ($('setupBanner')) $('setupBanner').style.borderColor = 'rgba(52,211,153,.4)';
+  // เริ่ม auto-ping หลัง script โหลดครบ (2 วิ เผื่อ init)
+  setTimeout(function(){ if(typeof _autoPingStart==='function') _autoPingStart(); }, 2000);
 }
+// ── Auto-ping: ปลุก Apps Script runtime ทุก 8 นาที ป้องกัน cold start ──
+var _autoPingTimer = null;
+var _PING_INTERVAL = 8 * 60 * 1000; // 8 นาที
+
+function _autoPing() {
+  if (!SCRIPT_URL) return;
+  fetch(SCRIPT_URL + '?action=ping&_t=' + Date.now(), { mode: 'no-cors' })
+    .catch(function() {}); // ไม่สน error — เป้าหมายคือแค่ปลุก runtime
+}
+
+function _autoPingStart() {
+  _autoPingStop();
+  if (!SCRIPT_URL) return;
+  _autoPing(); // ping ทันทีตอนเริ่ม
+  _autoPingTimer = setInterval(_autoPing, _PING_INTERVAL);
+}
+
+function _autoPingStop() {
+  if (_autoPingTimer) { clearInterval(_autoPingTimer); _autoPingTimer = null; }
+}
+
+
 function saveScriptUrl() {
   // redirect to apiTabSaveScript
   apiTabSaveScript();

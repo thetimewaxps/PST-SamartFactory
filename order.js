@@ -1988,21 +1988,12 @@ function renderOrderTable() {
       <td style="padding:8px 10px;text-align:center;font-size:.8rem;color:var(--t1)">${r[ORDER_COLS.qty]||'—'}</td>
       <td style="padding:8px 10px;font-size:.72rem;color:var(--t2)">${[note, note2].filter(Boolean).join(' / ') || '—'}</td>
       <td style="padding:8px 10px;text-align:right;font-size:.78rem;font-weight:600;color:var(--c1);white-space:nowrap">${price ? price.toLocaleString('th-TH',{minimumFractionDigits:2}) : '—'} <span style="font-size:.65rem">฿</span></td>
-      <td style="padding:8px 10px;text-align:center;white-space:nowrap">
-        <button onclick="showOrderDetail('${noPO.replace(/'/g,"\\'")}')"
-          style="padding:5px 10px;border-radius:7px;border:none;background:#2563eb;color:#fff;
-                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
-          👁️ ดู
-        </button>
-        <button onclick="_ordPrintCutting('${noPO.replace(/'/g,"\\'")}')"
-          style="padding:5px 10px;border-radius:7px;border:none;background:#f59e0b;color:#fff;
-                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
-          ✂️ ตัดเหล็ก
-        </button>
-        <button onclick="_ordPrintWorkOrder('${noPO.replace(/'/g,"\\'")}')"
-          style="padding:5px 10px;border-radius:7px;border:none;background:#7c3aed;color:#fff;
-                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
-          📋 Job Order
+      <td style="padding:8px 10px;text-align:center;white-space:nowrap;position:relative">
+        <button onclick="_ordOpenMenu(event,'${noPO.replace(/'/g,"\\'")}')"
+          style="padding:5px 12px;border-radius:7px;border:none;cursor:pointer;font-family:Sarabun,sans-serif;
+                 font-size:.72rem;font-weight:600;color:#fff;
+                 background:linear-gradient(135deg,#6366f1,#8b5cf6);white-space:nowrap">
+          ⚙ Property ▾
         </button>
       </td>
     </tr>`;
@@ -2448,6 +2439,47 @@ async function _ordMarkDelivered(noPO) {
 }
 
 // ── พิมพ์ Report ขนาดตัดเหล็ก: 1) จาก Order (OD/H) → 2) จาก DATA (No.Quo) → 3) กรอกเอง ──
+// ── Order Property dropdown menu ──
+var _ordMenuOpenNoPO = null;
+function _ordOpenMenu(e, noPO) {
+  e.stopPropagation();
+  var old = document.getElementById('ordPropMenu');
+  if (old) {
+    old.remove();
+    if (_ordMenuOpenNoPO === noPO) { _ordMenuOpenNoPO = null; return; }
+  }
+  _ordMenuOpenNoPO = noPO;
+  var btn = e.currentTarget;
+  var rect = btn.getBoundingClientRect();
+  var menu = document.createElement('div');
+  menu.id = 'ordPropMenu';
+  menu.style.cssText = 'position:fixed;z-index:9999;background:var(--bg-card);border:1px solid var(--bc-card);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:175px;padding:5px 0;font-family:Sarabun,sans-serif;font-size:.82rem';
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.max(4, rect.right - 175) + 'px';
+  var items = [
+    { icon:'👁️', label:'ดูรายละเอียด',   color:'#2563eb', fn: function(){ showOrderDetail(noPO); } },
+    { icon:'✏️', label:'แก้ไข Order',    color:'#d97706', fn: function(){ openEditOrder(noPO); } },
+    { icon:'✂️', label:'ตัดเหล็ก',      color:'#0891b2', fn: function(){ _ordPrintCutting(noPO); } },
+    { icon:'📋', label:'Job Order',       color:'#7c3aed', fn: function(){ _ordPrintWorkOrder(noPO); } },
+  ];
+  items.forEach(function(it) {
+    if (it.sep) {
+      var hr = document.createElement('div');
+      hr.style.cssText = 'border-top:1px solid var(--bc-div);margin:4px 0';
+      menu.appendChild(hr); return;
+    }
+    var row = document.createElement('button');
+    row.style.cssText = 'display:flex;align-items:center;gap:9px;width:100%;padding:8px 14px;border:none;background:transparent;color:'+it.color+';cursor:pointer;font-family:Sarabun,sans-serif;font-size:.82rem;font-weight:600;text-align:left';
+    row.onmouseover = function(){ this.style.background='var(--bg1,#f1f5f9)'; };
+    row.onmouseout  = function(){ this.style.background='transparent'; };
+    row.innerHTML = '<span>'+it.icon+'</span><span>'+it.label+'</span>';
+    row.onclick = function(ev){ ev.stopPropagation(); menu.remove(); _ordMenuOpenNoPO=null; it.fn(); };
+    menu.appendChild(row);
+  });
+  document.body.appendChild(menu);
+  setTimeout(function(){ document.addEventListener('click', function _close(){ menu.remove(); _ordMenuOpenNoPO=null; document.removeEventListener('click',_close); }); }, 0);
+}
+
 async function _ordPrintCutting(noPO) {
   const ord = _orderCache.find(row => String(row[ORDER_COLS.noPO]) === String(noPO));
   if (!ord) return;

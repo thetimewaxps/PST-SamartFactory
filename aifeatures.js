@@ -22,6 +22,7 @@ function apiTabSaveScript() {
   if (!url) return;
   SCRIPT_URL = url;
   localStorage.setItem('ptts_script_url', url);
+  if (typeof _autoPingStart === 'function') _autoPingStart(); // เริ่ม/รีสตาร์ท auto-ping
 
   const st = $('apiTab_scriptStatus');
   if (st) st.textContent = '✓ บันทึกแล้ว — กด ทดสอบเชื่อมต่อ เพื่อตรวจสอบ';
