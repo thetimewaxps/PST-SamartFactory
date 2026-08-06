@@ -123,7 +123,31 @@ let SCRIPT_URL = localStorage.getItem('ptts_script_url') || '';
 if (SCRIPT_URL) {
   if ($('apiTab_scriptUrl')) $('apiTab_scriptUrl').value = SCRIPT_URL;
   if ($('setupBanner')) $('setupBanner').style.borderColor = 'rgba(52,211,153,.4)';
+  // เริ่ม auto-ping หลัง script โหลดครบ (2 วิ เผื่อ init)
+  setTimeout(function(){ if(typeof _autoPingStart==='function') _autoPingStart(); }, 2000);
 }
+// ── Auto-ping: ปลุก Apps Script runtime ทุก 8 นาที ป้องกัน cold start ──
+var _autoPingTimer = null;
+var _PING_INTERVAL = 8 * 60 * 1000; // 8 นาที
+
+function _autoPing() {
+  if (!SCRIPT_URL) return;
+  fetch(SCRIPT_URL + '?action=ping&_t=' + Date.now(), { mode: 'no-cors' })
+    .catch(function() {}); // ไม่สน error — เป้าหมายคือแค่ปลุก runtime
+}
+
+function _autoPingStart() {
+  _autoPingStop();
+  if (!SCRIPT_URL) return;
+  _autoPing(); // ping ทันทีตอนเริ่ม
+  _autoPingTimer = setInterval(_autoPing, _PING_INTERVAL);
+}
+
+function _autoPingStop() {
+  if (_autoPingTimer) { clearInterval(_autoPingTimer); _autoPingTimer = null; }
+}
+
+
 function saveScriptUrl() {
   // redirect to apiTabSaveScript
   apiTabSaveScript();
@@ -548,6 +572,7 @@ function switchTab(name) {
   if (name === 'supplier')  { fetchSuppliers(); }
   if (name === 'wi')        { if (typeof _wiLoadList==='function') _wiLoadList(); if (typeof _wiPopulateWorkTypeList==='function') _wiPopulateWorkTypeList(); }
   if (name === 'order')     { updateOrderPreview(); fetchOrders(); fetchCustomers().then(()=>_gordRefreshCustomerList()); fetchItemMaster(); }
+  if (name === 'order')     { if (typeof _gquoRenderItems==='function') _gquoRenderItems(); if (typeof _gquoFetchList==='function') _gquoFetchList(); if (typeof _wiLoad==='function') setTimeout(_wiLoad, 600); }
   if (name === 'track')     {
     fetchOrders(); renderTrackDashboard();
     // โหลดประวัติใบแจ้งชุบ เพื่อใช้แสดงไอคอน 📨 บนขั้น "กำลังส่งชุป" ถ้าออกใบแจ้งชุบแล้ว
@@ -568,6 +593,7 @@ function switchTab(name) {
     if (btn) btn.textContent = '⛶ เปิดเต็มจอ';
   }
   if (name === 'po')        { fetchSuppliers(); fetchPurchaseOrders(); fetchPOSupplierItems(); if (!_poEditingNo && !_poItems.length) _poNewForm(); }
+  if (name === 'po')         { if (typeof _rfqReset==='function') _rfqReset(); if (typeof _rfqFetchList==='function') _rfqFetchList(); if (typeof _rfqLoadSupplierList==='function') setTimeout(_rfqLoadSupplierList, 500); }
   if (name === 'cust')       { fetchCustomers(); fetchOrders(); }
   if (name === 'invoice')    { fetchCustomers(); invInit(); } // fetchOrders(true) อยู่ใน invInit() แล้ว
   if (name === 'plating')    { fetchSuppliers(); fetchOrders(); platingInit(); }

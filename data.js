@@ -331,32 +331,11 @@ function dtRender() {
       <td style="padding:8px 10px;text-align:right;font-size:.78rem;color:var(--t1);font-weight:600">${fmtB(tc)} <span style="font-size:.65rem">฿</span></td>
       <td style="padding:8px 10px;text-align:right;font-size:.78rem;font-weight:600;color:${(sp>0&&tc>0&&sp<tc)?'#f87171':'var(--c1)'}">${fmtB(sp)} <span style="font-size:.65rem">฿</span></td>
       <td style="padding:8px 10px;font-size:.72rem;color:var(--t2);max-width:160px">${workNote||'—'}</td>
-      <td style="padding:8px 10px;text-align:center;white-space:nowrap">
-        <button onclick="dtLoadIntoForm(${globalIdx})"
-          style="padding:5px 10px;border-radius:7px;border:none;background:#16a34a;color:#fff;
-                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
-          📂 โหลดจ็อบนี้
-        </button>
-        <button onclick="dtShowSpecSheet(${globalIdx})"
-          style="padding:5px 10px;border-radius:7px;border:none;background:#2563eb;color:#fff;
-                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px">
-          📋 สเปค
-        </button>
-        <button onclick="dtAddOrder(${globalIdx})"
-          style="padding:5px 10px;border-radius:7px;border:none;background:#f59e0b;color:#1a1200;
-                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px;font-weight:700">
-          📦 Order
-        </button>
-        <button onclick="dtCopyRow(${globalIdx})"
-          style="padding:5px 10px;border-radius:7px;border:none;background:#0891b2;color:#fff;
-                 font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif;margin:1px"
-          title="คัดลอกใบเสนอราคานี้เป็นเลขที่ใหม่">
-          📋 คัดลอก
-        </button>
-        <button onclick="dtDelete('${String(r[DT.noQuo]||'').replace(/'/g,"\\'")}',this)"
-          style="padding:5px 8px;border-radius:7px;border:1px solid rgba(248,113,113,.35);
-                 background:rgba(248,113,113,.1);color:#f87171;font-size:.7rem;cursor:pointer;margin:1px">
-          🗑️
+      <td style="padding:8px 10px;text-align:center;white-space:nowrap;position:relative">
+        <button onclick="dtOpenMenu(event,${globalIdx},'${String(r[DT.noQuo]||'').replace(/'/g,"\\'")}')"
+          style="padding:5px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
+                 font-size:.75rem;cursor:pointer;font-family:Sarabun,sans-serif;font-weight:700">
+          ⚙ Property ▾
         </button>
       </td>
     </tr>`;
@@ -538,6 +517,64 @@ function _toIso(thaiShort) {
   }
   return thaiShort;
 }
+
+// ── Property dropdown menu ──────────────────────────────────────
+var _dtMenuOpen = false;
+function dtOpenMenu(e, idx, noQuo) {
+  e.stopPropagation();
+  var old = document.getElementById('dtPropMenu');
+  if (old) {
+    old.remove();
+    if (_dtMenuOpen === idx) { _dtMenuOpen = false; return; }
+  }
+  _dtMenuOpen = idx;
+  var btn = e.currentTarget;
+  var rect = btn.getBoundingClientRect();
+  var menu = document.createElement('div');
+  menu.id = 'dtPropMenu';
+  menu.style.cssText = 'position:fixed;z-index:9999;background:var(--bg-card);border:1px solid var(--bc-card);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:170px;padding:5px 0;font-family:Sarabun,sans-serif;font-size:.82rem';
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.max(4, rect.right - 170) + 'px';
+  var items = [
+    { icon:'✏️', label:'ส่งไปแก้ไข Break Down', color:'#059669', fn: function(){ dtLoadIntoForm(idx); } },
+    { icon:'📋', label:'โคลนใบเสนอราคา',         color:'#0891b2', fn: function(){ dtCopyRow(idx); } },
+    { icon:'🖨️', label:'พิมพ์ Spec',             color:'#2563eb', fn: function(){ dtShowSpecSheet(idx); } },
+    { icon:'📦', label:'สร้าง Order',             color:'#d97706', fn: function(){ dtAddOrder(idx); } },
+    { icon:'📤', label:'แชร์/รูป',               color:'#7c3aed', fn: function(){ dtShareCard(idx); } },
+    { sep: true },
+    { icon:'🗑️', label:'ลบ',                    color:'#ef4444', fn: function(){ var b=document.getElementById('dtPropMenu'); dtDelete(noQuo,b); } },
+  ];
+  items.forEach(function(it) {
+    if (it.sep) {
+      var hr = document.createElement('div');
+      hr.style.cssText = 'border-top:1px solid var(--bc-div);margin:4px 0';
+      menu.appendChild(hr); return;
+    }
+    var row = document.createElement('button');
+    row.style.cssText = 'display:flex;align-items:center;gap:9px;width:100%;padding:8px 14px;border:none;background:transparent;color:'+it.color+';cursor:pointer;font-family:Sarabun,sans-serif;font-size:.82rem;font-weight:600;text-align:left';
+    row.onmouseover = function(){ this.style.background='var(--bg1,#f1f5f9)'; };
+    row.onmouseout  = function(){ this.style.background='transparent'; };
+    row.innerHTML = '<span>'+it.icon+'</span><span>'+it.label+'</span>';
+    row.onclick = function(ev){ ev.stopPropagation(); menu.remove(); _dtMenuOpen=false; it.fn(); };
+    menu.appendChild(row);
+  });
+  document.body.appendChild(menu);
+  setTimeout(function(){ document.addEventListener('click', function _close(){ menu.remove(); _dtMenuOpen=false; document.removeEventListener('click',_close); }); }, 0);
+}
+
+
+function dtShareCard(idx) {
+  var tbody = $('dtBody');
+  var rows = tbody && tbody._filteredRows;
+  if (!rows || !rows[idx]) return;
+  var r = rows[idx];
+  // เซ็ต _lastSavedRow เพื่อให้ปุ่มในการ์ดแชร์ (copy/image) ทำงานได้
+  // แต่ไม่เรียก _enableShareBtn เพื่อไม่ให้ปุ่มแชร์/รูปใน Breakdown tab ถูก enable
+  // (ปุ่มนั้น enable ได้ต้องบันทึก Breakdown จริงๆ เท่านั้น)
+  if (typeof _lastSavedRow !== 'undefined') _lastSavedRow = r;
+  if (typeof showSaveSuccessCard === 'function') showSaveSuccessCard(r, false);
+}
+
 
 function dtLoadIntoForm(idx) {
   const tbody = $('dtBody');

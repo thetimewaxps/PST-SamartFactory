@@ -2194,10 +2194,4 @@ function _rfqLoadSupplierList(retry) {
 }
 
 // ── DOMContentLoaded ────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  if ($('rfqItemsWrap')) {
-    _rfqReset();
-    _rfqFetchList();
-    setTimeout(_rfqLoadSupplierList, 1200);
-  }
-});
+// _rfqFetchList และ _rfqLoadSupplierList โหลดเมื่อผู้ใช้เปิดแท็บ PO (lazy via switchTab)
