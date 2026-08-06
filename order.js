@@ -1581,7 +1581,7 @@ function _wiViewNext() {
 }
 
 
-document.addEventListener('DOMContentLoaded', () => { if ($('gquoItemsWrap')) _gquoRenderItems(); if ($('gquoListBody')) _gquoFetchList(); setTimeout(_wiLoad, 1500); });
+// _gquoFetchList และ _wiLoad โหลดเมื่อผู้ใช้เปิดแท็บ Order (lazy via switchTab)
 
 // ══════════════════════════════════════════════════════
 // ── Item Master: รายการสินค้า/บริการที่ใช้บ่อย (sheet "ItemMaster") ──

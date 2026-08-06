@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.56</span>
+      <span class="ph-chip ver">v12.57</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3479,12 +3479,12 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="core.js?v=9.02"></script>
+<script src="core.js?v=9.03"></script>
 <script src="data.js?v=2.13"></script>
-<script src="formcalc.js?v=9.08"></script>
+<script src="formcalc.js?v=9.09"></script>
 <script src="aifeatures.js?v=8.94"></script>
 <script src="theme.js?v=9.10"></script>
-<script src="order.js?v=9.83"></script>
+<script src="order.js?v=9.84"></script>
 <script src="dashboard.js?v=9.73"></script>
 <script src="inspect.js?v=10.09"></script>
   <script src="stock.js?v=10.32"></script>
@@ -3493,7 +3493,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="hr.js?v=4.97"></script>
   <script src="imageEditor.js?v=1.1"></script>
-<script src="purchase.js?v=9.58"></script>
+<script src="purchase.js?v=9.59"></script>
 <script src="invoice.js?v=9.05"></script>
 <script src="plating.js?v=8.96"></script>
 
@@ -3636,6 +3636,16 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260806-A',
+          date: '2026-08-06',
+          items: [
+            'formcalc.js v9.09: loadAllData — เพิ่ม cache TTL 10 นาที สำหรับข้อมูลที่เปลี่ยนช้า (MAT/SpecMat/WorkTypes/Contacts/Mold/Labor) → reload ครั้งที่ 2 ดึงแค่ 2 requests แทน 8; ลบ dtRefresh background ออก (lazy load เมื่อเปิดแท็บ DATA)',
+            'order.js v9.84: ลบ DOMContentLoaded auto-fetch (_gquoFetchList/_wiLoad) ออก → lazy load เมื่อเปิดแท็บ Order',
+            'purchase.js v9.59: ลบ DOMContentLoaded auto-fetch (_rfqFetchList/_rfqLoadSupplierList) ออก → lazy load เมื่อเปิดแท็บ PO',
+            'core.js v9.03: switchTab order/po — เพิ่ม lazy init _gquoFetchList/_wiLoad และ _rfqFetchList/_rfqLoadSupplierList',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260804-D',
           date: '2026-08-04',
           items: [

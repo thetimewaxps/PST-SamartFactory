@@ -572,6 +572,7 @@ function switchTab(name) {
   if (name === 'supplier')  { fetchSuppliers(); }
   if (name === 'wi')        { if (typeof _wiLoadList==='function') _wiLoadList(); if (typeof _wiPopulateWorkTypeList==='function') _wiPopulateWorkTypeList(); }
   if (name === 'order')     { updateOrderPreview(); fetchOrders(); fetchCustomers().then(()=>_gordRefreshCustomerList()); fetchItemMaster(); }
+  if (name === 'order')     { if (typeof _gquoRenderItems==='function') _gquoRenderItems(); if (typeof _gquoFetchList==='function') _gquoFetchList(); if (typeof _wiLoad==='function') setTimeout(_wiLoad, 600); }
   if (name === 'track')     {
     fetchOrders(); renderTrackDashboard();
     // โหลดประวัติใบแจ้งชุบ เพื่อใช้แสดงไอคอน 📨 บนขั้น "กำลังส่งชุป" ถ้าออกใบแจ้งชุบแล้ว
@@ -592,6 +593,7 @@ function switchTab(name) {
     if (btn) btn.textContent = '⛶ เปิดเต็มจอ';
   }
   if (name === 'po')        { fetchSuppliers(); fetchPurchaseOrders(); fetchPOSupplierItems(); if (!_poEditingNo && !_poItems.length) _poNewForm(); }
+  if (name === 'po')         { if (typeof _rfqReset==='function') _rfqReset(); if (typeof _rfqFetchList==='function') _rfqFetchList(); if (typeof _rfqLoadSupplierList==='function') setTimeout(_rfqLoadSupplierList, 500); }
   if (name === 'cust')       { fetchCustomers(); fetchOrders(); }
   if (name === 'invoice')    { fetchCustomers(); invInit(); } // fetchOrders(true) อยู่ใน invInit() แล้ว
   if (name === 'plating')    { fetchSuppliers(); fetchOrders(); platingInit(); }
