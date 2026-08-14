@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.57</span>
+      <span class="ph-chip ver">v12.58</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3495,7 +3495,7 @@
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.59"></script>
 <script src="invoice.js?v=9.05"></script>
-<script src="plating.js?v=8.96"></script>
+<script src="plating.js?v=8.97"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
 <div id="docExportOverlay">
@@ -3636,6 +3636,13 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260806-B',
+          date: '2026-08-06',
+          items: [
+            'plating.js v8.97: แก้บัค badge "ส่งแล้ว X/Y" — ตอน save แก้ไขใบส่งชุบ ไม่ได้อัป platingQty ทำให้ badge ยังแสดงค่าเก่า แก้โดยให้ save platingQty พร้อมกับ qty ทุกครั้ง',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260806-A',
           date: '2026-08-06',
           items: [

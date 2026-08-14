@@ -1583,6 +1583,7 @@ async function _platingEdit(idx) {
           ...it,
           description: document.getElementById(`plt_eq_desc_${id}`)?.value  ?? it.description,
           qty:   parseFloat(document.getElementById(`plt_eq_qty_${id}`)?.value)  || 0,
+          platingQty: parseFloat(document.getElementById(`plt_eq_qty_${id}`)?.value) || 0,
           unit:  document.getElementById(`plt_eq_unit_${id}`)?.value || it.unit || '',
           top: topQty > 0, bot: botQty > 0, meshOut: meshOutQty > 0,
           meshMid: meshMidQty > 0, meshIn: meshInQty > 0,
