@@ -334,6 +334,7 @@ function renderInvOrderList() {
     if (!_invIssuedCache || !_invIssuedCache.length) return '';
     const issues = [];
     (_invIssuedCache).forEach(inv => {
+      if (inv.status === 'ยกเลิก') return; // ใบยกเลิก → ไม่แสดง stamp warning
       const poArr = String(inv.poList || '').split(',').map(x => x.trim()).filter(Boolean);
       poArr.forEach(po => {
         const orderRow = (_orderCache || []).find(r => String(r[ORDER_COLS.noPO]||'').trim() === po);

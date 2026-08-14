@@ -38,7 +38,7 @@
       <div class="ph-sub">Smart Manufacturing &amp; Business Platform</div>
     </div>
     <div class="ph-right">
-      <span class="ph-chip ver">v12.62</span>
+      <span class="ph-chip ver">v12.64</span>
       <span class="ph-chip" id="phConnChip" style="display:none">✓ Online</span>
       <button class="theme-fab" onclick="location.reload()" title="รีเฟรชระบบ (F5)" style="font-size:1rem">🔄</button>
       <button class="theme-fab" onclick="switchTab('api')" title="ตั้งค่า">⚙️</button>
@@ -3350,7 +3350,6 @@
       <div class="field"><label>สถานะ</label>
         <select id="invEdit_status">
           <option value="ออกแล้ว">ออกแล้ว</option>
-          <option value="ยกเลิก">ยกเลิก</option>
         </select>
       </div>
     </div>
@@ -3494,7 +3493,7 @@
 <script src="hr.js?v=4.97"></script>
   <script src="imageEditor.js?v=1.1"></script>
 <script src="purchase.js?v=9.59"></script>
-<script src="invoice.js?v=9.09"></script>
+<script src="invoice.js?v=9.10"></script>
 <script src="plating.js?v=8.97"></script>
 
 <!-- ═══ DOCUMENT EXPORT OVERLAY ════════════════════════════════ -->
@@ -3636,6 +3635,20 @@
 // เพิ่มรายการใหม่ไว้ "บนสุด" ของ array นี้ทุกครั้งที่แก้ไขโค้ดเสร็จในแต่ละรอบ
 const DEV_LOGS = [
         { current: true,
+          ref: '#REV-20260814-E',
+          date: '2026-08-14',
+          items: [
+            'form.html v12.64: ลบ option "ยกเลิก" ออกจาก dropdown สถานะในหน้าแก้ไขใบกำกับ — ป้องกันยกเลิกผ่าน edit modal (ซึ่งไม่เคลียร์ AC/AD ใน Order)',
+          ]
+        },
+        { current: false,
+          ref: '#REV-20260814-D',
+          date: '2026-08-14',
+          items: [
+            'invoice.js v9.10: แก้ Stamp warning — ข้าม status "ยกเลิก" เพื่อไม่ให้แจ้งเตือน PO ของใบที่ยกเลิกแล้ว',
+          ]
+        },
+        { current: false,
           ref: '#REV-20260814-C',
           date: '2026-08-14',
           items: [
