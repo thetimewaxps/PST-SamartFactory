@@ -1621,9 +1621,21 @@ async function cancelIssuedInvoice(invoiceNo) {
     });
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message || 'unknown');
-    // อัป cache
+    // อัป Invoices cache
     const c = (_invIssuedCache || []).find(x => x.invoiceNo === invoiceNo);
+    const cancelledPOs = c ? String(c.poList || '').split(',').map(s => s.trim()).filter(Boolean) : [];
     if (c) c.status = 'ยกเลิก';
+    // อัป Order cache — เคลียร์ invoiceNo (col AC) ออกจาก row ที่ PO ตรงกัน
+    // เพื่อให้ renderInvOrderList แสดง PO คืนทันที โดยไม่ต้อง re-fetch
+    if (cancelledPOs.length && typeof _orderCache !== 'undefined' && _orderCache) {
+      _orderCache.forEach(r => {
+        const po = String(r[ORDER_COLS.noPO] || '').trim();
+        if (cancelledPOs.includes(po)) {
+          r[ORDER_COLS.invoiceNo] = '';   // col AC — เคลียร์เลขที่ใบกำกับ
+          if (typeof ORDER_COLS.invoiceDate !== 'undefined') r[ORDER_COLS.invoiceDate] = ''; // col AD ถ้ามี
+        }
+      });
+    }
     renderIssuedInvoiceList();
     renderInvOrderList();
     Swal.fire({ icon:'success', title:`ยกเลิกใบกำกับ ${invoiceNo} แล้ว ✅`,
