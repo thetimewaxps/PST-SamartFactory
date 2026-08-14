@@ -545,21 +545,19 @@ function _invUpdateSummary() {
 }
 
 // ── ตรวจสอบ PO ที่เลือก ว่าซ้ำกับใบกำกับที่ออกไปแล้วหรือไม่ ──
-// คืน Set ของ noPO ทั้งหมดที่ออกใบกำกับไปแล้ว (ข้าม status "ยกเลิก")
+// คืน Set ของ noPO ทั้งหมดที่ออกใบกำกับไปแล้ว (ใช้ cross-check หลายจุด)
 function _invInvoicedPOSet() {
   const s = new Set();
   (_invIssuedCache || []).forEach(inv => {
-    if (inv.status === 'ยกเลิก') return; // ใบยกเลิก → คืน PO ให้ใช้ใหม่ได้
     String(inv.poList || '').split(',').map(x => x.trim()).filter(Boolean).forEach(po => s.add(po));
   });
   return s;
 }
 
-// คืนรายการ {po, invoiceNo} ของ PO ที่พบว่าซ้ำ (ข้าม status "ยกเลิก")
+// คืนรายการ {po, invoiceNo} ของ PO ที่พบว่าซ้ำ (เคยอยู่ในใบกำกับอื่นมาก่อน)
 function _invFindDuplicatePOs(selectedPOs) {
   const dups = [];
   (_invIssuedCache || []).forEach(inv => {
-    if (inv.status === 'ยกเลิก') return;
     const poList = String(inv.poList || '').split(',').map(s => s.trim()).filter(Boolean);
     poList.forEach(po => {
       if (selectedPOs.has(po)) dups.push({ po, invoiceNo: inv.invoiceNo });
@@ -1536,40 +1534,28 @@ function renderIssuedInvoiceList() {
   }
 
   const rows = list.map(inv => {
-    const isCancelled = inv.status === 'ยกเลิก';
     const cust = _custCache.find(c => c.code === inv.customerCode) || {};
     const poList = (inv.items || []).map(it => it.poNo).filter(Boolean);
     const poArr  = poList.length ? poList : (inv.poList ? (Array.isArray(inv.poList) ? inv.poList : String(inv.poList).split(',').map(s=>s.trim()).filter(Boolean)) : []);
     const poText = poArr.length
       ? poArr.map(po => `<a href="javascript:void(0)" onclick="_invGoToOrderPO('${String(po).replace(/'/g,"\\'")}')"
-          style="color:${isCancelled?'#64748b':'#818cf8'};text-decoration:${isCancelled?'line-through':'underline'};cursor:pointer">${po}</a>`).join(', ')
+          style="color:#818cf8;text-decoration:underline;cursor:pointer">${po}</a>`).join(', ')
       : '-';
-    const rowStyle = isCancelled ? 'border-bottom:1px solid var(--bc-card);opacity:.6;background:rgba(239,68,68,.04)' : 'border-bottom:1px solid var(--bc-card)';
-    const cancelBadge = isCancelled ? `<span style="display:inline-block;padding:1px 7px;border-radius:10px;background:rgba(239,68,68,.15);color:#f87171;font-size:.68rem;font-weight:700;margin-left:4px">ยกเลิก</span>` : '';
-    const safeNo = inv.invoiceNo.replace(/'/g,"\\'");
-    const actionBtns = isCancelled
-      ? `<button onclick="openEditInvoice('${safeNo}')"
-          style="padding:3px 10px;border-radius:6px;border:1px solid rgba(148,163,184,.4);background:transparent;
-          color:#94a3b8;font-family:Sarabun,sans-serif;font-size:.75rem;cursor:pointer;margin-right:6px">🔍 ดูรายละเอียด</button>
-         <span style="font-size:.72rem;color:#64748b;font-style:italic">เก็บไว้เพื่อสอบทาน</span>`
-      : `<button onclick="openEditInvoice('${safeNo}')"
-          style="padding:3px 10px;border-radius:6px;border:1px solid rgba(99,102,241,.4);background:transparent;
-          color:#818cf8;font-family:Sarabun,sans-serif;font-size:.75rem;cursor:pointer;margin-right:4px">✏️ แก้ไข</button>
-        <button onclick="cancelIssuedInvoice('${safeNo}')"
-          style="padding:3px 10px;border-radius:6px;border:1px solid rgba(251,146,60,.4);background:transparent;
-          color:#fb923c;font-family:Sarabun,sans-serif;font-size:.75rem;cursor:pointer;margin-right:4px">🚫 ยกเลิก</button>
-        <button onclick="deleteIssuedInvoice('${safeNo}')"
-          style="padding:3px 10px;border-radius:6px;border:1px solid rgba(220,38,38,.4);background:transparent;
-          color:#f87171;font-family:Sarabun,sans-serif;font-size:.75rem;cursor:pointer">🗑️ ลบ</button>`;
-    return `<tr style="${rowStyle}">
-      <td style="padding:6px 8px;font-weight:700;color:${isCancelled?'var(--t3)':'var(--c1)'};white-space:nowrap">
-        <span style="${isCancelled?'text-decoration:line-through':''}">${inv.invoiceNo}</span>${cancelBadge}</td>
+    return `<tr style="border-bottom:1px solid var(--bc-card)">
+      <td style="padding:6px 8px;font-weight:700;color:var(--c1);white-space:nowrap">${inv.invoiceNo}</td>
       <td style="padding:6px 8px;font-size:.78rem;color:var(--t2);white-space:nowrap">${_invThaiDate(inv.date)}</td>
       <td style="padding:6px 8px;font-size:.78rem;color:var(--t2)">${cust.name||inv.customerCode||''}${cust.branch?' ('+cust.branch+')':''}</td>
       <td style="padding:6px 8px;font-size:.78rem;color:var(--t3)">${poText}</td>
       <td style="padding:6px 8px;font-size:.78rem;color:var(--t3)">${inv.type}</td>
-      <td style="padding:6px 8px;font-size:.78rem;color:${isCancelled?'#64748b':'#34d399'};text-align:right;white-space:nowrap">${isCancelled?'<s>':''}${fmtB(inv.total)} ฿${isCancelled?'</s>':''}</td>
-      <td style="padding:6px 8px;text-align:center;white-space:nowrap">${actionBtns}</td>
+      <td style="padding:6px 8px;font-size:.78rem;color:#34d399;text-align:right;white-space:nowrap">${fmtB(inv.total)} ฿</td>
+      <td style="padding:6px 8px;text-align:center;white-space:nowrap">
+        <button onclick="openEditInvoice('${inv.invoiceNo.replace(/'/g,"\\'")}')"
+          style="padding:3px 10px;border-radius:6px;border:1px solid rgba(99,102,241,.4);background:transparent;
+          color:#818cf8;font-family:Sarabun,sans-serif;font-size:.75rem;cursor:pointer;margin-right:4px">✏️ แก้ไข</button>
+        <button onclick="deleteIssuedInvoice('${inv.invoiceNo.replace(/'/g,"\\'")}')"
+          style="padding:3px 10px;border-radius:6px;border:1px solid rgba(220,38,38,.4);background:transparent;
+          color:#f87171;font-family:Sarabun,sans-serif;font-size:.75rem;cursor:pointer">🗑️ ลบ</button>
+      </td>
     </tr>`;
   }).join('');
   wrap.innerHTML = pageBar + `
@@ -1587,51 +1573,6 @@ function renderIssuedInvoiceList() {
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
-}
-
-// ── ยกเลิกใบกำกับ — คงเลขที่ไว้ เปลี่ยน status → "ยกเลิก" + คืน PO ให้ใช้ใหม่ได้ ──
-async function cancelIssuedInvoice(invoiceNo) {
-  const PROC_OPTIONS = ['กำลังผลิต','ส่งชุป','ส่งตัวอย่างเทส+รอสรุป','ส่งยังไม่ครบ','FG รอเรียก','Stock','เตรียมส่ง','(ไม่เปลี่ยนสถานะ)'];
-  const { isConfirmed, value: revertProcess } = await Swal.fire({
-    icon: 'warning',
-    title: `ยกเลิกใบกำกับ ${invoiceNo}?`,
-    html: `<div style="text-align:left;font-size:.85rem;color:#94a3b8;margin-bottom:10px">
-             เลขที่ใบกำกับ <b style="color:#f1f5f9">${invoiceNo}</b> จะถูกคงไว้ในระบบ แต่เปลี่ยนสถานะเป็น <b style="color:#f87171">ยกเลิก</b><br>
-             เลขที่ PO ที่ผูกไว้จะถูกปลดออก — สามารถนำกลับมาเปิดใบกำกับใหม่ได้
-           </div>
-           <div style="text-align:left;font-size:.82rem;margin-bottom:6px;color:#94a3b8">เปลี่ยน Process ของ Order ที่เกี่ยวข้องกลับเป็น:</div>
-           <select id="swal_cancelProc" style="width:100%;padding:8px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#cce4ff;font-size:.85rem">
-             ${PROC_OPTIONS.map(o => `<option value="${o}"${o==='เตรียมส่ง'?' selected':''}>${o}</option>`).join('')}
-           </select>`,
-    showCancelButton: true,
-    confirmButtonText: '🚫 ยกเลิกใบกำกับ',
-    cancelButtonText: 'ปิด',
-    confirmButtonColor: '#f97316',
-    background: '#0d1b2a', color: '#cce4ff',
-    preConfirm: () => document.getElementById('swal_cancelProc').value
-  });
-  if (!isConfirmed) return;
-  if (!SCRIPT_URL) return;
-  const rv = revertProcess === '(ไม่เปลี่ยนสถานะ)' ? '' : revertProcess;
-  try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST', mode: 'cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'cancelInvoiceRecord', invoiceNo, revertProcess: rv })
-    });
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message || 'unknown');
-    // อัป cache
-    const c = (_invIssuedCache || []).find(x => x.invoiceNo === invoiceNo);
-    if (c) c.status = 'ยกเลิก';
-    renderIssuedInvoiceList();
-    renderInvOrderList();
-    Swal.fire({ icon:'success', title:`ยกเลิกใบกำกับ ${invoiceNo} แล้ว ✅`,
-      text:'PO ที่เกี่ยวข้องพร้อมสำหรับการออกใบกำกับใหม่',
-      background:'#0d1b2a', color:'#cce4ff', timer:2000, showConfirmButton:false, toast:true, position:'top-end' });
-  } catch(e) {
-    Swal.fire({ icon:'error', title:'ยกเลิกไม่สำเร็จ', text:e.message, background:'#0d1b2a', color:'#cce4ff', confirmButtonColor:'#dc2626' });
-  }
 }
 
 // ── ลบใบกำกับที่ออกแล้ว (พร้อมยืนยัน + ถามสถานะ Process ที่จะ revert) ──
@@ -1887,47 +1828,6 @@ function openEditInvoice(invoiceNo) {
 
   _invRenderItemsEditor(inv.items || []);
 
-  // ── Read-only mode สำหรับใบที่ยกเลิกแล้ว ──
-  const isCancelled = inv.status === 'ยกเลิก';
-  const modalTitle = $('invEditModal').querySelector('[id="invEdit_no"]');
-  const hdr = $('invEditModal').querySelector('[style*="font-weight:700;font-size:.95rem"]');
-  // banner
-  let banner = $('invEditCancelBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'invEditCancelBanner';
-    banner.style.cssText = 'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:8px;' +
-      'padding:8px 14px;margin-bottom:12px;color:#f87171;font-weight:700;font-size:.82rem;display:none';
-    banner.textContent = '🚫 ใบกำกับนี้ถูกยกเลิกแล้ว — ดูได้อย่างเดียว ไม่สามารถแก้ไขได้';
-    hdr && hdr.parentNode.insertBefore(banner, hdr.nextSibling);
-  }
-  banner.style.display = isCancelled ? 'block' : 'none';
-  // lock / unlock fields
-  ['invEdit_date','invEdit_type','invEdit_customer','invEdit_status'].forEach(id => {
-    const el = $(id); if (!el) return;
-    if (isCancelled) { el.setAttribute('disabled',''); el.style.opacity='.5'; el.style.cursor='not-allowed'; }
-    else             { el.removeAttribute('disabled'); el.style.opacity=''; el.style.cursor=''; }
-  });
-  // lock item editor rows (rendered by _invRenderItemsEditor)
-  const itemWrap = $('invEdit_itemsWrap');
-  if (itemWrap) {
-    itemWrap.querySelectorAll('input,select,button').forEach(el => {
-      if (isCancelled) { el.setAttribute('disabled',''); el.style.opacity='.5'; }
-      else             { el.removeAttribute('disabled'); el.style.opacity=''; }
-    });
-  }
-  // add-item button
-  const addItemBtn = $('invEditModal').querySelector('button[onclick*="invEditAddItem"]');
-  if (addItemBtn) addItemBtn.style.display = isCancelled ? 'none' : '';
-  // save buttons / view button visibility
-  const footer = $('invEditModal').querySelector('[style*="display:flex;flex-wrap:wrap"]');
-  if (footer) {
-    footer.querySelectorAll('button').forEach(btn => {
-      const txt = btn.textContent.trim();
-      if (txt.includes('บันทึก')) btn.style.display = isCancelled ? 'none' : '';
-    });
-  }
-
   $('invEditModal').style.display = 'flex';
 }
 
@@ -2087,21 +1987,17 @@ function _invRepShowPreview(list, month, year) {
   const rows = list.map((inv, idx) => {
     const cust = _custCache.find(c => c.code === inv.customerCode) || {};
     const isBranch = (cust.branch||'').trim() && !/สำนักงานใหญ่|head\s*office/i.test(cust.branch||'');
-    const isCancelled = inv.status === 'ยกเลิก';
-    if (!isCancelled) { sumSubtotal += inv.subtotal; sumVat += inv.vat; sumTotal += inv.total; }
-    const rowBg    = isCancelled ? 'background:#fff5f5' : 'border-bottom:1px solid #e8ecf2';
-    const numStyle = isCancelled ? 'text-decoration:line-through;color:#ef4444' : '';
-    const badge    = isCancelled ? ' <span style="display:inline-block;background:#ef4444;color:#fff;font-size:.6rem;padding:1px 5px;border-radius:3px;margin-left:3px;vertical-align:middle">ยกเลิก</span>' : '';
-    return `<tr style="${rowBg}">
+    sumSubtotal += inv.subtotal; sumVat += inv.vat; sumTotal += inv.total;
+    return `<tr style="border-bottom:1px solid #e8ecf2">
       <td style="padding:6px 8px;text-align:center">${idx+1}</td>
-      <td style="padding:6px 8px;text-align:center;white-space:nowrap;${numStyle}">${inv.date}</td>
-      <td style="padding:6px 8px;text-align:center;white-space:nowrap;${numStyle}">${inv.invoiceNo}${badge}</td>
-      <td style="padding:6px 8px;white-space:nowrap;${numStyle}">${cust.name||''}</td>
-      <td style="padding:6px 8px;text-align:center;white-space:nowrap;${numStyle}">${cust.taxId||''}</td>
-      <td style="padding:6px 8px;text-align:center;font-size:.7rem;${numStyle}">${isBranch ? `สาขา ${cust.branch}` : 'สำนักงานใหญ่'}</td>
-      <td style="padding:6px 8px;text-align:right;${numStyle}">${fmtB(inv.subtotal)}</td>
-      <td style="padding:6px 8px;text-align:right;${numStyle}">${fmtB(inv.vat)}</td>
-      <td style="padding:6px 8px;text-align:right;${numStyle}">${fmtB(inv.total)}</td>
+      <td style="padding:6px 8px;text-align:center;white-space:nowrap">${inv.date}</td>
+      <td style="padding:6px 8px;text-align:center;white-space:nowrap">${inv.invoiceNo}</td>
+      <td style="padding:6px 8px;white-space:nowrap">${cust.name||''}</td>
+      <td style="padding:6px 8px;text-align:center;white-space:nowrap">${cust.taxId||''}</td>
+      <td style="padding:6px 8px;text-align:center;font-size:.7rem">${isBranch ? `สาขา ${cust.branch}` : 'สำนักงานใหญ่'}</td>
+      <td style="padding:6px 8px;text-align:right">${fmtB(inv.subtotal)}</td>
+      <td style="padding:6px 8px;text-align:right">${fmtB(inv.vat)}</td>
+      <td style="padding:6px 8px;text-align:right">${fmtB(inv.total)}</td>
     </tr>`;
   }).join('');
 
